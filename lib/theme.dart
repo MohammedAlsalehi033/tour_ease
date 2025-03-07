@@ -4,14 +4,14 @@ class AppThemes {
   static final lightTheme = ThemeData(
     useMaterial3: true, // Enable Material 3 design
     colorScheme: ColorScheme.light(
-      primary: Colors.blue, // Primary color
-      secondary: Colors.blueAccent, // Secondary color
-      surface: Colors.white, // Surface color
-      background: Colors.white, // Background color
-      onPrimary: Colors.white, // Text/icon color on primary
-      onSecondary: Colors.white, // Text/icon color on secondary
-      onSurface: Colors.black, // Text/icon color on surface
-      onBackground: Colors.black, // Text/icon color on background
+      primary: Colors.blue,
+      secondary: Colors.blueAccent,
+      surface: Colors.white,
+      background: Colors.white,
+      onPrimary: Colors.white,
+      onSecondary: Colors.white,
+      onSurface: Colors.black,
+      onBackground: Colors.black,
     ),
     scaffoldBackgroundColor: Colors.white,
     appBarTheme: AppBarTheme(

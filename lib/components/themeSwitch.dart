@@ -14,6 +14,7 @@ class Themeswitch extends StatelessWidget {
 
         return FloatingActionButton(
           onPressed: () {
+
             context.read<ThemeBloc>().add(ToggleThemeEvent());
           },
           backgroundColor: Colors.transparent,

@@ -105,7 +105,11 @@ class SignUpScreen extends StatelessWidget {
               // Sign Up Button
               ElevatedButton(
                 onPressed: () {
-                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MainPage(),));
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => MainPage()),
+                        (Route<dynamic> route) => false // This removes all previous routes.
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   padding: EdgeInsets.symmetric(vertical: 16.h),

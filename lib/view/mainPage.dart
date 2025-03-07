@@ -5,6 +5,7 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:tour_ease/components/cards/accommodationCardForHomePage.dart';
 import 'package:tour_ease/components/themeSwitch.dart';
+import 'package:tour_ease/view/chat/chatsPage.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({Key? key}) : super(key: key);
@@ -80,7 +81,6 @@ class _MainPageState extends State<MainPage> {
   }
 }
 
-// Placeholder pages for each tab
 class AccommodationPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -140,10 +140,10 @@ class AccommodationPage extends StatelessWidget {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 1, // Adjust the number of columns
+                    crossAxisCount: 1,
                     crossAxisSpacing: 10.w,
                     mainAxisSpacing: 10.h,
-                    childAspectRatio: 0.8, // Adjust the aspect ratio
+                    childAspectRatio: 0.8,
                   ),
                   itemCount: 6,
                   itemBuilder: (context, index) {
@@ -183,17 +183,6 @@ class TripsPage extends StatelessWidget {
   }
 }
 
-class MessagesPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'Messages',
-        style: Theme.of(context).textTheme.titleLarge,
-      ),
-    );
-  }
-}
 
 class ProfilePage extends StatelessWidget {
   @override
