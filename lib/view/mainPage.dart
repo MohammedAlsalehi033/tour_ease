@@ -36,7 +36,7 @@ class _MainPageState extends State<MainPage> {
     return Scaffold(extendBody: true,
       appBar: AppBar(
         title: Text(
-          'TourEase',
+          'TosadadDSurEase',
           style: Theme.of(context).textTheme.titleLarge,
         ),
         actions: [Themeswitch(),
