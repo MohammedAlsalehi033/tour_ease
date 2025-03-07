@@ -5,31 +5,25 @@ class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Profile'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.edit),
-            onPressed: () {
-              // Navigate to edit profile page
-            },
+
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // User Profile Section
+              _buildUserProfileSection(context),
+              SizedBox(height: 24.h),
+              // Settings Section
+              _buildSettingsSection(context),
+              SizedBox(height: 24.h),
+              // Logout Button
+              _buildLogoutButton(context),
+              // Safe Space at the Bottom
+              SizedBox(height: MediaQuery.of(context).padding.bottom),
+            ],
           ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // User Profile Section
-            _buildUserProfileSection(context),
-            SizedBox(height: 24.h),
-            // Settings Section
-            _buildSettingsSection(context),
-            SizedBox(height: 24.h),
-            // Logout Button
-            _buildLogoutButton(context),
-          ],
         ),
       ),
     );

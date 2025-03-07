@@ -6,6 +6,8 @@ import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:tour_ease/components/cards/accommodationCardForHomePage.dart';
 import 'package:tour_ease/components/themeSwitch.dart';
 import 'package:tour_ease/view/chat/chatsPage.dart';
+import 'package:tour_ease/view/profile/profile.dart';
+import 'package:tour_ease/view/rideSharing/RideSharingPage.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({Key? key}) : super(key: key);
@@ -20,7 +22,7 @@ class _MainPageState extends State<MainPage> {
   // Pages corresponding to each tab
   final List<Widget> _pages = [
     AccommodationPage(),
-    RideSharingPage(),
+    RideFilterPage(),
     TripsPage(),
     MessagesPage(),
     ProfilePage(),
@@ -159,17 +161,7 @@ class AccommodationPage extends StatelessWidget {
   }
 }
 
-class RideSharingPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'Ride Sharing',
-        style: Theme.of(context).textTheme.titleLarge,
-      ),
-    );
-  }
-}
+
 
 class TripsPage extends StatelessWidget {
   @override
@@ -184,14 +176,3 @@ class TripsPage extends StatelessWidget {
 }
 
 
-class ProfilePage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'Profile',
-        style: Theme.of(context).textTheme.titleLarge,
-      ),
-    );
-  }
-}
