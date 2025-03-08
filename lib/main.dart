@@ -3,15 +3,30 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tour_ease/bloc/themeSwithBloc.dart';
+import 'package:tour_ease/bloc/rideResultsBloc.dart';
+import 'package:tour_ease/bloc/rideFilterBloc.dart';
+import 'package:tour_ease/model/rideSharing/rideRepository.dart';
 import 'package:tour_ease/theme.dart';
 import 'package:tour_ease/view/auth.dart';
 import 'package:tour_ease/view/mainPage.dart';
-import 'package:tour_ease/view/page2.dart';
+
 
 void main() {
   runApp(
-    BlocProvider(
-      create: (context) => ThemeBloc(),
+    MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) => ThemeBloc(),
+        ),
+        BlocProvider(
+          create: (context) => RideFilterBloc(),
+        ),
+        BlocProvider(
+          create: (context) => RideResultBloc(
+            rideRepository: RideRepositoryImpl(apiService: ApiService()),
+          ),
+        ),
+      ],
       child: MyApp(),
     ),
   );
@@ -19,6 +34,7 @@ void main() {
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ThemeBloc, ThemeState>(

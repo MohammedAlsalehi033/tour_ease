@@ -8,6 +8,7 @@ import 'package:tour_ease/components/themeSwitch.dart';
 import 'package:tour_ease/view/chat/chatsPage.dart';
 import 'package:tour_ease/view/profile/profile.dart';
 import 'package:tour_ease/view/rideSharing/RideSharingPage.dart';
+import 'package:tour_ease/view/tripPlanner/tripPlannerPage.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({Key? key}) : super(key: key);
@@ -23,7 +24,7 @@ class _MainPageState extends State<MainPage> {
   final List<Widget> _pages = [
     AccommodationPage(),
     RideFilterPage(),
-    TripsPage(),
+    TripPlannerPage(),
     MessagesPage(),
     ProfilePage(),
   ];
@@ -163,16 +164,5 @@ class AccommodationPage extends StatelessWidget {
 
 
 
-class TripsPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'Trips',
-        style: Theme.of(context).textTheme.titleLarge,
-      ),
-    );
-  }
-}
 
 

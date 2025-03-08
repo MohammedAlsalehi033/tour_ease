@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:day_night_time_picker/day_night_time_picker.dart';
+import 'package:tour_ease/bloc/rideFilterBloc.dart';
+import 'package:tour_ease/bloc/rideResultsBloc.dart';
+import 'package:tour_ease/model/rideSharing/rideRepository.dart';
+import 'package:tour_ease/view/rideSharing/RideResultsPage.dart';
+
 class RideFilterPage extends StatefulWidget {
   const RideFilterPage({Key? key}) : super(key: key);
 
@@ -12,382 +18,390 @@ class RideFilterPage extends StatefulWidget {
 }
 
 class _RideFilterPageState extends State<RideFilterPage> {
-  DateTime? _selectedDate;
-  Time _startTime = Time(hour: 11, minute: 30, second: 20);
-  Time _endTime = Time(hour: 11, minute: 30, second: 20);
-  int _numberOfTravelers = 1;
-  int _luggageCapacity = 1;
-  final TextEditingController _pickupController = TextEditingController();
-  final TextEditingController _destinationController = TextEditingController();
-  bool _isLoading = false;
-
-  // Price range filter
-  RangeValues _priceRange = const RangeValues(20, 100);
-
-  @override
-  void dispose() {
-    _pickupController.dispose();
-    _destinationController.dispose();
-    super.dispose();
-  }
-
-  void _applyFilters() {
-
-
-  }
-
-  void _resetFilters() {
-    setState(() {
-      _selectedDate = null;
-      _numberOfTravelers = 1;
-      _luggageCapacity = 1;
-      _pickupController.clear();
-      _destinationController.clear();
-      _priceRange = const RangeValues(20, 100);
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
 
-    void onTimeChanged(Time newTime) {
-      setState(() {
-        _startTime = newTime;
-      });
-    }
-    return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        title: Text(
-          'Filters',
-          style: textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w500,
-            color: colorScheme.onSurface,
-          ),
-        ),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: colorScheme.surface,
-        leading: IconButton(
-          icon: Icon(Icons.close, color: colorScheme.onSurface),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        actions: [
-          TextButton(
-            onPressed: _resetFilters,
-            child: Text(
-              'Clear all',
-              style: textTheme.bodyMedium?.copyWith(
-                color: colorScheme.primary,
-              ),
-            ),
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Main scrolling content
-            Expanded(
-              child: SingleChildScrollView(
-                child: AnimationLimiter(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24.w),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: AnimationConfiguration.toStaggeredList(
-                        duration: const Duration(milliseconds: 400),
-                        childAnimationBuilder: (widget) => SlideAnimation(
-                          horizontalOffset: 20.0,
-                          child: FadeInAnimation(
-                            child: widget,
-                          ),
-                        ),
-                        children: [
+    return BlocBuilder<RideFilterBloc, RideFilterState>(
+      builder: (context, state) {
+        return Scaffold(
+          backgroundColor: colorScheme.surface,
+          body: SafeArea(
+            child: Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: AnimationLimiter(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 24.w),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: AnimationConfiguration.toStaggeredList(
+                            duration: const Duration(milliseconds: 400),
+                            childAnimationBuilder: (widget) => SlideAnimation(
+                              horizontalOffset: 20.0,
+                              child: FadeInAnimation(
+                                child: widget,
+                              ),
+                            ),
+                            children: [
+                              SizedBox(height: 16.h),
 
-                          SizedBox(height: 16.h),
+                              // Pickup Location
+                              _buildSectionTitle('Where from?', theme),
+                              _buildMinimalTextField(
+                                controller: context
+                                    .read<RideFilterBloc>()
+                                    .pickupController,
+                                hintText: 'Add pickup location',
+                                theme: theme,
+                              ),
+                              SizedBox(height: 24.h),
 
-                          // Pickup Location
-                          _buildSectionTitle('Where from?', theme),
-                          _buildMinimalTextField(
-                            controller: _pickupController,
-                            hintText: 'Add pickup location',
-                            theme: theme,
-                          ),
-                          SizedBox(height: 24.h),
+                              // Destination
+                              _buildSectionTitle('Where to?', theme),
+                              _buildMinimalTextField(
+                                controller: context
+                                    .read<RideFilterBloc>()
+                                    .destinationController,
+                                hintText: 'Add destination',
+                                theme: theme,
+                              ),
+                              SizedBox(height: 32.h),
 
-                          // Destination
-                          _buildSectionTitle('Where to?', theme),
-                          _buildMinimalTextField(
-                            controller: _destinationController,
-                            hintText: 'Add destination',
-                            theme: theme,
-                          ),
-                          SizedBox(height: 32.h),
-
-                          // Date Selection
-                          _buildSectionTitle('When?', theme),
-                          _buildSelectionTile(
-                            icon: Icons.calendar_today_outlined,
-                            title: _selectedDate == null
-                                ? 'Any date'
-                                : '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
-                            onTap: () async {
-                              await showDialog(
-                                context: context,
-                                builder: (context) => Dialog(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16.r),
-                                  ),
-                                  child: Container(
-                                    height: 380.h,
-                                    padding: EdgeInsets.all(16.w),
-                                    child: Column(
-                                      children: [
-                                        Align(
-                                          alignment: Alignment.centerRight,
-                                          child: IconButton(
-                                            icon: Icon(Icons.close, color: colorScheme.onSurface),
-                                            onPressed: () => Navigator.pop(context),
-                                          ),
-                                        ),
-                                        Expanded(
-                                          child: SfDateRangePicker(
-                                            selectionMode: DateRangePickerSelectionMode.single,
-                                            initialSelectedDate: _selectedDate ?? DateTime.now(),
-                                            minDate: DateTime.now(),
-                                            maxDate: DateTime.now().add(const Duration(days: 90)),
-                                            onSelectionChanged: (DateRangePickerSelectionChangedArgs args) {
-                                              setState(() {
-                                                _selectedDate = args.value;
-                                              });
-                                              Navigator.pop(context);
-                                            },
-                                            headerStyle: DateRangePickerHeaderStyle(
-                                              textStyle: textTheme.titleMedium?.copyWith(
-                                                color: colorScheme.onSurface,
-                                              ),
-                                            ),
-                                            monthCellStyle: DateRangePickerMonthCellStyle(
-                                              todayTextStyle: TextStyle(
-                                                color: colorScheme.onSurface,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                              todayCellDecoration: BoxDecoration(
-                                                color: colorScheme.surfaceVariant,
-                                                shape: BoxShape.circle,
-                                              ),
-                                            ),
-                                            selectionColor: colorScheme.primary,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                            theme: theme,
-                          ),
-                          SizedBox(height: 32.h),
-
-                          // Time Range
-                          _buildSectionTitle('Time', theme),
-                          Row(
-                            children: [                              Expanded(
-                              child: _buildSelectionTile(
-                                icon: Icons.access_time,
-                                title: _startTime?.format(context) ?? 'Start time',
+                              // Date Selection
+                              _buildSectionTitle('When?', theme),
+                              _buildSelectionTile(
+                                icon: Icons.calendar_today_outlined,
+                                title: state.filterModel.selectedDate == null
+                                    ? 'Any date'
+                                    : '${state.filterModel.selectedDate!.day}/${state.filterModel.selectedDate!.month}/${state.filterModel.selectedDate!.year}',
                                 onTap: () async {
-                                  Navigator.of(context).push(
-                                    showPicker(themeData: Theme.of(context),
-                                      context: context,
-                                      value: _startTime,
-                                      sunrise: TimeOfDay(hour: 6, minute: 0), // optional
-                                      sunset: TimeOfDay(hour: 18, minute: 0), // optional
-                                      duskSpanInMinutes: 120, // optional
-                                      onChange: onTimeChanged,
-                                    ),
+                                  // When showing the dialog, pass your existing bloc instance directly
+                                  await showDialog(
+                                    context: context,
+                                    builder: (dialogContext) {
+                                      // Capture the bloc from the original context
+                                      final rideFilterBloc =
+                                          context.read<RideFilterBloc>();
+
+                                      return Dialog(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(16.r),
+                                        ),
+                                        child: SfDateRangePicker(
+                                          selectionMode:
+                                              DateRangePickerSelectionMode
+                                                  .single,
+                                          initialSelectedDate: state
+                                                  .filterModel.selectedDate ??
+                                              DateTime.now(),
+                                          minDate: DateTime.now(),
+                                          maxDate: DateTime.now()
+                                              .add(const Duration(days: 90)),
+                                          onSelectionChanged:
+                                              (DateRangePickerSelectionChangedArgs
+                                                  args) {
+                                            // Use the captured bloc instance
+                                            rideFilterBloc
+                                                .add(UpdateDate(args.value));
+                                            Navigator.pop(dialogContext);
+                                          },
+                                          headerStyle:
+                                              DateRangePickerHeaderStyle(
+                                            textStyle: textTheme.titleMedium
+                                                ?.copyWith(
+                                              color: colorScheme.onSurface,
+                                            ),
+                                          ),
+                                          monthCellStyle:
+                                              DateRangePickerMonthCellStyle(
+                                            todayTextStyle: TextStyle(
+                                              color: colorScheme.onSurface,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                            todayCellDecoration:
+                                                BoxDecoration(
+                                              color:
+                                                  colorScheme.surfaceVariant,
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                          selectionColor: colorScheme.primary,
+                                        ),
+                                      );
+                                    },
                                   );
                                 },
                                 theme: theme,
                               ),
-                            ),
-                              SizedBox(width: 20.w,),
+                              SizedBox(height: 32.h),
 
-                              Expanded(
-                                child: _buildSelectionTile(
-                                  icon: Icons.access_time,
-                                  title: _endTime?.format(context) ?? 'End time',
-                                  onTap: () async {
-                                    Navigator.of(context).push(
-                                      showPicker(
-                                        context: context,
-                                        value: _endTime,
-                                        sunrise: TimeOfDay(hour: 6, minute: 0), // optional
-                                        sunset: TimeOfDay(hour: 18, minute: 0), // optional
-                                        duskSpanInMinutes: 120, // optional
-                                        onChange: onTimeChanged,
-                                      ),
-                                    );
+                              // Time Range
+                              _buildSectionTitle('Time', theme),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildSelectionTile(
+                                      icon: Icons.access_time,
+                                      title: state.filterModel.startTime
+                                          .format(context),
+                                      onTap: () async {
+                                        Navigator.of(context).push(
+                                          showPicker(
+                                            themeData: Theme.of(context),
+                                            context: context,
+                                            value:
+                                                state.filterModel.startTime,
+                                            sunrise:
+                                                TimeOfDay(hour: 6, minute: 0),
+                                            sunset: TimeOfDay(
+                                                hour: 18, minute: 0),
+                                            duskSpanInMinutes: 120,
+                                            onChange: (newTime) {
+                                              context
+                                                  .read<RideFilterBloc>()
+                                                  .add(UpdateStartTime(
+                                                      newTime));
+                                            },
+                                          ),
+                                        );
+                                      },
+                                      theme: theme,
+                                    ),
+                                  ),
+                                  SizedBox(width: 20.w),
+                                  Expanded(
+                                    child: _buildSelectionTile(
+                                      icon: Icons.access_time,
+                                      title: state.filterModel.endTime
+                                          .format(context),
+                                      onTap: () async {
+                                        Navigator.of(context).push(
+                                          showPicker(
+                                            context: context,
+                                            value: state.filterModel.endTime,
+                                            sunrise:
+                                                TimeOfDay(hour: 6, minute: 0),
+                                            sunset: TimeOfDay(
+                                                hour: 18, minute: 0),
+                                            duskSpanInMinutes: 120,
+                                            onChange: (newTime) {
+                                              context
+                                                  .read<RideFilterBloc>()
+                                                  .add(
+                                                      UpdateEndTime(newTime));
+                                            },
+                                          ),
+                                        );
+                                      },
+                                      theme: theme,
+                                    ),
+                                  ),
+                                  SizedBox(width: 16.w),
+                                ],
+                              ),
+                              SizedBox(height: 32.h),
+
+                              // Price Range
+                              _buildSectionTitle('Price range', theme),
+                              SizedBox(height: 8.h),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    '\$${state.filterModel.priceRange.start.round()}',
+                                    style: textTheme.bodyMedium?.copyWith(
+                                      color: colorScheme.onSurface,
+                                    ),
+                                  ),
+                                  Text(
+                                    '\$${state.filterModel.priceRange.end.round()}',
+                                    style: textTheme.bodyMedium?.copyWith(
+                                      color: colorScheme.onSurface,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SliderTheme(
+                                data: SliderThemeData(
+                                  activeTrackColor: colorScheme.primary,
+                                  inactiveTrackColor:
+                                      colorScheme.surfaceVariant,
+                                  thumbColor: colorScheme.surface,
+                                  thumbShape: RoundSliderThumbShape(
+                                    enabledThumbRadius: 12.r,
+                                    elevation: 2,
+                                  ),
+                                  overlayColor:
+                                      colorScheme.primary.withOpacity(0.1),
+                                ),
+                                child: RangeSlider(
+                                  values: state.filterModel.priceRange,
+                                  min: 0,
+                                  max: 200,
+                                  divisions: 20,
+                                  labels: RangeLabels(
+                                    '\$${state.filterModel.priceRange.start.round()}',
+                                    '\$${state.filterModel.priceRange.end.round()}',
+                                  ),
+                                  onChanged: (RangeValues values) {
+                                    context
+                                        .read<RideFilterBloc>()
+                                        .add(UpdatePriceRange(values));
                                   },
-                                  theme: theme,
                                 ),
                               ),
-                              SizedBox(width: 16.w),
+                              SizedBox(height: 32.h),
+
+                              // Passengers
+                              _buildSectionTitle('Passengers', theme),
+                              _buildCounterTile(
+                                title: 'Travelers',
+                                value: state.filterModel.numberOfTravelers,
+                                onDecrease: () {
+                                  context
+                                      .read<RideFilterBloc>()
+                                      .add(DecrementTravelers());
+                                },
+                                onIncrease: () {
+                                  context
+                                      .read<RideFilterBloc>()
+                                      .add(IncrementTravelers());
+                                },
+                                theme: theme,
+                              ),
+                              SizedBox(height: 16.h),
+
+                              // Luggage
+                              _buildCounterTile(
+                                title: 'Luggage',
+                                value: state.filterModel.luggageCapacity,
+                                onDecrease: () {
+                                  context
+                                      .read<RideFilterBloc>()
+                                      .add(DecrementLuggage());
+                                },
+                                onIncrease: () {
+                                  context
+                                      .read<RideFilterBloc>()
+                                      .add(IncrementLuggage());
+                                },
+                                theme: theme,
+                              ),
+                              SizedBox(
+                                  height:
+                                      100.h), // Extra space for bottom button
                             ],
                           ),
-                          SizedBox(height: 32.h),
-
-                          // Price Range
-                          _buildSectionTitle('Price range', theme),
-                          SizedBox(height: 8.h),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                '\$${_priceRange.start.round()}',
-                                style: textTheme.bodyMedium?.copyWith(
-                                  color: colorScheme.onSurface,
-                                ),
-                              ),
-                              Text(
-                                '\$${_priceRange.end.round()}',
-                                style: textTheme.bodyMedium?.copyWith(
-                                  color: colorScheme.onSurface,
-                                ),
-                              ),
-                            ],
-                          ),
-                          SliderTheme(
-                            data: SliderThemeData(
-                              activeTrackColor: colorScheme.primary,
-                              inactiveTrackColor: colorScheme.surfaceVariant,
-                              thumbColor: colorScheme.surface,
-                              thumbShape: RoundSliderThumbShape(
-                                enabledThumbRadius: 12.r,
-                                elevation: 2,
-                              ),
-                              overlayColor: colorScheme.primary.withOpacity(0.1),
-                            ),
-                            child: RangeSlider(
-                              values: _priceRange,
-                              min: 0,
-                              max: 200,
-                              divisions: 20,
-                              labels: RangeLabels(
-                                '\$${_priceRange.start.round()}',
-                                '\$${_priceRange.end.round()}',
-                              ),
-                              onChanged: (RangeValues values) {
-                                setState(() {
-                                  _priceRange = values;
-                                });
-                              },
-                            ),
-                          ),
-                          SizedBox(height: 32.h),
-
-                          // Passengers
-                          _buildSectionTitle('Passengers', theme),
-                          _buildCounterTile(
-                            title: 'Travelers',
-                            value: _numberOfTravelers,
-                            onDecrease: () {
-                              if (_numberOfTravelers > 1) {
-                                setState(() {
-                                  _numberOfTravelers--;
-                                });
-                              }
-                            },
-                            onIncrease: () {
-                              setState(() {
-                                _numberOfTravelers++;
-                              });
-                            },
-                            theme: theme,
-                          ),
-                          SizedBox(height: 16.h),
-
-                          // Luggage
-                          _buildCounterTile(
-                            title: 'Luggage',
-                            value: _luggageCapacity,
-                            onDecrease: () {
-                              if (_luggageCapacity > 0) {
-                                setState(() {
-                                  _luggageCapacity--;
-                                });
-                              }
-                            },
-                            onIncrease: () {
-                              setState(() {
-                                _luggageCapacity++;
-                              });
-                            },
-                            theme: theme,
-                          ),
-                          SizedBox(height: 100.h), // Extra space for bottom button
-                        ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ),
 
-            // Bottom fixed button container
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(24.w),
-              decoration: BoxDecoration(
-                color: colorScheme.surface,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(16.r),
-                  topRight: Radius.circular(16.r),
+                // Bottom fixed button container
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(24.w),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surface,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(16.r),
+                      topRight: Radius.circular(16.r),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: colorScheme.onSurface.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, -4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: state.isLoading
+                              ? null
+                              : () {
+                                  context
+                                      .read<RideFilterBloc>()
+                                      .add(ResetFilters());
+                                },
+                          style: TextButton.styleFrom(
+                            foregroundColor: colorScheme.primary,
+                            padding: EdgeInsets.symmetric(vertical: 16.h),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
+                            textStyle: textTheme.labelLarge?.copyWith(
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          child: const Text('Reset'),
+                        ),
+                      ),
+                      SizedBox(width: 16.w),
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton(
+                          onPressed: state.isLoading
+                              ? null
+                              : () {
+                                  context.read<RideResultBloc>().add(
+                                      FetchRideResults(
+                                          filterModel: state.filterModel));
+
+
+                                  context
+                                      .read<RideFilterBloc>()
+                                      .add(ApplyFilters());
+
+
+                                  Navigator.push(context  , MaterialPageRoute(builder: (context) => RideResultsPage(),));
+                                },
+                          style: ElevatedButton.styleFrom(
+                            elevation: 0,
+                            backgroundColor: colorScheme.primary,
+                            foregroundColor: colorScheme.onPrimary,
+                            padding: EdgeInsets.symmetric(vertical: 16.h),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
+                            textStyle: textTheme.labelLarge?.copyWith(
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 0.5,
+                            ),
+                            disabledBackgroundColor:
+                                colorScheme.primary.withOpacity(0.8),
+                          ),
+                          child: state.isLoading
+                              ? SizedBox(
+                                  height: 20.h,
+                                  width: 20.w,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        colorScheme.onPrimary),
+                                  ),
+                                )
+                              : const Text('Show results'),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: colorScheme.onSurface.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, -4),
-                  ),
-                ],
-              ),
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _applyFilters,
-                style: ElevatedButton.styleFrom(
-                  elevation: 0,
-                  backgroundColor: colorScheme.primary,
-                  foregroundColor: colorScheme.onPrimary,
-                  padding: EdgeInsets.symmetric(vertical: 16.h),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  textStyle: textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 0.5,
-                  ),
-                  disabledBackgroundColor: colorScheme.primary.withOpacity(0.8),
-                ),
-                child: _isLoading
-                    ? SizedBox(
-                  height: 20.h,
-                  width: 20.w,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(colorScheme.onPrimary),
-                  ),
-                )
-                    : const Text('Show results'),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -397,7 +411,9 @@ class _RideFilterPageState extends State<RideFilterPage> {
       padding: EdgeInsets.only(bottom: 8.h),
       child: Text(
         title,
-        style: theme.textTheme.titleMedium
+        style: theme.textTheme.titleMedium?.copyWith(
+          color: theme.colorScheme.primary,
+        ),
       ),
     );
   }
@@ -454,7 +470,8 @@ class _RideFilterPageState extends State<RideFilterPage> {
               child: Text(
                 title,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: title.contains('Any') || title.contains('time') && !title.contains(':')
+                  color: title.contains('Any') ||
+                          title.contains('time') && !title.contains(':')
                       ? theme.colorScheme.onSurface.withOpacity(0.6)
                       : theme.colorScheme.onSurface,
                 ),
@@ -537,14 +554,16 @@ class _RideFilterPageState extends State<RideFilterPage> {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           border: Border.all(
-            color: enabled ? theme.colorScheme.primary : theme.colorScheme.outline,
+            color:
+                enabled ? theme.colorScheme.primary : theme.colorScheme.outline,
             width: 1,
           ),
         ),
         child: Icon(
           icon,
           size: 16.sp,
-          color: enabled ? theme.colorScheme.primary : theme.colorScheme.outline,
+          color:
+              enabled ? theme.colorScheme.primary : theme.colorScheme.outline,
         ),
       ),
     );
