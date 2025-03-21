@@ -56,4 +56,7 @@ class Ride {
       'image_url': imageUrl,
     };
   }
+
+
 }
+

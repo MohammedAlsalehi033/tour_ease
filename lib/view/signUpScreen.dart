@@ -1,11 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tour_ease/components/themeSwitch.dart';
+import 'package:tour_ease/controller/auth/signUpController.dart';
+import 'package:tour_ease/model/auth/UserRepo.dart';
 import 'package:tour_ease/view/mainPage.dart';
 
-class SignUpScreen extends StatelessWidget {
+class SignUpScreen extends StatefulWidget {
   const SignUpScreen({Key? key}) : super(key: key);
 
+  @override
+  State<SignUpScreen> createState() => _SignUpScreenState();
+}
+
+class _SignUpScreenState extends State<SignUpScreen> {
+
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
   @override
   Widget build(BuildContext context) {
     ScreenUtil.init(context, designSize: const Size(360, 800));
@@ -63,6 +74,7 @@ class SignUpScreen extends StatelessWidget {
 
               // Email Field
               TextField(
+                controller: _emailController,
                 decoration: InputDecoration(
                   labelText: 'Email',
                   labelStyle: TextStyle(fontSize: 14.sp),
@@ -76,6 +88,7 @@ class SignUpScreen extends StatelessWidget {
 
               // Password Field
               TextField(
+                controller: _passwordController,
                 obscureText: true,
                 decoration: InputDecoration(
                   labelText: 'Password',
@@ -90,6 +103,7 @@ class SignUpScreen extends StatelessWidget {
 
               // Confirm Password Field
               TextField(
+                controller: _confirmPasswordController,
                 obscureText: true,
                 decoration: InputDecoration(
                   labelText: 'Confirm Password',
@@ -104,12 +118,40 @@ class SignUpScreen extends StatelessWidget {
 
               // Sign Up Button
               ElevatedButton(
-                onPressed: () {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => MainPage()),
-                        (Route<dynamic> route) => false // This removes all previous routes.
-                  );
+                onPressed: () async {
+                  final email = _emailController.text;
+                  final password = _passwordController.text;
+                  final confirmPassword = _confirmPasswordController.text;
+
+                  if (email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Please fill in all fields')),
+                    );
+                    return;
+                  }
+
+                  if (password != confirmPassword) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Passwords do not match')),
+                    );
+                    return;
+                  }
+
+                  try {
+                    final signUpController = SignUpWithFireBaseController(UserRepoFireBase());
+                    final user = await signUpController.signUpWithEmailAndPassword(email, password);
+
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => MainPage()),
+                          (Route<dynamic> route) => false,
+                    );
+                  } catch (e) {
+                    // Show error message
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Sign-up failed: $e')),
+                    );
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   padding: EdgeInsets.symmetric(vertical: 16.h),

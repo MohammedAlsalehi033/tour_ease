@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -6,12 +7,16 @@ import 'package:tour_ease/bloc/themeSwithBloc.dart';
 import 'package:tour_ease/bloc/rideResultsBloc.dart';
 import 'package:tour_ease/bloc/rideFilterBloc.dart';
 import 'package:tour_ease/model/rideSharing/rideRepository.dart';
+import 'package:tour_ease/testingthings/test.dart';
 import 'package:tour_ease/theme.dart';
 import 'package:tour_ease/view/auth.dart';
 import 'package:tour_ease/view/mainPage.dart';
 
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+
   runApp(
     MultiBlocProvider(
       providers: [

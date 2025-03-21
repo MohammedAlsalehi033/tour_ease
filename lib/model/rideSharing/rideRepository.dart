@@ -42,6 +42,8 @@ class RideRepositoryImpl implements RideRepository {
 }
 
 
+
+
 class ApiService {
   final String baseUrl;
   final Duration latency;
