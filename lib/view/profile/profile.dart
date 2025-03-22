@@ -1,7 +1,23 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tour_ease/controller/auth/initialize.dart';
+import 'package:tour_ease/model/auth/user.dart';
+import 'package:tour_ease/view/auth.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
+
+
+
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -40,14 +56,14 @@ class ProfilePage extends StatelessWidget {
           ),
           SizedBox(height: 16.h),
           Text(
-            'John Doe',
+            UserModel().email,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
           SizedBox(height: 8.h),
           Text(
-            'Software Developer',
+              UserModel().email,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
             ),
@@ -125,8 +141,9 @@ class ProfilePage extends StatelessWidget {
   Widget _buildLogoutButton(BuildContext context) {
     return Center(
       child: ElevatedButton(
-        onPressed: () {
-          // Handle logout
+        onPressed: () async {
+           await FirebaseAuth.instance.signOut();
+           Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => AuthScreen(),));
         },
         style: ElevatedButton.styleFrom(
           padding: EdgeInsets.symmetric(horizontal: 32.w, vertical: 16.h),

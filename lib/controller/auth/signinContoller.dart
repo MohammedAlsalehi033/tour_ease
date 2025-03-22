@@ -1,0 +1,29 @@
+import 'dart:ffi';
+
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:tour_ease/model/auth/user.dart';
+
+abstract class SigninWithEmailAndPassword {
+  Future<void> signInWithEmailAndPassword(String email , String password);
+}
+
+
+class SignInWithFireBaseController extends SigninWithEmailAndPassword {
+  @override
+  Future<void> signInWithEmailAndPassword(String email, String password) async{
+    try {
+      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: email,
+          password: password
+      );
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found') {
+        print('No user found for that email.');
+      } else if (e.code == 'wrong-password') {
+        print('Wrong password provided for that user.');
+      }
+    }
+
+  }
+
+}

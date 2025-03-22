@@ -239,14 +239,11 @@ class RideFilterBloc extends Bloc<RideFilterEvent, RideFilterState> {
     emit(state.copyWith(isLoading: true));
 
     try {
-      // Here you'd call a service or repository to get filtered results
-      // Simulate network delay
+
       await Future.delayed(const Duration(seconds: 1));
 
-      // If successful, you can also save the filter model for later use
-      // await _saveFilterModel(state.filterModel);
 
-      // If successful
+
       emit(state.copyWith(
         isLoading: false,
         isApplied: true,

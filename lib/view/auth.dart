@@ -1,10 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tour_ease/components/themeSwitch.dart';
+import 'package:tour_ease/controller/auth/signinContoller.dart';
+import 'package:tour_ease/view/mainPage.dart';
 import 'package:tour_ease/view/signUpScreen.dart';
 
-class AuthScreen extends StatelessWidget {
+class AuthScreen extends StatefulWidget {
   const AuthScreen({Key? key}) : super(key: key);
+
+  @override
+  State<AuthScreen> createState() => _AuthScreenState();
+}
+
+class _AuthScreenState extends State<AuthScreen> {
+  final TextEditingController _textEditingControllerEmail = TextEditingController();
+  final TextEditingController _textEditingControllerPassword = TextEditingController();
+
+  @override
+  void dispose() {
+    _textEditingControllerEmail.dispose();
+    _textEditingControllerPassword.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +59,7 @@ class AuthScreen extends StatelessWidget {
               ),
               SizedBox(height: 40.h),
               // Email Field
-              TextField(
+              TextField(controller: _textEditingControllerEmail,
                 decoration: InputDecoration(
                   labelText: 'Email',
                   labelStyle: TextStyle(fontSize: 14.sp),
@@ -55,6 +72,7 @@ class AuthScreen extends StatelessWidget {
               SizedBox(height: 20.h),
               // Password Field
               TextField(
+                controller: _textEditingControllerPassword,
                 obscureText: true,
                 decoration: InputDecoration(
                   labelText: 'Password',
@@ -83,7 +101,31 @@ class AuthScreen extends StatelessWidget {
               SizedBox(height: 20.h),
               // Sign In Button
               ElevatedButton(
-                onPressed: () {},
+                onPressed: () async{
+                  String email = _textEditingControllerEmail.text;
+                  String password = _textEditingControllerPassword.text;
+                  if (email.isEmpty || password.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Please fill in all fields')),
+                    );
+                    return;
+                  }
+                  try{
+                    await SignInWithFireBaseController().signInWithEmailAndPassword(email, password);
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => MainPage()),
+                          (Route<dynamic> route) => false,
+                    );
+                  }catch(e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Sign-in failed: $e')),
+                    );
+                  }
+
+
+
+                },
                 style: ElevatedButton.styleFrom(
                   padding: EdgeInsets.symmetric(vertical: 16.h),
                   shape: RoundedRectangleBorder(

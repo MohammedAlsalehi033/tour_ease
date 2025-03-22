@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -5,6 +7,9 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:tour_ease/components/cards/accommodationCardForHomePage.dart';
 import 'package:tour_ease/components/themeSwitch.dart';
+import 'package:tour_ease/controller/auth/JWTController.dart';
+import 'package:tour_ease/controller/auth/initialize.dart';
+import 'package:tour_ease/model/auth/user.dart';
 import 'package:tour_ease/view/chat/chatsPage.dart';
 import 'package:tour_ease/view/profile/profile.dart';
 import 'package:tour_ease/view/rideSharing/RideSharingPage.dart';
@@ -30,57 +35,74 @@ class _MainPageState extends State<MainPage> {
   ];
 
   double iconsSizeBottomBar = 20;
+@override
+  void initState() {
+  initUser ();
+    super.initState();
+  }
+
+  Future<void> initUser () async {
+    print("About to initialize user...");
+
+    print("User initialized successfully!");
+
+  }
+
 
   @override
   Widget build(BuildContext context) {
     ScreenUtil.init(context, designSize: const Size(360, 800));
-    return Scaffold(extendBody: true,
-      appBar: AppBar(
-        title: Text(
-          'TosadadDSurEase',
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        actions: [Themeswitch(),
-          IconButton(
-            icon: Icon(Icons.search, color: Theme.of(context).iconTheme.color),
-            onPressed: () {
-              // Add search functionality
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.notifications, color: Theme.of(context).iconTheme.color),
-            onPressed: () {
-              // Add notifications functionality
-            },
-          ),
-        ],
-      ),
-      body: _pages[_selectedIndex],
-      bottomNavigationBar: Container(
-        color: Colors.transparent, // Set the background color to transparent
-        child: CurvedNavigationBar(
-          index: _selectedIndex,
-          height: 70.h,
-          items: [
-            Icon(Icons.home, size: iconsSizeBottomBar, color: Theme.of(context).colorScheme.onPrimary),
-            Icon(Icons.directions_car, size: iconsSizeBottomBar, color: Theme.of(context).colorScheme.onPrimary),
-            Icon(Icons.card_travel, size: iconsSizeBottomBar, color: Theme.of(context).colorScheme.onPrimary),
-            Icon(Icons.message, size: iconsSizeBottomBar, color: Theme.of(context).colorScheme.onPrimary),
-            Icon(Icons.person, size: iconsSizeBottomBar, color: Theme.of(context).colorScheme.onPrimary),
-          ],
-          color: Theme.of(context).colorScheme.primary,
-          buttonBackgroundColor: Theme.of(context).colorScheme.secondary,
-          backgroundColor: Colors.transparent,
-          animationCurve: Curves.easeInOut,
-          animationDuration: const Duration(milliseconds: 300),
-          onTap: (index) {
-            setState(() {
-              _selectedIndex = index;
-            });
-          },
-        ),
-      )
-    );
+    return FutureBuilder(future: UserInitializer().initializeUser()
+    , builder:(context, snapshot) {
+       return Scaffold(extendBody: true,
+            appBar: AppBar(
+              title: Text(
+                UserModel().email,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              actions: [Themeswitch(),
+                IconButton(
+                  icon: Icon(Icons.search, color: Theme.of(context).iconTheme.color),
+                  onPressed: () {
+                    // Add search functionality
+                  },
+                ),
+                IconButton(
+                  icon: Icon(Icons.notifications, color: Theme.of(context).iconTheme.color),
+                  onPressed: () {
+                    // Add notifications functionality
+                  },
+                ),
+              ],
+            ),
+            body: _pages[_selectedIndex],
+            bottomNavigationBar: Container(
+              color: Colors.transparent, // Set the background color to transparent
+              child: CurvedNavigationBar(
+                index: _selectedIndex,
+                height: 70.h,
+                items: [
+                  Icon(Icons.home, size: iconsSizeBottomBar, color: Theme.of(context).colorScheme.onPrimary),
+                  Icon(Icons.directions_car, size: iconsSizeBottomBar, color: Theme.of(context).colorScheme.onPrimary),
+                  Icon(Icons.card_travel, size: iconsSizeBottomBar, color: Theme.of(context).colorScheme.onPrimary),
+                  Icon(Icons.message, size: iconsSizeBottomBar, color: Theme.of(context).colorScheme.onPrimary),
+                  Icon(Icons.person, size: iconsSizeBottomBar, color: Theme.of(context).colorScheme.onPrimary),
+                ],
+                color: Theme.of(context).colorScheme.primary,
+                buttonBackgroundColor: Theme.of(context).colorScheme.secondary,
+                backgroundColor: Colors.transparent,
+                animationCurve: Curves.easeInOut,
+                animationDuration: const Duration(milliseconds: 300),
+                onTap: (index) {
+                  setState(() {
+                    _selectedIndex = index;
+                  });
+                },
+              ),
+            )
+        );
+
+    }, );
   }
 }
 

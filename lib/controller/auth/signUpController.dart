@@ -1,9 +1,11 @@
+import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:tour_ease/controller/auth/JWTController.dart';
 import 'package:tour_ease/model/auth/UserRepo.dart';
-import 'package:tour_ease/model/auth/user.dart' as myuser;
+import 'package:tour_ease/model/auth/user.dart';
 
 abstract class SignUp {
-  Future<myuser.User> signUpWithEmailAndPassword(String email, String password);
+  Future<UserModel> signUpWithEmailAndPassword(String email, String password);
 }
 
 class SignUpWithFireBaseController implements SignUp {
@@ -13,7 +15,7 @@ class SignUpWithFireBaseController implements SignUp {
   SignUpWithFireBaseController(this.userRepo);
 
   @override
-  Future<myuser.User> signUpWithEmailAndPassword(String email, String password) async {
+  Future<UserModel> signUpWithEmailAndPassword(String email, String password) async {
     try {
       UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
@@ -24,11 +26,12 @@ class SignUpWithFireBaseController implements SignUp {
         throw Exception('Firebase user creation failed');
       }
 
-      final user = myuser.User();
+      final user = UserModel();
+
       user.updateUser(
-        id: _auth.currentUser?.uid.toString(),
+        id: _auth.currentUser!.uid,
         email: email,
-        accountStatus: "Active",
+        accountStatus: "active",
       );
 
       final apiResponse = await userRepo.createUser(user);
@@ -36,6 +39,7 @@ class SignUpWithFireBaseController implements SignUp {
       if (apiResponse.statusCode == 200 || apiResponse.statusCode == 201) {
         return user;
       } else {
+        // If backend creation fails, delete the Firebase user to maintain consistency
         await _auth.currentUser?.delete();
         throw Exception('Failed to create user in the database');
       }
@@ -44,4 +48,37 @@ class SignUpWithFireBaseController implements SignUp {
       rethrow;
     }
   }
+
+
+  // Future<void> testForJWT() async {
+  //   final dio = Dio();
+  //   final idToken = await getFirebaseIdToken();
+  //   try {
+  //     final response = await dio.post(
+  //       'http://10.0.2.2:3000/verifyJWT',
+  //       options: Options(
+  //         headers: {
+  //           'Authorization': 'Bearer $idToken',
+  //         },
+  //       ),
+  //       // Add the required body data
+  //       data: {
+  //         'name': 'Test User',
+  //         'email': 'test@example.com',
+  //       },
+  //     );
+  //     print('Response: ${response.data}');
+  //   } on DioException catch (e) {
+  //     // Add more detailed error logging
+  //     if (e.response != null) {
+  //       print('Error status: ${e.response?.statusCode}');
+  //       print('Error data: ${e.response?.data}');
+  //     } else {
+  //       print('Error: ${e.message}');
+  //     }
+  //     print('Request details: ${e.requestOptions.uri}');
+  //     print('Request headers: ${e.requestOptions.headers}');
+  //   }
+  // }
+
 }

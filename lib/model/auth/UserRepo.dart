@@ -1,40 +1,43 @@
+import 'dart:convert';
+import 'package:dio/dio.dart';
+import 'package:tour_ease/controller/auth/JWTController.dart';
+
 import 'package:tour_ease/model/auth/user.dart';
 import 'package:http/http.dart' as http;
 
 abstract class UserRepo {
-  User fetchUser();
-  Future<http.Response> createUser(User user);
+  UserModel fetchUser();
+  Future<http.Response> createUser(UserModel user);
 }
 
 class UserRepoFireBase extends UserRepo {
 
-  @override
-  User fetchUser() {
-
-    return  new User()..updateUser(
-      id: 'firebase_user_123',
-      userName: 'firebase_user',
-      email: 'firebase@example.com',
-      mediaUrls: ['url1', 'url2'],
-      accountStatus: 'active',
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),);
-  }
 
   @override
-  Future<http.Response> createUser(User user) async {
-    const apiUrl = 'https://your-api-endpoint.com/createuser';
+  Future<http.Response> createUser(UserModel user) async {
+    print(user.toString());
+    const apiUrl = 'http://10.0.2.2:3000/api/createUser';
+
     final response = await http.post(
       Uri.parse(apiUrl),
-      body: {
-        'email': "mohmamed",
-        'password': "hello",
+      headers: {
+        "Content-Type": "application/json",
       },
+      body: jsonEncode({
+        "id": user.id,
+        "username": user.email,
+        "email": user.email,
+      }),
     );
 
     return response;
   }
 
+  @override
+  UserModel fetchUser() {
+    // TODO: implement fetchUser
+    throw UnimplementedError();
+  }
 
 }
 

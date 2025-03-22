@@ -17,6 +17,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _confirmPasswordController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
   @override
   Widget build(BuildContext context) {
     ScreenUtil.init(context, designSize: const Size(360, 800));
@@ -147,7 +155,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           (Route<dynamic> route) => false,
                     );
                   } catch (e) {
-                    // Show error message
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Sign-up failed: $e')),
                     );

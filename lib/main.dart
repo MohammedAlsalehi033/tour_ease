@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -6,16 +7,18 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tour_ease/bloc/themeSwithBloc.dart';
 import 'package:tour_ease/bloc/rideResultsBloc.dart';
 import 'package:tour_ease/bloc/rideFilterBloc.dart';
+import 'package:tour_ease/controller/auth/initialize.dart';
+import 'package:tour_ease/model/auth/user.dart';
 import 'package:tour_ease/model/rideSharing/rideRepository.dart';
 import 'package:tour_ease/testingthings/test.dart';
 import 'package:tour_ease/theme.dart';
 import 'package:tour_ease/view/auth.dart';
 import 'package:tour_ease/view/mainPage.dart';
 
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
 
   runApp(
     MultiBlocProvider(
@@ -45,13 +48,26 @@ class MyApp extends StatelessWidget {
     return BlocBuilder<ThemeBloc, ThemeState>(
       builder: (context, state) {
         return MaterialApp(
+          debugShowCheckedModeBanner: false,
           theme: state.themeData,
           darkTheme: AppThemes.darkTheme,
           home: ScreenUtilInit(
             designSize: const Size(360, 800),
-            builder: (_, child) => const AuthScreen(),
+            builder: (_, child) => _handleAuthState(),
           ),
         );
+      },
+    );
+  }
+
+  Widget _handleAuthState() {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.hasData && snapshot.data != null) {
+          return const MainPage();
+        }
+        return const AuthScreen();
       },
     );
   }
