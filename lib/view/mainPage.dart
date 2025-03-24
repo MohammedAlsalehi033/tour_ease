@@ -12,6 +12,7 @@ import 'package:tour_ease/controller/auth/initialize.dart';
 import 'package:tour_ease/model/auth/user.dart';
 import 'package:tour_ease/view/chat/chatsPage.dart';
 import 'package:tour_ease/view/profile/profile.dart';
+import 'package:tour_ease/view/questions/questionsPage.dart';
 import 'package:tour_ease/view/rideSharing/RideSharingPage.dart';
 import 'package:tour_ease/view/tripPlanner/tripPlannerPage.dart';
 
@@ -31,6 +32,7 @@ class _MainPageState extends State<MainPage> {
     RideFilterPage(),
     TripPlannerPage(),
     MessagesPage(),
+    QuestionsScreen(),
     ProfilePage(),
   ];
 
@@ -62,12 +64,6 @@ class _MainPageState extends State<MainPage> {
               ),
               actions: [Themeswitch(),
                 IconButton(
-                  icon: Icon(Icons.search, color: Theme.of(context).iconTheme.color),
-                  onPressed: () {
-                    // Add search functionality
-                  },
-                ),
-                IconButton(
                   icon: Icon(Icons.notifications, color: Theme.of(context).iconTheme.color),
                   onPressed: () {
                     // Add notifications functionality
@@ -86,6 +82,7 @@ class _MainPageState extends State<MainPage> {
                   Icon(Icons.directions_car, size: iconsSizeBottomBar, color: Theme.of(context).colorScheme.onPrimary),
                   Icon(Icons.card_travel, size: iconsSizeBottomBar, color: Theme.of(context).colorScheme.onPrimary),
                   Icon(Icons.message, size: iconsSizeBottomBar, color: Theme.of(context).colorScheme.onPrimary),
+                  Icon(Icons.question_answer, size: iconsSizeBottomBar, color: Theme.of(context).colorScheme.onPrimary),
                   Icon(Icons.person, size: iconsSizeBottomBar, color: Theme.of(context).colorScheme.onPrimary),
                 ],
                 color: Theme.of(context).colorScheme.primary,
