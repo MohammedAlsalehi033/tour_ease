@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tour_ease/components/themeSwitch.dart';
-import 'package:tour_ease/controller/auth/signUpController.dart';
-import 'package:tour_ease/model/auth/UserRepo.dart';
+import 'package:tour_ease/controller/userManagment//signUpController.dart';
+import 'package:tour_ease/model/userManagment/UserRepo.dart';
 import 'package:tour_ease/view/mainPage.dart';
 
 class SignUpScreen extends StatefulWidget {

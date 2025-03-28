@@ -1,39 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:intl/intl.dart';
-import 'package:tour_ease/bloc/rideResultsBloc.dart';
-import 'package:tour_ease/model/rideSharing/rideModel.dart';
-import 'package:tour_ease/view/rideSharing/rideBookingSheetUp.dart';
+import 'package:tab_container/tab_container.dart';
+import 'package:tour_ease/controller/rideSharing/transportationProvider/transporation_provider_bloc.dart';
+import 'package:tour_ease/model/userManagment/transportationProvider.dart';
 
 class NewTransportationProviderPage extends StatefulWidget {
   const NewTransportationProviderPage({super.key});
 
   @override
-  State<NewTransportationProviderPage> createState() => _NewTransportationProviderPageState();
+  State<NewTransportationProviderPage> createState() =>
+      _NewTransportationProviderPageState();
 }
 
-class _NewTransportationProviderPageState extends State<NewTransportationProviderPage> {
+class _NewTransportationProviderPageState extends State<NewTransportationProviderPage>
+    with TickerProviderStateMixin {
+  @override
+  void initState() {
+    super.initState();
+    context.read<TransporationProviderBloc>().add(FetchCurrentTransportationProviderData());
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final dateFormat = DateFormat('MMM dd, yyyy hh:mm a');
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Available Rides', style: textTheme.headlineMedium),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
+        title: const Text('Transportation Provider Details'),
       ),
-      body: BlocBuilder<RideResultBloc, RideResultState>(
+      body: BlocBuilder<TransporationProviderBloc, TransporationProviderState>(
         builder: (context, state) {
-          print(state.rides);
-
-          if (state.isLoading) {
+          if (state is TransportationProviderdataLoading) {
             return Center(
               child: CircularProgressIndicator(
                 color: colorScheme.primary,
@@ -41,357 +43,209 @@ class _NewTransportationProviderPageState extends State<NewTransportationProvide
             );
           }
 
-          if (state.error != null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 64.sp,
-                    color: colorScheme.error,
-                  ),
-                  SizedBox(height: 16.h),
-                  Text(
-                    'Something went wrong',
-                    style: textTheme.titleLarge?.copyWith(
-                      color: colorScheme.error,
+          if (state is TransportationProviderdataError) {
+            return _buildErrorState(context, state, textTheme, colorScheme);
+          }
+
+          if (state is TransportationProviderdataLoaded) {
+            final provider = state.transportationProviderModel;
+
+            if (provider.accountStatus.toLowerCase() == 'active') {
+              return TabContainer(
+                color: colorScheme.surface,
+                selectedTextStyle: textTheme.titleMedium?.copyWith(
+                  color: colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+                unselectedTextStyle: textTheme.titleMedium?.copyWith(
+                  color: colorScheme.onSurface.withOpacity(0.6),
+                ),
+
+                borderRadius: BorderRadius.circular(16.w),
+                tabEdge: TabEdge.top,
+                tabCurve: Curves.fastEaseInToSlowEaseOut,
+                transitionBuilder: (child, animation) {
+                  return FadeTransition(
+                    opacity: CurvedAnimation(
+                      parent: animation,
+                      curve: Curves.easeInOut,
                     ),
-                  ),
-                  SizedBox(height: 8.h),
-                  Text(
-                    state.error!,
-                    style: textTheme.bodyMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: 24.h),
-                  ElevatedButton(
-                    onPressed: () {
-                      // Option to retry or go back
-                      Navigator.pop(context);
-                    },
-                    child: Text('Go Back'),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          if (state.rides.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.directions_car_outlined,
-                    size: 64.sp,
-                    color: colorScheme.primary.withOpacity(0.7),
-                  ),
-                  SizedBox(height: 16.h),
-                  Text(
-                    'No rides available',
-                    style: textTheme.titleLarge,
-                  ),
-                  SizedBox(height: 8.h),
-                  Text(
-                    'Try adjusting your filters or check back later',
-                    style: textTheme.bodyMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: 24.h),
-                  ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text('Back to Filters'),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return AnimationLimiter(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-              child: ListView.builder(
-                itemCount: state.rides.length,
-                itemBuilder: (context, index) {
-                  final ride = state.rides[index];
-
-                  return AnimationConfiguration.staggeredList(
-                    position: index,
-                    duration: const Duration(milliseconds: 375),
-                    child: SlideAnimation(
-                      verticalOffset: 50.0,
-                      child: FadeInAnimation(
-                        child: _buildRideCard(ride, theme),
-                      ),
+                    child: ScaleTransition(
+                      scale: Tween<double>(begin: 0.95, end: 1.0).animate(animation),
+                      child: child,
                     ),
                   );
                 },
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildRideCard(Ride ride, ThemeData theme) {
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-    final dateFormat = DateFormat('MMM dd, hh:mm a');
-
-    return Card(
-      margin: EdgeInsets.symmetric(vertical: 8.h),
-      child: InkWell(
-        onTap: () {
-          // Navigate to ride details page
-        },
-        borderRadius: BorderRadius.circular(12.r),
-        child: Padding(
-          padding: EdgeInsets.all(16.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Ride header
-              Row(
-                children: [
-                  Container(
-                    width: 48.w,
-                    height: 48.h,
-                    decoration: BoxDecoration(
-                      color: colorScheme.primaryContainer,
-                      shape: BoxShape.circle,
-                      image: ride.imageUrl.isNotEmpty
-                          ? DecorationImage(
-                        image: NetworkImage(ride.imageUrl),
-                        fit: BoxFit.cover,
-                      )
-                          : null,
-                    ),
-                    child: ride.imageUrl.isEmpty
-                        ? Icon(
-                      Icons.person,
-                      color: colorScheme.primary,
-                      size: 24.sp,
-                    )
-                        : null,
-                  ),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          ride.driverName,
-                          style: textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 4.h),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.star,
-                              color: Colors.amber,
-                              size: 16.sp,
-                            ),
-                            SizedBox(width: 4.w),
-                            Text(
-                              ride.rating.toStringAsFixed(1),
-                              style: textTheme.bodyMedium,
-                            ),
-                            SizedBox(width: 12.w),
-                            Icon(
-                              Icons.directions_car,
-                              color: colorScheme.onSurfaceVariant,
-                              size: 16.sp,
-                            ),
-                            SizedBox(width: 4.w),
-                            Text(
-                              ride.vehicleType,
-                              style: textTheme.bodyMedium?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                    decoration: BoxDecoration(
-                      color: colorScheme.primary,
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    child: Text(
-                      '\$${ride.price.toStringAsFixed(0)}',
-                      style: textTheme.titleMedium?.copyWith(
-                        color: colorScheme.onPrimary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              // Divider
-              Divider(height: 32.h),
-
-              // Ride details
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      children: [
-                        _buildLocationInfo(
-                          icon: Icons.location_on_outlined,
-                          title: 'Pick-up',
-                          location: ride.pickupLocation,
-                          theme: theme,
-                        ),
-                        SizedBox(height: 24.h),
-                        _buildLocationInfo(
-                          icon: Icons.location_on,
-                          title: 'Destination',
-                          location: ride.destination,
-                          theme: theme,
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    height: 80.h,
-                    width: 1.w,
-                    color: colorScheme.outlineVariant,
-                  ),
-                  SizedBox(width: 16.w),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                tabs: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _buildDetail(
-                        icon: Icons.access_time,
-                        label: 'Departure',
-                        value: dateFormat.format(ride.departureTime),
-                        theme: theme,
-                      ),
-                      SizedBox(height: 12.h),
-                      _buildDetail(
-                        icon: Icons.people_outline,
-                        label: 'Seats',
-                        value: ride.availableSeats.toString(),
-                        theme: theme,
-                      ),
-                      SizedBox(height: 12.h),
-                      _buildDetail(
-                        icon: Icons.work_outline,
-                        label: 'Luggage',
-                        value: ride.luggageCapacity.toString(),
-                        theme: theme,
-                      ),
+                      Icon(Icons.info_outline, size: 20.sp, color: colorScheme.primary),
+                      SizedBox(width: 8.w),
+                      Text('Provider Details'),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.directions_car, size: 20.sp, color: colorScheme.primary),
+                      SizedBox(width: 8.w),
+                      Text('Ride Requests'),
                     ],
                   ),
                 ],
-              ),
+                children: [
+                  _buildProviderDetailsTab(provider, textTheme, dateFormat, colorScheme),
+                  _buildRideRequestsTab(textTheme, colorScheme),
+                ],
+              );
 
-              // Action button
-              SizedBox(height: 24.h),
-              ElevatedButton(
-                onPressed: () {
+            } else {
+              return SingleChildScrollView(
+                padding: EdgeInsets.all(16.w),
+                child: _buildProviderDetailsContent(provider, textTheme, dateFormat),
+              );
+            }
+          }
 
-
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => RideDetailsSheet(ride: ride,),)) ;               },
-                style: ElevatedButton.styleFrom(
-                  minimumSize: Size(double.infinity, 48.h),
-                ),
-                child: Text('Book Ride'),
-              ),
-            ],
-          ),
-        ),
+          return const Center(child: Text('Loading Transportation Provider Data...'));
+        },
       ),
     );
   }
 
-  Widget _buildLocationInfo({
-    required IconData icon,
-    required String title,
-    required String location,
-    required ThemeData theme,
-  }) {
-    final textTheme = theme.textTheme;
-    final colorScheme = theme.colorScheme;
-
-    return Row(
-      children: [
-        Icon(
-          icon,
-          color: title == 'Pick-up' ? colorScheme.secondary : colorScheme.primary,
-          size: 24.sp,
-        ),
-        SizedBox(width: 12.w),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-              SizedBox(height: 2.h),
-              Text(
-                location,
-                style: textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+  Widget _buildErrorState(
+      BuildContext context, TransportationProviderdataError state, TextTheme textTheme, ColorScheme colorScheme) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: 64.sp,
+            color: colorScheme.error,
           ),
-        ),
+          SizedBox(height: 16.h),
+          Text(
+            'Something went wrong',
+            style: textTheme.titleLarge?.copyWith(
+              color: colorScheme.error,
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            state.error,
+            style: textTheme.bodyMedium,
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 24.h),
+          ElevatedButton(
+            onPressed: () {
+              context.read<TransporationProviderBloc>().add(FetchCurrentTransportationProviderData());
+            },
+            child: const Text('Retry'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProviderDetailsTab(
+      TransportationProviderModel provider,
+      TextTheme textTheme,
+      DateFormat dateFormat,
+      ColorScheme colorScheme) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(16.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildProviderDetailsContent(provider, textTheme, dateFormat),
+          SizedBox(height: 24.h),
+          ElevatedButton(
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Create Listing button pressed')),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              minimumSize: Size(double.infinity, 48.h),
+              backgroundColor: colorScheme.primary,
+              foregroundColor: colorScheme.onPrimary,
+            ),
+            child: const Text('Create New Listing'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProviderDetailsContent(
+      TransportationProviderModel provider,
+      TextTheme textTheme,
+      DateFormat dateFormat) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Provider ID: ${provider.providerId}', style: textTheme.titleLarge),
+        SizedBox(height: 16.h),
+        Text('Vehicle Type: ${provider.vehicleType}', style: textTheme.titleMedium),
+        SizedBox(height: 8.h),
+        Text('Seats Available: ${provider.seatsAvailable}', style: textTheme.titleMedium),
+        SizedBox(height: 8.h),
+        Text('Account Status: ${provider.accountStatus}', style: textTheme.titleMedium),
+        SizedBox(height: 8.h),
+        Text('Created At: ${dateFormat.format(provider.createdAt)}', style: textTheme.bodyMedium),
       ],
     );
   }
 
-  Widget _buildDetail({
-    required IconData icon,
-    required String label,
-    required String value,
-    required ThemeData theme,
-  }) {
-    final textTheme = theme.textTheme;
-    final colorScheme = theme.colorScheme;
+  Widget _buildRideRequestsTab(TextTheme textTheme, ColorScheme colorScheme) {
+    final dummyRequests = [
+      {
+        'id': 'R001',
+        'traveler': 'John Doe',
+        'pickup': 'City Center',
+        'destination': 'Airport',
+        'time': '2023-06-15 14:30',
+        'status': 'Pending'
+      },
+      {
+        'id': 'R002',
+        'traveler': 'Jane Smith',
+        'pickup': 'University',
+        'destination': 'Train Station',
+        'time': '2023-06-16 09:15',
+        'status': 'Pending'
+      },
+      {
+        'id': 'R003',
+        'traveler': 'Robert Johnson',
+        'pickup': 'Hotel Grand',
+        'destination': 'Beach Resort',
+        'time': '2023-06-17 11:00',
+        'status': 'Accepted'
+      },
+    ];
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          icon,
-          color: colorScheme.primary.withOpacity(0.7),
-          size: 18.sp,
-        ),
-        SizedBox(width: 8.w),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-            Text(
-              value,
-              style: textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ],
+    return ListView.builder(
+      padding: EdgeInsets.all(16.w),
+      itemCount: dummyRequests.length,
+      itemBuilder: (context, index) {
+        final request = dummyRequests[index];
+        return Card(
+          margin: EdgeInsets.only(bottom: 16.h),
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.w),
+          ),
+          child: ListTile(
+            title: Text('Traveler: ${request['traveler']}', style: textTheme.titleMedium),
+            subtitle: Text('From: ${request['pickup']} To: ${request['destination']}'),
+            trailing: Text(request['status']!),
+          ),
+        );
+      },
     );
   }
 }

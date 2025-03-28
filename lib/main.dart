@@ -8,11 +8,13 @@ import 'package:tour_ease/Services/ApiService.dart';
 import 'package:tour_ease/bloc/themeSwithBloc.dart';
 import 'package:tour_ease/bloc/rideResultsBloc.dart';
 import 'package:tour_ease/bloc/rideFilterBloc.dart';
-import 'package:tour_ease/controller/auth/initialize.dart';
+import 'package:tour_ease/controller/rideSharing/transportationProvider/transporation_provider_bloc.dart';
+import 'package:tour_ease/controller/userManagment//initialize.dart';
 import 'package:tour_ease/controller/question/commets/comments_bloc.dart';
 import 'package:tour_ease/controller/question/questionBloc.dart';
 import 'package:tour_ease/controller/question/votes/votes_bloc.dart';
-import 'package:tour_ease/model/auth/user.dart';
+import 'package:tour_ease/model/userManagment/transportationProviderRepo.dart';
+import 'package:tour_ease/model/userManagment/user.dart';
 import 'package:tour_ease/model/question/comments/commentRepo.dart';
 import 'package:tour_ease/model/question/questionRepo.dart';
 import 'package:tour_ease/model/question/votes/votesRepo.dart';
@@ -38,12 +40,13 @@ void main() async {
         ),
         BlocProvider(
           create: (context) => RideResultBloc(
-            rideRepository: RideRepositoryImpl(apiService: ApiService()),
+            rideRepository: RideRepositoryImpl(apiService: ApiServiceDummy()),
           ),
         ),
         BlocProvider(create: (context) => QuestionBloc(questionRepository: QuestionRepoFromAPI(APIServiceNodeJS("http://10.0.2.2:3000"))),),
         BlocProvider(create: (context) => VotesBloc(VotesRepoNodeAPI(APIServiceNodeJS("http://10.0.2.2:3000")))),
         BlocProvider(create: (context) => CommentsBloc(CommentRepoNodeJSApi(APIServiceNodeJS("http://10.0.2.2:3000")))),
+        BlocProvider(create: (context) => TransporationProviderBloc(TransportationProviderRepoFromAPI(apiService: APIServiceNodeJS("http://10.0.2.2:3000")))),
       ],
       child: MyApp(),
     ),

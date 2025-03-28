@@ -1,7 +1,7 @@
 import 'dart:ffi';
 
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:tour_ease/model/auth/user.dart';
+import 'package:tour_ease/model/userManagment/user.dart';
 
 abstract class SigninWithEmailAndPassword {
   Future<void> signInWithEmailAndPassword(String email , String password);

@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:tour_ease/Services/ApiService.dart';
-import 'package:tour_ease/model/auth/user.dart';
+import 'package:tour_ease/model/userManagment/user.dart';
 import 'package:tour_ease/model/question/comments/commentModel.dart';
 import 'package:tour_ease/model/question/questionModel.dart';
 

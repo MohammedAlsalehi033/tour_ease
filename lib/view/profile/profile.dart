@@ -1,8 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:tour_ease/controller/auth/initialize.dart';
-import 'package:tour_ease/model/auth/user.dart';
+import 'package:tour_ease/model/userManagment/user.dart';
 import 'package:tour_ease/view/auth.dart';
 
 class ProfilePage extends StatefulWidget {

@@ -13,7 +13,7 @@ abstract class RideRepository {
 }
 
 class RideRepositoryImpl implements RideRepository {
-  final ApiService apiService;
+  final ApiServiceDummy apiService;
 
   RideRepositoryImpl({required this.apiService});
 
@@ -44,7 +44,7 @@ class RideRepositoryImpl implements RideRepository {
 
 
 
-class ApiService {
+class ApiServiceDummy {
   final String baseUrl;
   final Duration latency;
   final Random _random = Random();
@@ -147,7 +147,7 @@ class ApiService {
     },
   ];
 
-  ApiService({
+  ApiServiceDummy({
     this.baseUrl = 'https://api.tourease.example.com',
     this.latency = const Duration(milliseconds: 300),
   });

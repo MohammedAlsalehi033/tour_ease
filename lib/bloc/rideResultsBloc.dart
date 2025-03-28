@@ -28,6 +28,8 @@ class FetchRideResults extends RideResultEvent {
 
 class ClearResults extends RideResultEvent {}
 
+
+
 // STATE
 class RideResultState {
   final List<Ride> rides;

@@ -4,7 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:tour_ease/controller/question/commets/comments_bloc.dart';
 import 'package:tour_ease/controller/question/questionBloc.dart';
-import 'package:tour_ease/model/auth/user.dart';
+import 'package:tour_ease/model/userManagment/user.dart';
 import 'package:tour_ease/model/otherUser/otherUserModel.dart';
 import 'package:tour_ease/model/question/comments/commentModel.dart';
 import 'package:tour_ease/model/question/questionModel.dart';

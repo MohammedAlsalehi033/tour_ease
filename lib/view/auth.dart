@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tour_ease/components/themeSwitch.dart';
-import 'package:tour_ease/controller/auth/signinContoller.dart';
+import 'package:tour_ease/controller/userManagment/signinContoller.dart';
 import 'package:tour_ease/view/mainPage.dart';
 import 'package:tour_ease/view/signUpScreen.dart';
 

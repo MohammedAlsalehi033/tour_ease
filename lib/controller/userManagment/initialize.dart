@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:tour_ease/model/auth/user.dart';
+import 'package:tour_ease/model/userManagment/user.dart';
 
 class UserInitializer {
 
@@ -38,5 +38,7 @@ class UserInitializer {
     }
   }
 
+
+  
 
 }

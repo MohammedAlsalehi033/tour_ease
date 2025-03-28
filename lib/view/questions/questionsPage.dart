@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tour_ease/controller/question/questionBloc.dart';
 import 'package:tour_ease/controller/question/votes/votes_bloc.dart';
-import 'package:tour_ease/model/auth/user.dart';
+import 'package:tour_ease/model/userManagment/user.dart';
 import 'package:tour_ease/model/question/questionModel.dart';
 import 'package:tour_ease/view/questions/questionMaking.dart';
 import 'package:tour_ease/view/questions/questionQetails.dart';

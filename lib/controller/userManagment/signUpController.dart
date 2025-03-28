@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:tour_ease/controller/auth/JWTController.dart';
-import 'package:tour_ease/model/auth/UserRepo.dart';
-import 'package:tour_ease/model/auth/user.dart';
+import 'package:tour_ease/controller/userManagment//JWTController.dart';
+import 'package:tour_ease/model/userManagment/UserRepo.dart';
+import 'package:tour_ease/model/userManagment/user.dart';
 
 abstract class SignUp {
   Future<UserModel> signUpWithEmailAndPassword(String email, String password);
