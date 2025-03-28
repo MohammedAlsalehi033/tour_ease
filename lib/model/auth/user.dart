@@ -1,5 +1,4 @@
 class UserModel {
-  // Correct the singleton instance definition
   static final UserModel _instance = UserModel._internal();
 
   factory UserModel() {
@@ -147,7 +146,6 @@ class Role {
 
   Role({required this.id, required this.roleName});
 
-  // Factory constructor for creating a Role from JSON
   factory Role.fromJson(Map<String, dynamic> json) {
     return Role(
       id: json['id'] ?? '',
@@ -155,7 +153,6 @@ class Role {
     );
   }
 
-  // Convert Role to JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,

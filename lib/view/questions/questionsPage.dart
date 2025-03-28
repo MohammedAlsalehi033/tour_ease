@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tour_ease/controller/question/questionBloc.dart';
+import 'package:tour_ease/controller/question/votes/votes_bloc.dart';
+import 'package:tour_ease/model/auth/user.dart';
 import 'package:tour_ease/model/question/questionModel.dart';
-
+import 'package:tour_ease/view/questions/questionMaking.dart';
+import 'package:tour_ease/view/questions/questionQetails.dart';
 
 class QuestionsScreen extends StatefulWidget {
   const QuestionsScreen({super.key});
+
   @override
   State<QuestionsScreen> createState() => _QuestionsScreenState();
 }
@@ -12,210 +18,280 @@ class QuestionsScreen extends StatefulWidget {
 class _QuestionsScreenState extends State<QuestionsScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _selectedTag = "All";
+  final _scrollController = ScrollController();
 
-  final List<String> _availableTags = [
-    "All",
-    "Islamabad",
-    "Lahore",
-    "Karachi",
-    "Swat",
-    "Hunza",
-    "Neelum Valley",
-    "Transportation",
-    "Accommodation",
-    "Food",
-    "Safety",
-    "Budget",
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+    context.read<QuestionBloc>().add(FetchQuestions());
+  }
 
-  // Sample questions data
-  final List<Question> _questions = [
-    Question(
-      id: "1",
-      title: "Best time to visit Hunza Valley?",
-      description: "I'm planning a trip to Hunza Valley and would like to know the best season to visit for good weather and views.",
-      authorName: "Asad Khan",
-      authorAvatarUrl: "https://randomuser.me/api/portraits/men/1.jpg",
-      timestamp: "2 hours ago",
-      tags: ["Hunza", "Weather"],
-      answers: 5,
-      views: 124,
-    ),
-    Question(
-      id: "2",
-      title: "Transportation options from Islamabad to Lahore?",
-      description: "What are the most convenient ways to travel from Islamabad to Lahore? Looking for both budget and comfortable options.",
-      authorName: "Fatima Ahmed",
-      authorAvatarUrl: "https://randomuser.me/api/portraits/women/2.jpg",
-      timestamp: "Yesterday",
-      tags: ["Transportation", "Islamabad", "Lahore"],
-      answers: 8,
-      views: 210,
-    ),
-    Question(
-      id: "3",
-      title: "Safe hotels in Karachi for family stay?",
-      description: "Planning a family trip to Karachi. Can anyone recommend safe and family-friendly hotels in a good location?",
-      authorName: "Omar Malik",
-      authorAvatarUrl: "https://randomuser.me/api/portraits/men/3.jpg",
-      timestamp: "3 days ago",
-      tags: ["Karachi", "Accommodation", "Safety"],
-      answers: 12,
-      views: 345,
-    ),
-    Question(
-      id: "4",
-      title: "Best local food to try in Lahore?",
-      description: "Visiting Lahore next month and want to try authentic local cuisine. Any suggestions for must-try dishes and restaurants?",
-      authorName: "Zara Mahmood",
-      authorAvatarUrl: "https://randomuser.me/api/portraits/women/4.jpg",
-      timestamp: "1 week ago",
-      tags: ["Lahore", "Food"],
-      answers: 15,
-      views: 467,
-    ),
-    Question(
-      id: "5",
-      title: "Budget accommodations in Swat Valley?",
-      description: "Looking for affordable places to stay in Swat that are clean and have basic amenities. Any recommendations?",
-      authorName: "Ali Hassan",
-      authorAvatarUrl: "https://randomuser.me/api/portraits/men/5.jpg",
-      timestamp: "2 weeks ago",
-      tags: ["Swat", "Accommodation", "Budget"],
-      answers: 7,
-      views: 189,
-    ),
-  ];
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels ==
+        _scrollController.position.maxScrollExtent) {
+      context.read<QuestionBloc>().add(FetchQuestions(
+            sort: 'newest',
+          ));
+    }
+  }
+
+  void _refreshQuestions() {
+    context.read<QuestionBloc>().add(FetchQuestions(
+          refresh: true,
+          sort: 'newest',
+        ));
+  }
 
   List<Question> get filteredQuestions {
-    if (_selectedTag == "All" && _searchController.text.isEmpty) {
-      return _questions;
+    final state = context.read<QuestionBloc>().state;
+    List<Question> questions = [];
+
+    if (state is QuestionLoadSuccess) {
+      questions = state.questions;
     }
 
-    return _questions.where((question) {
-      bool matchesTag = _selectedTag == "All" || question.tags.contains(_selectedTag);
+    if (_selectedTag == "All" && _searchController.text.isEmpty) {
+      return questions;
+    }
+
+    return questions.where((question) {
+      bool matchesTag =
+          _selectedTag == "All" || question.tags.contains(_selectedTag);
       bool matchesSearch = _searchController.text.isEmpty ||
-          question.title.toLowerCase().contains(_searchController.text.toLowerCase()) ||
-          question.description.toLowerCase().contains(_searchController.text.toLowerCase());
+          question.title
+              .toLowerCase()
+              .contains(_searchController.text.toLowerCase()) ||
+          question.description
+              .toLowerCase()
+              .contains(_searchController.text.toLowerCase());
 
       return matchesTag && matchesSearch;
     }).toList();
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
+  void _handleVote(Question question, String newVoteType) {
+    final currentUserId = UserModel().id;
+
+    setState(() {
+      question.votes?.removeWhere((vote) => vote['userId'] == currentUserId);
+
+      question.votes?.add({
+        'userId': currentUserId,
+        'type': newVoteType,
+      });
+
+      // Update counts
+      if (newVoteType == 'UPVOTE') {
+        question.upvotes = question.upvotes! + 1;
+        if (question.downvotes! > 0)
+          question.downvotes = question.downvotes! - 1;
+      } else {
+        question.downvotes = question.downvotes! + 1;
+        if (question.upvotes! > 0) question.upvotes = question.upvotes! - 1;
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
       body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Search questions...',
-                  prefixIcon: Icon(Icons.search),
-                  filled: true,
-                  fillColor: Theme.of(context).colorScheme.surfaceVariant,
-                  contentPadding: EdgeInsets.symmetric(vertical: 0),
+        child: BlocBuilder<QuestionBloc, QuestionState>(
+          builder: (context, state) {
+            return Column(
+              children: [
+                // Search Bar
+                Padding(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search questions...',
+                      prefixIcon: const Icon(Icons.search),
+                      filled: true,
+                      fillColor: Theme.of(context).colorScheme.surfaceVariant,
+                      contentPadding: EdgeInsets.symmetric(vertical: 0),
+                    ),
+                    onChanged: (value) {
+                      setState(() {});
+                    },
+                  ),
                 ),
-                onChanged: (value) {
-                  setState(() {});
-                },
-              ),
-            ),
 
-            SizedBox(
-              height: 50.h,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.symmetric(horizontal: 12.w),
-                itemCount: _availableTags.length,
-                itemBuilder: (context, index) {
-                  final tag = _availableTags[index];
-                  final isSelected = tag == _selectedTag;
+                // Tags Filter
+                SizedBox(
+                  height: 50.h,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: EdgeInsets.symmetric(horizontal: 12.w),
+                    itemCount: _availableTags.length,
+                    itemBuilder: (context, index) {
+                      final tag = _availableTags[index];
+                      final isSelected = tag == _selectedTag;
 
-                  return Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 4.w),
-                    child: ChoiceChip(
-                      label: Text(tag),
-                      selected: isSelected,
-                      onSelected: (selected) {
-                        if (selected) {
-                          setState(() {
-                            _selectedTag = tag;
-                          });
-                        }
-                      },
-                      backgroundColor: Colors.transparent,
-                      side: BorderSide(
-                        color: isSelected
-                            ? Colors.transparent
-                            : Theme.of(context).colorScheme.outline.withOpacity(0.3),
-                        width: 0.5,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      selectedColor: Theme.of(context).colorScheme.primaryContainer,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      labelStyle: TextStyle(
-                        color: isSelected
-                            ? Theme.of(context).colorScheme.onPrimaryContainer
-                            : Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
-                        fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
-                        fontSize: 14,
-                      ),
-                      elevation: 0,
-                      pressElevation: 0,
-                    )
-                  );
-                },
-              ),
-            ),
+                      return Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 4.w),
+                        child: ChoiceChip(
+                          label: Text(tag),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            if (selected) {
+                              setState(() {
+                                _selectedTag = tag;
+                              });
+                            }
+                          },
+                          backgroundColor: Colors.transparent,
+                          side: BorderSide(
+                            color: isSelected
+                                ? Colors.transparent
+                                : Theme.of(context)
+                                    .colorScheme
+                                    .outline
+                                    .withOpacity(0.3),
+                            width: 0.5,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          selectedColor:
+                              Theme.of(context).colorScheme.primaryContainer,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          labelStyle: TextStyle(
+                            color: isSelected
+                                ? Theme.of(context)
+                                    .colorScheme
+                                    .onPrimaryContainer
+                                : Theme.of(context)
+                                    .colorScheme
+                                    .onSurface
+                                    .withOpacity(0.8),
+                            fontWeight:
+                                isSelected ? FontWeight.w500 : FontWeight.w400,
+                            fontSize: 14,
+                          ),
+                          elevation: 0,
+                          pressElevation: 0,
+                        ),
+                      );
+                    },
+                  ),
+                ),
 
-            // Questions List
-            Expanded(
-              child: ListView.builder(
-                padding: EdgeInsets.only(top: 8.h),
-                itemCount: filteredQuestions.length,
-                itemBuilder: (context, index) {
-                  final question = filteredQuestions[index];
-                  return _buildQuestionItem(context, question);
-                },
-              ),
-            ),
-          ],
+                // Questions List
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: () async => _refreshQuestions(),
+                    child: _buildQuestionList(state),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
-      ),floatingActionButtonLocation: FloatingActionButtonLocation.endTop,
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endTop,
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Navigate to ask question screen
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => QuestionMakingPage(),
+              ));
         },
-        child: Icon(Icons.add),
+        child: const Icon(Icons.add),
         tooltip: 'Ask a Question',
       ),
     );
   }
 
+  Widget _buildQuestionList(QuestionState state) {
+    if (state is QuestionInitial) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (state is QuestionLoadInProgress) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (state is QuestionLoadFailure) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Error: ${state.error}'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _refreshQuestions,
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (state is QuestionLoadSuccess && filteredQuestions.isEmpty) {
+      return const Center(child: Text('No questions found'));
+    }
+
+    return ListView.builder(
+      controller: _scrollController,
+      padding: EdgeInsets.only(top: 8.h),
+      itemCount: _calculateItemCount(state),
+      itemBuilder: (context, index) {
+        if (index >= filteredQuestions.length) {
+          return const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+        return _buildQuestionItem(context, filteredQuestions[index]);
+      },
+    );
+  }
+
+  int _calculateItemCount(QuestionState state) {
+    if (state is QuestionLoadSuccess) {
+      return state.hasReachedMax
+          ? filteredQuestions.length
+          : filteredQuestions.length + 1;
+    }
+    return filteredQuestions.length;
+  }
+
   Widget _buildQuestionItem(BuildContext context, Question question) {
+    final bloc = BlocProvider.of<VotesBloc>(context);
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
+    final userVote = question.votes?.firstWhere(
+      (vote) => vote['userId'] == UserModel().id,
+      orElse: () => null,
+    );
+    final userVoteType = userVote?['type'];
     return Card(
       margin: EdgeInsets.symmetric(vertical: 8.h, horizontal: 16.w),
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
       child: InkWell(
         onTap: () {
-          // Navigate to question details
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => QuestionDetailsPage(
+                  question: question,
+                ),
+              ));
         },
         borderRadius: BorderRadius.circular(16.r),
         child: Padding(
@@ -223,19 +299,19 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Question header with author info
               Row(
                 children: [
                   Container(
                     width: 48.w,
                     height: 48.h,
                     decoration: BoxDecoration(
+                      image:  DecorationImage(
+                          image: NetworkImage(question.mediaUrls!.length > 0 ? question.mediaUrls!
+                              .where((element) =>
+                              element.contains("profilePicture"))
+                              .first : "https://lh3.googleusercontent.com/a-/ALV-UjX8IbJfWUTnSn2_CXavbtKkli-sXoK4ShX4DlUjTbDehIafaZ0V=s64")) ,
                       color: colorScheme.primaryContainer,
                       shape: BoxShape.circle,
-                      image: DecorationImage(
-                        image: NetworkImage(question.authorAvatarUrl),
-                        fit: BoxFit.cover,
-                      ),
                     ),
                   ),
                   SizedBox(width: 12.w),
@@ -244,14 +320,14 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          question.authorName,
+                          question.userName ?? "",
                           style: textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         SizedBox(height: 4.h),
                         Text(
-                          question.timestamp,
+                          question.updatedAt.toString(),
                           style: textTheme.bodySmall?.copyWith(
                             color: colorScheme.onSurfaceVariant,
                           ),
@@ -260,7 +336,8 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                     ),
                   ),
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                     decoration: BoxDecoration(
                       color: colorScheme.primaryContainer,
                       borderRadius: BorderRadius.circular(12.r),
@@ -270,13 +347,13 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                         Icon(
                           Icons.question_answer_outlined,
                           size: 16.sp,
-                          color: colorScheme.primary,
+                          color: colorScheme.inversePrimary,
                         ),
                         SizedBox(width: 4.w),
                         Text(
-                          question.answers.toString(),
+                          question.commentCount.toString(),
                           style: textTheme.titleMedium?.copyWith(
-                            color: colorScheme.primary,
+                            color: colorScheme.inversePrimary,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -289,7 +366,6 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
               // Divider
               Divider(height: 32.h),
 
-              // Question title and description
               Text(
                 question.title,
                 style: textTheme.titleMedium?.copyWith(
@@ -306,7 +382,6 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                 overflow: TextOverflow.ellipsis,
               ),
 
-              // Question stats and tags
               SizedBox(height: 16.h),
               Row(
                 children: [
@@ -316,7 +391,8 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                       runSpacing: 8.h,
                       children: question.tags.map((tag) {
                         return Container(
-                          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 12.w, vertical: 6.h),
                           decoration: BoxDecoration(
                             color: colorScheme.surfaceVariant,
                             borderRadius: BorderRadius.circular(16.r),
@@ -334,27 +410,93 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                   ),
                   Row(
                     children: [
-                      Icon(
-                        Icons.visibility_outlined,
-                        size: 16.sp,
-                        color: colorScheme.onSurfaceVariant,
+                      // Upvote Section
+                      GestureDetector(
+                        onTap: userVoteType != 'UPVOTE'
+                            ? () {
+                                _handleVote(question, 'UPVOTE');
+                                bloc.add(UpdateVote(question, true));
+                              }
+                            : null,
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.arrow_upward,
+                              size: 16.sp,
+                              color: userVoteType == 'UPVOTE'
+                                  ? colorScheme.primary
+                                  : userVoteType == 'DOWNVOTE'
+                                      ? colorScheme.onSurfaceVariant
+                                          .withOpacity(0.5)
+                                      : colorScheme.onSurfaceVariant,
+                            ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              question.upvotes.toString(),
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: userVoteType == 'UPVOTE'
+                                    ? colorScheme.primary
+                                    : userVoteType == 'DOWNVOTE'
+                                        ? colorScheme.onSurfaceVariant
+                                            .withOpacity(0.5)
+                                        : colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      SizedBox(width: 4.w),
-                      Text(
-                        question.views.toString(),
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
+                      SizedBox(width: 10.w),
+                      GestureDetector(
+                        onTap: userVoteType != 'DOWNVOTE'
+                            ? () {
+                                _handleVote(question, 'DOWNVOTE');
+                                bloc.add(UpdateVote(question, false));
+                              }
+                            : null,
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.arrow_downward,
+                              size: 16.sp,
+                              color: userVoteType == 'DOWNVOTE'
+                                  ? colorScheme.primary
+                                  : userVoteType == 'UPVOTE'
+                                      ? colorScheme.onSurfaceVariant
+                                          .withOpacity(0.5)
+                                      : colorScheme.onSurfaceVariant,
+                            ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              question.downvotes.toString(),
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: userVoteType == 'DOWNVOTE'
+                                    ? colorScheme.primary
+                                    : userVoteType == 'UPVOTE'
+                                        ? colorScheme.onSurfaceVariant
+                                            .withOpacity(0.5)
+                                        : colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 ],
               ),
-
-
             ],
           ),
         ),
       ),
     );
-  }}
+  }
+
+  final List<String> _availableTags = [
+    "All",
+    "Islamabad",
+    "Karachi",
+    "Lahore",
+    "Peshawar",
+    "Quetta"
+  ];
+}

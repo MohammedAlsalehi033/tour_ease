@@ -9,6 +9,7 @@ import 'package:tour_ease/bloc/rideFilterBloc.dart';
 import 'package:tour_ease/bloc/rideResultsBloc.dart';
 import 'package:tour_ease/model/rideSharing/rideRepository.dart';
 import 'package:tour_ease/view/rideSharing/RideResultsPage.dart';
+import 'package:tour_ease/view/rideSharing/newTransportProviderPage.dart';
 
 class RideFilterPage extends StatefulWidget {
   const RideFilterPage({Key? key}) : super(key: key);
@@ -26,7 +27,9 @@ class _RideFilterPageState extends State<RideFilterPage> {
 
     return BlocBuilder<RideFilterBloc, RideFilterState>(
       builder: (context, state) {
-        return Scaffold(
+        return Scaffold(appBar: AppBar(title: Text("join as a driver"),actions: [IconButton(onPressed: () {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => NewTransportationProviderPage(),));
+        }, icon: Icon(Icons.add))],),
           backgroundColor: colorScheme.surface,
           body: SafeArea(
             child: Column(

@@ -25,7 +25,6 @@ class UserInitializer {
         final responseBody = response.data;
 
         if (responseBody['success'] == true && responseBody['data'] != null) {
-          // Pass the user data part to fromJson
           UserModel.fromJson(responseBody['data']);
         } else {
           throw Exception('Failed to fetch user: ${responseBody['message'] ?? "Unknown error"}');

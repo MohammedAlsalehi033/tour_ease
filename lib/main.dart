@@ -4,11 +4,18 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tour_ease/Services/ApiService.dart';
 import 'package:tour_ease/bloc/themeSwithBloc.dart';
 import 'package:tour_ease/bloc/rideResultsBloc.dart';
 import 'package:tour_ease/bloc/rideFilterBloc.dart';
 import 'package:tour_ease/controller/auth/initialize.dart';
+import 'package:tour_ease/controller/question/commets/comments_bloc.dart';
+import 'package:tour_ease/controller/question/questionBloc.dart';
+import 'package:tour_ease/controller/question/votes/votes_bloc.dart';
 import 'package:tour_ease/model/auth/user.dart';
+import 'package:tour_ease/model/question/comments/commentRepo.dart';
+import 'package:tour_ease/model/question/questionRepo.dart';
+import 'package:tour_ease/model/question/votes/votesRepo.dart';
 import 'package:tour_ease/model/rideSharing/rideRepository.dart';
 import 'package:tour_ease/testingthings/test.dart';
 import 'package:tour_ease/theme.dart';
@@ -34,6 +41,9 @@ void main() async {
             rideRepository: RideRepositoryImpl(apiService: ApiService()),
           ),
         ),
+        BlocProvider(create: (context) => QuestionBloc(questionRepository: QuestionRepoFromAPI(APIServiceNodeJS("http://10.0.2.2:3000"))),),
+        BlocProvider(create: (context) => VotesBloc(VotesRepoNodeAPI(APIServiceNodeJS("http://10.0.2.2:3000")))),
+        BlocProvider(create: (context) => CommentsBloc(CommentRepoNodeJSApi(APIServiceNodeJS("http://10.0.2.2:3000")))),
       ],
       child: MyApp(),
     ),
