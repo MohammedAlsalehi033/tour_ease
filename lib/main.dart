@@ -28,7 +28,8 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
-
+final baseUrlLocal = "http://10.0.2.2:3000";
+final baseUrlDeploied = "http://13.201.19.41:3003";
   runApp(
     MultiBlocProvider(
       providers: [
@@ -43,10 +44,10 @@ void main() async {
             rideRepository: RideRepositoryImpl(apiService: ApiServiceDummy()),
           ),
         ),
-        BlocProvider(create: (context) => QuestionBloc(questionRepository: QuestionRepoFromAPI(APIServiceNodeJS("http://10.0.2.2:3000"))),),
-        BlocProvider(create: (context) => VotesBloc(VotesRepoNodeAPI(APIServiceNodeJS("http://10.0.2.2:3000")))),
-        BlocProvider(create: (context) => CommentsBloc(CommentRepoNodeJSApi(APIServiceNodeJS("http://10.0.2.2:3000")))),
-        BlocProvider(create: (context) => TransporationProviderBloc(TransportationProviderRepoFromAPI(apiService: APIServiceNodeJS("http://10.0.2.2:3000")))),
+        BlocProvider(create: (context) => QuestionBloc(questionRepository: QuestionRepoFromAPI(APIServiceNodeJS(baseUrlDeploied))),),
+        BlocProvider(create: (context) => VotesBloc(VotesRepoNodeAPI(APIServiceNodeJS(baseUrlDeploied)))),
+        BlocProvider(create: (context) => CommentsBloc(CommentRepoNodeJSApi(APIServiceNodeJS(baseUrlDeploied)))),
+        BlocProvider(create: (context) => TransporationProviderBloc(TransportationProviderRepoFromAPI(apiService: APIServiceNodeJS(baseUrlDeploied)))),
       ],
       child: MyApp(),
     ),

@@ -29,10 +29,11 @@ class QuestionRepoFromAPI extends QuestionsRepo {
     try {
 
       String url =  '$baseUrl/api/questions?page=$page&limit=$limit&sort=$sort';
+      print(url);
+
       final response = await dio.get(
        url
       );
-
       if (response.statusCode == 200) {
         final data = response.data;
         if (data['success'] == true) {

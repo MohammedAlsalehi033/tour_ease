@@ -12,6 +12,8 @@ class TransportationProviderdataLoaded extends TransporationProviderState{
 }
 
 class TransportationProviderdataLoading extends TransporationProviderState {}
+
+
 class TransportationProviderdataError extends TransporationProviderState {
   final String error;
 

@@ -52,7 +52,6 @@ class _RideFilterPageState extends State<RideFilterPage> {
                             children: [
                               SizedBox(height: 16.h),
 
-                              // Pickup Location
                               _buildSectionTitle('Where from?', theme),
                               _buildMinimalTextField(
                                 controller: context
@@ -63,7 +62,7 @@ class _RideFilterPageState extends State<RideFilterPage> {
                               ),
                               SizedBox(height: 24.h),
 
-                              // Destination
+
                               _buildSectionTitle('Where to?', theme),
                               _buildMinimalTextField(
                                 controller: context
@@ -82,11 +81,9 @@ class _RideFilterPageState extends State<RideFilterPage> {
                                     ? 'Any date'
                                     : '${state.filterModel.selectedDate!.day}/${state.filterModel.selectedDate!.month}/${state.filterModel.selectedDate!.year}',
                                 onTap: () async {
-                                  // When showing the dialog, pass your existing bloc instance directly
                                   await showDialog(
                                     context: context,
                                     builder: (dialogContext) {
-                                      // Capture the bloc from the original context
                                       final rideFilterBloc =
                                           context.read<RideFilterBloc>();
 
@@ -298,7 +295,7 @@ class _RideFilterPageState extends State<RideFilterPage> {
                               ),
                               SizedBox(
                                   height:
-                                      100.h), // Extra space for bottom button
+                                      100.h),
                             ],
                           ),
                         ),

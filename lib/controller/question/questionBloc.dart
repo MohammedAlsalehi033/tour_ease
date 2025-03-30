@@ -106,14 +106,13 @@ class QuestionBloc extends Bloc<QuestionEvent, QuestionState> {
         nextPage = currentState.currentPage + 1;
       }
 
-      // Fetch questions from repository
       final questions = await questionRepository.getQuestions(
         page: nextPage,
         limit: itemsPerPage,
         sort: event.sort,
       );
 
-      // Handle empty response (no more questions)
+
       if (questions.isEmpty) {
         if (currentState is QuestionLoadSuccess) {
           emit(currentState.copyWith(hasReachedMax: true));
@@ -121,7 +120,6 @@ class QuestionBloc extends Bloc<QuestionEvent, QuestionState> {
         }
       }
 
-      // Combine new questions with existing ones if needed
       if (currentState is QuestionLoadSuccess && !event.refresh) {
         emit(QuestionLoadSuccess(
           questions: currentState.questions + questions,

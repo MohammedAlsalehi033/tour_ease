@@ -74,7 +74,6 @@ class _QuestionDetailsPageState extends State<QuestionDetailsPage> {
           style: textTheme.titleLarge?.copyWith(
               color: colorScheme.onPrimary, fontWeight: FontWeight.w600),
         ),
-        backgroundColor: colorScheme.primary,
         elevation: 0,
         iconTheme: IconThemeData(color: colorScheme.onPrimary),
         shape: RoundedRectangleBorder(

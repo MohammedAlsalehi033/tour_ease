@@ -2,20 +2,23 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:tour_ease/Services/ApiService.dart';
 import 'package:tour_ease/model/userManagment/user.dart';
 
 class UserInitializer {
 
   Future<void> initializeUser() async {
     final dio = Dio();
+
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) {
       return;
     }
 
+
     try {
       final response = await dio.get(
-        'http://10.0.2.2:3000/api/getUserById',
+        'http://13.201.19.41:3003/api/getUserById',
         queryParameters: {
           "id": currentUser.uid,
         },

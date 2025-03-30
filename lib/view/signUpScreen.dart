@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tour_ease/Services/ApiService.dart';
 import 'package:tour_ease/components/themeSwitch.dart';
 import 'package:tour_ease/controller/userManagment//signUpController.dart';
 import 'package:tour_ease/model/userManagment/UserRepo.dart';
@@ -146,7 +147,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   }
 
                   try {
-                    final signUpController = SignUpWithFireBaseController(UserRepoFireBase());
+                    final signUpController = SignUpWithFireBaseController(UserRepoFireBase(apiService: APIServiceNodeJS("http://13.201.19.41:3003")));
                     final user = await signUpController.signUpWithEmailAndPassword(email, password);
 
                     Navigator.pushAndRemoveUntil(
