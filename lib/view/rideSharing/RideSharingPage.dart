@@ -8,6 +8,7 @@ import 'package:day_night_time_picker/day_night_time_picker.dart';
 import 'package:tour_ease/bloc/rideFilterBloc.dart';
 import 'package:tour_ease/bloc/rideResultsBloc.dart';
 import 'package:tour_ease/model/rideSharing/rideRepository.dart';
+import 'package:tour_ease/view/mapscreen/mappage.dart';
 import 'package:tour_ease/view/rideSharing/RideResultsPage.dart';
 import 'package:tour_ease/view/rideSharing/newTransportProviderPage.dart';
 
@@ -52,26 +53,76 @@ class _RideFilterPageState extends State<RideFilterPage> {
                             children: [
                               SizedBox(height: 16.h),
 
-                              _buildSectionTitle('Where from?', theme),
-                              _buildMinimalTextField(
-                                controller: context
-                                    .read<RideFilterBloc>()
-                                    .pickupController,
-                                hintText: 'Add pickup location',
-                                theme: theme,
-                              ),
-                              SizedBox(height: 24.h),
+                              GestureDetector(
+                                onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => MapScreen()),
+                                ),
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                                  decoration: BoxDecoration(
+                                    color: theme.cardColor,
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black12,
+                                        blurRadius: 5,
+                                        offset: Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      _buildSectionTitle('Where from?', theme),
+                                      Row(
+                                        children: [
+                                          Icon(Icons.location_on, color: theme.primaryColor, size: 18),
+                                          SizedBox(width: 8.w),
+                                          Expanded(
+                                            child: Text(
+                                              state.filterModel.pickupLocation.isEmpty
+                                                  ? 'Select pickup location'
+                                                  : state.filterModel.pickupLocation,
+                                              style: TextStyle(
+                                                color: state.filterModel.pickupLocation.isEmpty
+                                                    ? theme.hintColor
+                                                    : theme.textTheme.bodyMedium?.color,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      Divider(height: 24.h, thickness: 1),
+                                      _buildSectionTitle('Where to?', theme),
+                                      Row(
+                                        children: [
+                                          Icon(Icons.location_on, color: theme.primaryColor, size: 18),
+                                          SizedBox(width: 8.w),
+                                          Expanded(
+                                            child: Text(
+                                              state.filterModel.destination.isEmpty
+                                                  ? 'Select destination'
+                                                  : state.filterModel.destination,
+                                              style: TextStyle(
+                                                color: state.filterModel.destination.isEmpty
+                                                    ? theme.hintColor
+                                                    : theme.textTheme.bodyMedium?.color,
+                                              ),
+                                            ),
+                                          ),
+                                          Icon(Icons.arrow_forward_ios, color: theme.primaryColor, size: 16),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              )
 
 
-                              _buildSectionTitle('Where to?', theme),
-                              _buildMinimalTextField(
-                                controller: context
-                                    .read<RideFilterBloc>()
-                                    .destinationController,
-                                hintText: 'Add destination',
-                                theme: theme,
-                              ),
-                              SizedBox(height: 32.h),
+
+
+                              ,SizedBox(height: 32.h),
 
                               // Date Selection
                               _buildSectionTitle('When?', theme),

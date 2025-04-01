@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:day_night_time_picker/day_night_time_picker.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class RideFilterModel {
   final DateTime? selectedDate;
@@ -10,6 +11,8 @@ class RideFilterModel {
   final String pickupLocation;
   final String destination;
   final RangeValues priceRange;
+  final LatLng pickupLocationCoordinates;
+  final LatLng destinationCoordinates;
 
   const RideFilterModel({
     this.selectedDate,
@@ -20,6 +23,8 @@ class RideFilterModel {
     this.pickupLocation = '',
     this.destination = '',
     this.priceRange = const RangeValues(20, 100),
+    this.destinationCoordinates = const LatLng(10, 10),
+    this.pickupLocationCoordinates = const LatLng(10, 10),
   });
 
   RideFilterModel copyWith({
@@ -31,7 +36,10 @@ class RideFilterModel {
     String? pickupLocation,
     String? destination,
     RangeValues? priceRange,
+    LatLng? pickupLocationCoordinates,
+    LatLng? destinationCoordinates,
   }) {
+
     return RideFilterModel(
       selectedDate: selectedDate ?? this.selectedDate,
       startTime: startTime ?? this.startTime,
@@ -41,6 +49,8 @@ class RideFilterModel {
       pickupLocation: pickupLocation ?? this.pickupLocation,
       destination: destination ?? this.destination,
       priceRange: priceRange ?? this.priceRange,
+      pickupLocationCoordinates: pickupLocationCoordinates ?? this.pickupLocationCoordinates,
+      destinationCoordinates: destinationCoordinates ?? this.destinationCoordinates,
     );
   }
 
@@ -70,10 +80,13 @@ class RideFilterModel {
       'destination': destination,
       'priceRangeStart': priceRange.start,
       'priceRangeEnd': priceRange.end,
+      'pickupLocationLat': pickupLocationCoordinates.latitude,
+      'pickupLocationLng': pickupLocationCoordinates.longitude,
+      'destinationLat': destinationCoordinates.latitude,
+      'destinationLng': destinationCoordinates.longitude,
     };
   }
 
-  // Create model from JSON
   factory RideFilterModel.fromJson(Map<String, dynamic> json) {
     return RideFilterModel(
       selectedDate: json['selectedDate'] != null
@@ -97,6 +110,14 @@ class RideFilterModel {
         json['priceRangeStart'],
         json['priceRangeEnd'],
       ),
+      pickupLocationCoordinates: LatLng(
+        json['pickupLocationLat'] ?? 10,
+        json['pickupLocationLng'] ?? 10,
+      ),
+      destinationCoordinates: LatLng(
+        json['destinationLat'] ?? 10,
+        json['destinationLng'] ?? 10,
+      ),
     );
   }
 
@@ -117,7 +138,11 @@ class RideFilterModel {
         other.pickupLocation == pickupLocation &&
         other.destination == destination &&
         other.priceRange.start == priceRange.start &&
-        other.priceRange.end == priceRange.end;
+        other.priceRange.end == priceRange.end &&
+        other.pickupLocationCoordinates.latitude == pickupLocationCoordinates.latitude &&
+        other.pickupLocationCoordinates.longitude == pickupLocationCoordinates.longitude &&
+        other.destinationCoordinates.latitude == destinationCoordinates.latitude &&
+        other.destinationCoordinates.longitude == destinationCoordinates.longitude;
   }
 
   @override
@@ -129,6 +154,8 @@ class RideFilterModel {
     luggageCapacity.hashCode ^
     pickupLocation.hashCode ^
     destination.hashCode ^
-    priceRange.hashCode;
+    priceRange.hashCode ^
+    pickupLocationCoordinates.hashCode ^
+    destinationCoordinates.hashCode;
   }
 }

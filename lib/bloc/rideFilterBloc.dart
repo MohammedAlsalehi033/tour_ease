@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:day_night_time_picker/day_night_time_picker.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:tour_ease/model/rideSharing/RideFilterData.dart';
 
 
@@ -17,7 +18,8 @@ class InitializeFilter extends RideFilterEvent {}
 
 class UpdatePickupLocation extends RideFilterEvent {
   final String location;
-  const UpdatePickupLocation(this.location);
+  final LatLng locationCo;
+  const UpdatePickupLocation(this.location, this.locationCo);
 
   @override
   List<Object?> get props => [location];
@@ -25,7 +27,9 @@ class UpdatePickupLocation extends RideFilterEvent {
 
 class UpdateDestination extends RideFilterEvent {
   final String destination;
-  const UpdateDestination(this.destination);
+  final LatLng destinationCo;
+
+  const UpdateDestination(this.destination, this.destinationCo);
 
   @override
   List<Object?> get props => [destination];
@@ -149,12 +153,7 @@ class RideFilterBloc extends Bloc<RideFilterEvent, RideFilterState> {
     on<ApplyFilters>(_onApplyFilters);
     on<ResetFilters>(_onResetFilters);
 
-    pickupController.addListener(() {
-      add(UpdatePickupLocation(pickupController.text));
-    });
-    destinationController.addListener(() {
-      add(UpdateDestination(destinationController.text));
-    });
+
   }
 
   void _onInitialize(InitializeFilter event, Emitter<RideFilterState> emit) {
@@ -164,6 +163,7 @@ class RideFilterBloc extends Bloc<RideFilterEvent, RideFilterState> {
   void _onUpdatePickupLocation(UpdatePickupLocation event, Emitter<RideFilterState> emit) {
     final updatedModel = state.filterModel.copyWith(
       pickupLocation: event.location,
+      destinationCoordinates: event.locationCo
     );
     emit(state.copyWith(filterModel: updatedModel));
   }
@@ -171,6 +171,7 @@ class RideFilterBloc extends Bloc<RideFilterEvent, RideFilterState> {
   void _onUpdateDestination(UpdateDestination event, Emitter<RideFilterState> emit) {
     final updatedModel = state.filterModel.copyWith(
       destination: event.destination,
+      destinationCoordinates: event.destinationCo
     );
     emit(state.copyWith(filterModel: updatedModel));
   }
