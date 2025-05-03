@@ -2,8 +2,9 @@ import 'package:day_night_time_picker/day_night_time_picker.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:tour_ease/model/rideSharing/RideFilterData.dart';
+import 'package:tour_ease/model/rideSharing/rideListing/rideListingModel.dart';
 import 'package:tour_ease/model/rideSharing/rideModel.dart';
-import 'package:tour_ease/model/rideSharing/rideRepository.dart';
+import 'package:tour_ease/model/rideSharing/rideListing/rideRepository.dart';
 
 // Import your filter model
 
@@ -32,7 +33,7 @@ class ClearResults extends RideResultEvent {}
 
 // STATE
 class RideResultState {
-  final List<Ride> rides;
+  final List<RideListingModel> rides;
   final bool isLoading;
   final String? error;
 
@@ -43,7 +44,7 @@ class RideResultState {
   });
 
   RideResultState copyWith({
-    List<Ride>? rides,
+    List<RideListingModel>? rides,
     bool? isLoading,
     String? error,
   }) {
@@ -77,7 +78,7 @@ class RideResultBloc extends Bloc<RideResultEvent, RideResultState> {
 
     try {
 
-      final List<Ride> rides = await rideRepository.fetchRides(event.filterModel);
+      final List<RideListingModel> rides = await rideRepository.fetchRidesListing(event.filterModel);
 
       emit(state.copyWith(
         rides: rides,

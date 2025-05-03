@@ -10,12 +10,14 @@ import 'package:tour_ease/components/themeSwitch.dart';
 import 'package:tour_ease/controller/userManagment//JWTController.dart';
 import 'package:tour_ease/controller/userManagment/initialize.dart';
 import 'package:tour_ease/model/userManagment/user.dart';
+import 'package:tour_ease/view/NotifiactionScreen.dart';
 import 'package:tour_ease/view/chat/chatsPage.dart';
 import 'package:tour_ease/view/mapscreen/mappage.dart';
 import 'package:tour_ease/view/mapscreen/trackingMap.dart';
 import 'package:tour_ease/view/profile/profile.dart';
 import 'package:tour_ease/view/questions/questionsPage.dart';
 import 'package:tour_ease/view/rideSharing/RideSharingPage.dart';
+import 'package:tour_ease/view/rideSharing/RidebookingScreen.dart';
 import 'package:tour_ease/view/tripPlanner/tripPlannerPage.dart';
 
 class MainPage extends StatefulWidget {
@@ -31,7 +33,7 @@ class _MainPageState extends State<MainPage> {
   // Pages corresponding to each tab
   final List<Widget> _pages = [
     AccommodationPage(),
-    RideFilterPage(),
+    RidebookingscreenTraveler(),
     TripPlannerPage(),
     MessagesPage(),
     QuestionsScreen(),
@@ -68,7 +70,7 @@ class _MainPageState extends State<MainPage> {
                 IconButton(
                   icon: Icon(Icons.notifications, color: Theme.of(context).iconTheme.color),
                   onPressed: () {
-Navigator.push(context, MaterialPageRoute(builder: (context) => MapScreen(),));                  },
+Navigator.push(context, MaterialPageRoute(builder: (context) => NotifiactionScreen(),));                  },
                 ),
               ],
             ),

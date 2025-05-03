@@ -14,3 +14,9 @@ class CreateTransportationProvider extends TransporationProviderEvent{
       this.transportationProviderModel, this.licenseMedia, this.vehicleMedia);
 }
 
+class CreateTransportationProviderListing extends TransporationProviderEvent{
+     final RideListingModel rideListing;
+
+  CreateTransportationProviderListing({required this.rideListing});
+}
+

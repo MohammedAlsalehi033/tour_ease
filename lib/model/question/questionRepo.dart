@@ -7,7 +7,7 @@ import 'package:tour_ease/model/question/questionModel.dart';
 abstract class QuestionsRepo {
   Future<List<Question>> getQuestions({int page, int limit, String sort});
   Future<Question> getQuestionById(String id);
-  Future<Question> uploadQuestion(Question question);
+  Future<Question> createQuestion(Question question);
   Future<Question> editQuestion(Question question);
 }
 
@@ -59,7 +59,7 @@ class QuestionRepoFromAPI extends QuestionsRepo {
   }
 
   @override
-  Future<Question> uploadQuestion(Question question) async{
+  Future<Question> createQuestion(Question question) async{
     String url = '$baseUrl/api/questions';
     var headers = {
       'Content-Type': 'application/json',

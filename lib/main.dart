@@ -8,17 +8,23 @@ import 'package:tour_ease/Services/ApiService.dart';
 import 'package:tour_ease/bloc/themeSwithBloc.dart';
 import 'package:tour_ease/bloc/rideResultsBloc.dart';
 import 'package:tour_ease/bloc/rideFilterBloc.dart';
+import 'package:tour_ease/controller/rideSharing/RideBooking/ride_booking_bloc.dart';
+import 'package:tour_ease/controller/rideSharing/RideRequests/ride_request_bloc.dart';
+import 'package:tour_ease/controller/rideSharing/offers/offers_bloc.dart';
+import 'package:tour_ease/controller/rideSharing/offers/offers_event.dart';
 import 'package:tour_ease/controller/rideSharing/transportationProvider/transporation_provider_bloc.dart';
 import 'package:tour_ease/controller/userManagment//initialize.dart';
 import 'package:tour_ease/controller/question/commets/comments_bloc.dart';
 import 'package:tour_ease/controller/question/questionBloc.dart';
 import 'package:tour_ease/controller/question/votes/votes_bloc.dart';
+import 'package:tour_ease/model/rideSharing/RideBooking/RideBookingRepo.dart';
+import 'package:tour_ease/model/rideSharing/offer/offerRepo.dart';
 import 'package:tour_ease/model/userManagment/transportationProviderRepo.dart';
 import 'package:tour_ease/model/userManagment/user.dart';
 import 'package:tour_ease/model/question/comments/commentRepo.dart';
 import 'package:tour_ease/model/question/questionRepo.dart';
 import 'package:tour_ease/model/question/votes/votesRepo.dart';
-import 'package:tour_ease/model/rideSharing/rideRepository.dart';
+import 'package:tour_ease/model/rideSharing/rideListing/rideRepository.dart';
 import 'package:tour_ease/testingthings/test.dart';
 import 'package:tour_ease/theme.dart';
 import 'package:tour_ease/view/auth.dart';
@@ -28,8 +34,8 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
-final baseUrlLocal = "http://10.0.2.2:3000";
-final baseUrlDeploied = "http://13.201.19.41:3003";
+  final baseUrlLocal = "http://10.0.2.2:3000";
+  final baseUrlDeploied = "http://13.201.19.41:3003";
   runApp(
     MultiBlocProvider(
       providers: [
@@ -41,13 +47,35 @@ final baseUrlDeploied = "http://13.201.19.41:3003";
         ),
         BlocProvider(
           create: (context) => RideResultBloc(
-            rideRepository: RideRepositoryImpl(apiService: ApiServiceDummy()),
+            rideRepository: RideRepositoryImpl(
+                apiService: APIServiceNodeJS(baseUrlDeploied)),
           ),
         ),
-        BlocProvider(create: (context) => QuestionBloc(questionRepository: QuestionRepoFromAPI(APIServiceNodeJS(baseUrlDeploied))),),
-        BlocProvider(create: (context) => VotesBloc(VotesRepoNodeAPI(APIServiceNodeJS(baseUrlDeploied)))),
-        BlocProvider(create: (context) => CommentsBloc(CommentRepoNodeJSApi(APIServiceNodeJS(baseUrlDeploied)))),
-        BlocProvider(create: (context) => TransporationProviderBloc(TransportationProviderRepoFromAPI(apiService: APIServiceNodeJS(baseUrlDeploied)))),
+        BlocProvider(
+          create: (context) => QuestionBloc(
+              questionRepository:
+                  QuestionRepoFromAPI(APIServiceNodeJS(baseUrlDeploied))),
+        ),
+        BlocProvider(
+            create: (context) =>
+                VotesBloc(VotesRepoNodeAPI(APIServiceNodeJS(baseUrlDeploied)))),
+        BlocProvider(
+            create: (context) => CommentsBloc(
+                CommentRepoNodeJSApi(APIServiceNodeJS(baseUrlDeploied)))),
+        BlocProvider(
+            create: (context) => RideRequestBloc(rideRepository: RideRepositoryImpl(apiService: APIServiceNodeJS(baseUrlDeploied)))),
+        BlocProvider(
+            create: (context) => TransporationProviderBloc(
+                TransportationProviderRepoFromAPI(
+                    apiService: APIServiceNodeJS(baseUrlDeploied)),
+                RideRepositoryImpl(
+                    apiService: APIServiceNodeJS(baseUrlDeploied)))),
+        BlocProvider(
+            create: (context) => OfferBloc(
+                OfferRepoNodeJSApi(APIServiceNodeJS(baseUrlDeploied) ))..add(GetAllOffersEvent())),
+        BlocProvider(
+            create: (context) => BookingBloc(
+                bookingRepository: BookingRepositoryImpl(apiService: APIServiceNodeJS(baseUrlLocal))))
       ],
       child: MyApp(),
     ),

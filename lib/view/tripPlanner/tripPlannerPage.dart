@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+import 'package:tour_ease/view/tripPlanner/TripDetailsPage.dart';
 
 class TripPlannerPage extends StatefulWidget {
   const TripPlannerPage({Key? key}) : super(key: key);
@@ -10,32 +11,43 @@ class TripPlannerPage extends StatefulWidget {
 }
 
 class _TripPlannerPageState extends State<TripPlannerPage> {
-  // Form controllers
-  final _destinationController = TextEditingController();
-  final _pickupController = TextEditingController();
-  final _budgetController = TextEditingController();
-  final _specialRequirementsController = TextEditingController();
+  // Form controllers with default values
+  final _destinationController = TextEditingController(text: "Lahore, Pakistan");
+  final _pickupController = TextEditingController(text: "Islamabad, Pakistan");
+  final _budgetController = TextEditingController(text: "3000");
+  final _specialRequirementsController = TextEditingController(text: "Need hotel with gym access");
 
-  // Selected date range
-  DateTimeRange? _selectedDateRange;
+  // Selected date range with default values
+  late DateTimeRange _selectedDateRange;
 
-  // Activities selection
+  // Activities selection with some defaults selected
   final Map<String, bool> _activities = {
-    'Sightseeing': false,
+    'Sightseeing': true,
     'Outdoor Adventures': false,
-    'Museums & Culture': false,
-    'Food & Dining': false,
+    'Museums & Culture': true,
+    'Food & Dining': true,
     'Shopping': false,
     'Nightlife': false,
     'Relaxation': false,
     'Beach': false,
   };
 
-  // Travel preferences
-  String _travelMode = 'Any';
+  // Travel preferences with default
+  String _travelMode = 'Air';
   final List<String> _travelModes = ['Any', 'Air', 'Train', 'Car', 'Public Transport'];
 
-  int _travelersCount = 1;
+  int _travelersCount = 2;
+
+  @override
+  void initState() {
+    super.initState();
+    // Set default date range (2 weeks from now, for 7 days)
+    final now = DateTime.now();
+    _selectedDateRange = DateTimeRange(
+      start: DateTime(now.year, now.month, now.day + 14),
+      end: DateTime(now.year, now.month, now.day + 21),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -105,11 +117,31 @@ class _TripPlannerPageState extends State<TripPlannerPage> {
                           _buildSectionTitle('When do you want to travel?', theme),
                           _buildSelectionTile(
                             icon: Icons.calendar_today_outlined,
-                            title: _selectedDateRange != null
-                                ? '${_selectedDateRange!.start.day}/${_selectedDateRange!.start.month} - ${_selectedDateRange!.end.day}/${_selectedDateRange!.end.month}'
-                                : 'Select dates',
-                            onTap: () {
-                              // Date selection would go here in real implementation
+                            title: '${_selectedDateRange.start.day}/${_selectedDateRange.start.month} - ${_selectedDateRange.end.day}/${_selectedDateRange.end.month}',
+                            onTap: () async {
+                              final DateTimeRange? picked = await showDateRangePicker(
+                                context: context,
+                                initialDateRange: _selectedDateRange,
+                                firstDate: DateTime.now(),
+                                lastDate: DateTime.now().add(const Duration(days: 365)),
+                                builder: (context, child) {
+                                  return Theme(
+                                    data: Theme.of(context).copyWith(
+                                      colorScheme: ColorScheme.light(
+                                        primary: colorScheme.primary,
+                                        onPrimary: colorScheme.onPrimary,
+                                        surface: colorScheme.surface,
+                                      ),
+                                    ),
+                                    child: child!,
+                                  );
+                                },
+                              );
+                              if (picked != null) {
+                                setState(() {
+                                  _selectedDateRange = picked;
+                                });
+                              }
                             },
                             theme: theme,
                           ),
@@ -132,10 +164,16 @@ class _TripPlannerPageState extends State<TripPlannerPage> {
                             title: 'Travelers',
                             value: _travelersCount,
                             onDecrease: () {
-                              // Decrease logic would go here
+                              if (_travelersCount > 1) {
+                                setState(() {
+                                  _travelersCount--;
+                                });
+                              }
                             },
                             onIncrease: () {
-                              // Increase logic would go here
+                              setState(() {
+                                _travelersCount++;
+                              });
                             },
                             theme: theme,
                           ),
@@ -147,7 +185,7 @@ class _TripPlannerPageState extends State<TripPlannerPage> {
                             icon: _getTravelModeIcon(_travelMode),
                             title: _travelMode,
                             onTap: () {
-                              // Travel mode selection would go here
+                              _showTravelModeSelector(context, theme);
                             },
                             theme: theme,
                           ),
@@ -211,9 +249,7 @@ class _TripPlannerPageState extends State<TripPlannerPage> {
                 children: [
                   Expanded(
                     child: TextButton(
-                      onPressed: () {
-                        // Reset form would go here
-                      },
+                      onPressed: _resetForm,
                       style: TextButton.styleFrom(
                         foregroundColor: colorScheme.primary,
                         padding: EdgeInsets.symmetric(vertical: 16.h),
@@ -232,9 +268,7 @@ class _TripPlannerPageState extends State<TripPlannerPage> {
                   Expanded(
                     flex: 2,
                     child: ElevatedButton(
-                      onPressed: () {
-                        // Generate trip plan would go here
-                      },
+                      onPressed: _generateTripPlan,
                       style: ElevatedButton.styleFrom(
                         elevation: 0,
                         backgroundColor: colorScheme.primary,
@@ -252,6 +286,96 @@ class _TripPlannerPageState extends State<TripPlannerPage> {
                     ),
                   ),
                 ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _resetForm() {
+    setState(() {
+      _destinationController.text = "Paris, France";
+      _pickupController.text = "New York, USA";
+      _budgetController.text = "3000";
+      _specialRequirementsController.text = "Need hotel with gym access";
+
+      // Reset date range
+      final now = DateTime.now();
+      _selectedDateRange = DateTimeRange(
+        start: DateTime(now.year, now.month, now.day + 14),
+        end: DateTime(now.year, now.month, now.day + 21),
+      );
+
+      // Reset activities
+      for (var key in _activities.keys) {
+        _activities[key] = key == 'Sightseeing' || key == 'Museums & Culture' || key == 'Food & Dining';
+      }
+
+      // Reset travel mode and travelers
+      _travelMode = 'Air';
+      _travelersCount = 2;
+    });
+  }
+
+  void _generateTripPlan() {
+    // Get selected activities
+    final selectedActivities = _activities.entries
+        .where((entry) => entry.value)
+        .map((entry) => entry.key)
+        .toList();
+
+    // Create trip data map
+    final tripData = {
+      'Destination': _destinationController.text,
+      'Starting Point': _pickupController.text,
+      'Travel Dates': '${_selectedDateRange.start.toString().split(' ')[0]} to ${_selectedDateRange.end.toString().split(' ')[0]}',
+      'Duration': '${_selectedDateRange.duration.inDays} days',
+      'Budget': '${_budgetController.text} USD',
+      'Travelers': _travelersCount,
+      'Transport Mode': _travelMode,
+      'Activities': selectedActivities,
+      'Special Requirements': _specialRequirementsController.text,
+    };
+
+    print(tripData);
+
+Navigator.push(context, MaterialPageRoute(builder: (context) => TripDetailsPage(),));
+  }
+
+  void _showTravelModeSelector(BuildContext context, ThemeData theme) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        padding: EdgeInsets.all(16.w),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Choose transport mode',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 16.h),
+            ...List.generate(
+              _travelModes.length,
+                  (index) => ListTile(
+                leading: Icon(
+                  _getTravelModeIcon(_travelModes[index]),
+                  color: _travelMode == _travelModes[index]
+                      ? theme.colorScheme.primary
+                      : null,
+                ),
+                title: Text(_travelModes[index]),
+                onTap: () {
+                  setState(() {
+                    _travelMode = _travelModes[index];
+                  });
+                  Navigator.pop(context);
+                },
               ),
             ),
           ],
@@ -444,7 +568,9 @@ class _TripPlannerPageState extends State<TripPlannerPage> {
 
         return InkWell(
           onTap: () {
-            // Selection logic would go here
+            setState(() {
+              _activities[activity] = !isSelected;
+            });
           },
           child: Container(
             decoration: BoxDecoration(

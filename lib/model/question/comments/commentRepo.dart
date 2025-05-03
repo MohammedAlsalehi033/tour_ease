@@ -19,7 +19,9 @@ class CommentRepoNodeJSApi extends CommentsRepo {
   @override
   Future<List<CommentModel>> getAllComments(Question question, int page, int limit, String sort) async {
     try {
-      String url = '$baseUrl/api/commments?page=$page&limit=$limit';
+      String url = '$baseUrl/api/commments?page=$page&limit=$limit&id=${question.id}';
+      print(url);
+
       final response = await dio.get(
           url,
           options: Options(contentType: "application/json"),
@@ -29,7 +31,6 @@ class CommentRepoNodeJSApi extends CommentsRepo {
         }
 
       );
-      print(response);
 
       if (response.statusCode == 200) {
         final data = response.data;

@@ -158,4 +158,6 @@ class RideFilterModel {
     pickupLocationCoordinates.hashCode ^
     destinationCoordinates.hashCode;
   }
+
+  get destinationLat => null;
 }

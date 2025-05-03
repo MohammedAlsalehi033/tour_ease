@@ -7,10 +7,10 @@ import 'package:flutter_tabler_icons/flutter_tabler_icons.dart';
 import 'package:day_night_time_picker/day_night_time_picker.dart';
 import 'package:tour_ease/bloc/rideFilterBloc.dart';
 import 'package:tour_ease/bloc/rideResultsBloc.dart';
-import 'package:tour_ease/model/rideSharing/rideRepository.dart';
+import 'package:tour_ease/model/rideSharing/rideListing/rideRepository.dart';
 import 'package:tour_ease/view/mapscreen/mappage.dart';
 import 'package:tour_ease/view/rideSharing/RideResultsPage.dart';
-import 'package:tour_ease/view/rideSharing/newTransportProviderPage.dart';
+import 'package:tour_ease/view/rideSharing/transportationProviderScreens/newTransportProviderPage.dart';
 
 class RideFilterPage extends StatefulWidget {
   const RideFilterPage({Key? key}) : super(key: key);

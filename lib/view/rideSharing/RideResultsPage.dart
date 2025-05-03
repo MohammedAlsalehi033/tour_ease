@@ -4,7 +4,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:intl/intl.dart';
 import 'package:tour_ease/bloc/rideResultsBloc.dart';
+import 'package:tour_ease/components/PulsatingActionButton/PulsatingActionButton.dart';
+import 'package:tour_ease/model/rideSharing/rideListing/rideListingModel.dart';
 import 'package:tour_ease/model/rideSharing/rideModel.dart';
+import 'package:tour_ease/view/rideSharing/RideRequestPage.dart';
+import 'package:tour_ease/view/rideSharing/RideSharingPage.dart';
 import 'package:tour_ease/view/rideSharing/rideBookingSheetUp.dart';
 
 class RideResultsPage extends StatefulWidget {
@@ -29,6 +33,8 @@ class _RideResultsPageState extends State<RideResultsPage> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
+      floatingActionButton: PulsatingActionButton(onPressed: (){Navigator.push(context, MaterialPageRoute(builder: (context) => RideRequestPage(),));}),
+      
       body: BlocBuilder<RideResultBloc, RideResultState>(
         builder: (context, state) {
           print(state.rides);
@@ -135,7 +141,7 @@ class _RideResultsPageState extends State<RideResultsPage> {
     );
   }
 
-  Widget _buildRideCard(Ride ride, ThemeData theme) {
+  Widget _buildRideCard(RideListingModel ride, ThemeData theme) {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
     final dateFormat = DateFormat('MMM dd, hh:mm a');
@@ -161,14 +167,14 @@ class _RideResultsPageState extends State<RideResultsPage> {
                     decoration: BoxDecoration(
                       color: colorScheme.primaryContainer,
                       shape: BoxShape.circle,
-                      image: ride.imageUrl.isNotEmpty
+                      image: ride.mediaUrls.isNotEmpty
                           ? DecorationImage(
-                        image: NetworkImage(ride.imageUrl),
+                        image: NetworkImage(ride.mediaUrls[0]),
                         fit: BoxFit.cover,
                       )
                           : null,
                     ),
-                    child: ride.imageUrl.isEmpty
+                    child: ride.mediaUrls.isEmpty
                         ? Icon(
                       Icons.person,
                       color: colorScheme.primary,
@@ -182,7 +188,7 @@ class _RideResultsPageState extends State<RideResultsPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          ride.driverName,
+                          ride.provider!.user.username,
                           style: textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -197,7 +203,7 @@ class _RideResultsPageState extends State<RideResultsPage> {
                             ),
                             SizedBox(width: 4.w),
                             Text(
-                              ride.rating.toStringAsFixed(1),
+                              "4.2",
                               style: textTheme.bodyMedium,
                             ),
                             SizedBox(width: 12.w),
@@ -208,7 +214,7 @@ class _RideResultsPageState extends State<RideResultsPage> {
                             ),
                             SizedBox(width: 4.w),
                             Text(
-                              ride.vehicleType,
+                              ride.provider!.vehicleType,
                               style: textTheme.bodyMedium?.copyWith(
                                 color: colorScheme.onSurfaceVariant,
                               ),
@@ -225,7 +231,7 @@ class _RideResultsPageState extends State<RideResultsPage> {
                       borderRadius: BorderRadius.circular(12.r),
                     ),
                     child: Text(
-                      '\$${ride.price.toStringAsFixed(0)}',
+                      '\$${ride.pricePerSeat.toStringAsFixed(0)}',
                       style: textTheme.titleMedium?.copyWith(
                         color: colorScheme.onPrimary,
                         fontWeight: FontWeight.bold,
@@ -247,14 +253,14 @@ class _RideResultsPageState extends State<RideResultsPage> {
                         _buildLocationInfo(
                           icon: Icons.location_on_outlined,
                           title: 'Pick-up',
-                          location: ride.pickupLocation,
+                          location: ride.startLocationText,
                           theme: theme,
                         ),
                         SizedBox(height: 24.h),
                         _buildLocationInfo(
                           icon: Icons.location_on,
                           title: 'Destination',
-                          location: ride.destination,
+                          location: ride.endLocationText,
                           theme: theme,
                         ),
                       ],
@@ -279,14 +285,14 @@ class _RideResultsPageState extends State<RideResultsPage> {
                       _buildDetail(
                         icon: Icons.people_outline,
                         label: 'Seats',
-                        value: ride.availableSeats.toString(),
+                        value: ride.seatsAvailable.toString(),
                         theme: theme,
                       ),
                       SizedBox(height: 12.h),
                       _buildDetail(
                         icon: Icons.work_outline,
                         label: 'Luggage',
-                        value: ride.luggageCapacity.toString(),
+                        value: "3",
                         theme: theme,
                       ),
                     ],

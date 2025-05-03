@@ -161,10 +161,13 @@ class RideFilterBloc extends Bloc<RideFilterEvent, RideFilterState> {
   }
 
   void _onUpdatePickupLocation(UpdatePickupLocation event, Emitter<RideFilterState> emit) {
+    print(event.locationCo);
+
     final updatedModel = state.filterModel.copyWith(
       pickupLocation: event.location,
-      destinationCoordinates: event.locationCo
+      pickupLocationCoordinates: event.locationCo
     );
+    print(updatedModel.pickupLocationCoordinates);
     emit(state.copyWith(filterModel: updatedModel));
   }
 

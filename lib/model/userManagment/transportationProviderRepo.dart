@@ -2,7 +2,7 @@
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:tour_ease/Services/ApiService.dart';
-import 'package:tour_ease/model/rideSharing/rideRepository.dart';
+import 'package:tour_ease/model/rideSharing/rideListing/rideRepository.dart';
 import 'package:tour_ease/model/userManagment/transportationProvider.dart';
 import 'package:tour_ease/model/userManagment/user.dart';
 

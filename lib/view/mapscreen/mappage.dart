@@ -486,6 +486,7 @@ class _MapScreenState extends State<MapScreen> {
     context.read<RideFilterBloc>().add(UpdateDestination(_destinationAddress!, _destination!));
     context.read<RideFilterBloc>().add(UpdatePickupLocation(_originAddress!,_origin!));
 
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(

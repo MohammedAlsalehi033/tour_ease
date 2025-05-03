@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tour_ease/model/rideSharing/rideListing/rideListingModel.dart';
 import 'package:tour_ease/view/chat/chatDetailsPage.dart';
-import '../../model/rideSharing/rideModel.dart';
 import 'package:intl/intl.dart';
 import 'dart:ui';
 
 class RideDetailsSheet extends StatefulWidget {
-  final Ride ride;
+  final RideListingModel ride;
   const RideDetailsSheet({super.key, required this.ride});
 
   @override
@@ -23,7 +23,7 @@ class _RideDetailsSheetState extends State<RideDetailsSheet> with SingleTickerPr
   @override
   void initState() {
     super.initState();
-    counterOffer = widget.ride.price;
+    counterOffer = widget.ride.pricePerSeat;
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
@@ -212,7 +212,7 @@ class _RideDetailsSheetState extends State<RideDetailsSheet> with SingleTickerPr
                                 Container(
                                   constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.4),
                                   child: Text(
-                                    widget.ride.pickupLocation,
+                                    widget.ride.startLocationText,
                                     style: theme.textTheme.titleSmall,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -230,7 +230,7 @@ class _RideDetailsSheetState extends State<RideDetailsSheet> with SingleTickerPr
                                 Container(
                                   constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.4),
                                   child: Text(
-                                    widget.ride.destination,
+                                    widget.ride.endLocationText,
                                     style: theme.textTheme.titleSmall,
                                     textAlign: TextAlign.right,
                                     overflow: TextOverflow.ellipsis,
@@ -276,7 +276,7 @@ class _RideDetailsSheetState extends State<RideDetailsSheet> with SingleTickerPr
                             ),
                             child: CircleAvatar(
                               radius: 32,
-                              backgroundImage: NetworkImage(widget.ride.imageUrl),
+                              // backgroundImage: NetworkImage(widget.ride.provider.user.mediaUrls[0]),
                               backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
                             ),
                           ),
@@ -289,7 +289,7 @@ class _RideDetailsSheetState extends State<RideDetailsSheet> with SingleTickerPr
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
-                                      widget.ride.driverName,
+                                      widget.ride.provider!.user.username,
                                       style: theme.textTheme.titleLarge?.copyWith(
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -315,9 +315,9 @@ class _RideDetailsSheetState extends State<RideDetailsSheet> with SingleTickerPr
                                     Row(
                                       children: List.generate(5, (index) {
                                         return Icon(
-                                          index < widget.ride.rating.floor()
+                                          index < 4
                                               ? Icons.star
-                                              : (index < widget.ride.rating
+                                              : (index < 5
                                               ? Icons.star_half
                                               : Icons.star_border),
                                           color: Colors.amber,
@@ -327,7 +327,7 @@ class _RideDetailsSheetState extends State<RideDetailsSheet> with SingleTickerPr
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
-                                      widget.ride.rating.toString(),
+                                      "4",
                                       style: theme.textTheme.bodySmall?.copyWith(
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -386,7 +386,7 @@ class _RideDetailsSheetState extends State<RideDetailsSheet> with SingleTickerPr
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    widget.ride.vehicleType,
+                                    widget.ride.provider!.vehicleType,
                                     style: theme.textTheme.titleMedium?.copyWith(
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -418,7 +418,7 @@ class _RideDetailsSheetState extends State<RideDetailsSheet> with SingleTickerPr
                                 child: _buildDetailItem(
                                     context,
                                     Icons.event_seat_outlined,
-                                    '${widget.ride.availableSeats} seats',
+                                    '${widget.ride.seatsAvailable} seats',
                                     'Available',
                                     accentColor
                                 ),
@@ -428,7 +428,7 @@ class _RideDetailsSheetState extends State<RideDetailsSheet> with SingleTickerPr
                                 child: _buildDetailItem(
                                     context,
                                     Icons.luggage_outlined,
-                                    '${widget.ride.luggageCapacity} kg',
+                                    '4 kg',
                                     'Luggage',
                                     accentColor
                                 ),
@@ -462,7 +462,7 @@ class _RideDetailsSheetState extends State<RideDetailsSheet> with SingleTickerPr
                                 style: theme.textTheme.bodyMedium,
                               ),
                               Text(
-                                '\$${(widget.ride.price * 0.85).toStringAsFixed(2)}',
+                                '\$${(widget.ride.pricePerSeat * 0.85).toStringAsFixed(2)}',
                                 style: theme.textTheme.bodyMedium,
                               ),
                             ],
@@ -476,7 +476,7 @@ class _RideDetailsSheetState extends State<RideDetailsSheet> with SingleTickerPr
                                 style: theme.textTheme.bodyMedium,
                               ),
                               Text(
-                                '\$${(widget.ride.price * 0.15).toStringAsFixed(2)}',
+                                '\$${(widget.ride.pricePerSeat * 0.15).toStringAsFixed(2)}',
                                 style: theme.textTheme.bodyMedium,
                               ),
                             ],
@@ -497,7 +497,7 @@ class _RideDetailsSheetState extends State<RideDetailsSheet> with SingleTickerPr
                                 ),
                               ),
                               Text(
-                                '\$${widget.ride.price.toStringAsFixed(2)}',
+                                '\$${widget.ride.pricePerSeat.toStringAsFixed(2)}',
                                 style: theme.textTheme.titleLarge?.copyWith(
                                   color: accentColor,
                                   fontWeight: FontWeight.bold,
@@ -597,25 +597,7 @@ class _RideDetailsSheetState extends State<RideDetailsSheet> with SingleTickerPr
                     flex: 3,
                     child: ElevatedButton(
                       onPressed: () {
-                        if (isCountering) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Offer of \$${counterOffer.toStringAsFixed(2)} sent'),
-                              behavior: SnackBarBehavior.floating,
-                              backgroundColor: accentColor,
-                            ),
-                          );
-                          setState(() {
-                            isCountering = false;
-                            _animationController.reverse();
-                          });
-                        } else {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => ChatScreen(userName: widget.ride.driverName, avatarUrl: widget.ride.imageUrl,),
-                            ),
-                          );
-                        }
+
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: accentColor,

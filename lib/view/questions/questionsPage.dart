@@ -305,11 +305,8 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                     width: 48.w,
                     height: 48.h,
                     decoration: BoxDecoration(
-                      image:  DecorationImage(
-                          image: NetworkImage(question.mediaUrls!.length > 0 ? question.mediaUrls!
-                              .where((element) =>
-                              element.contains("profilePicture"))
-                              .first : "https://lh3.googleusercontent.com/a-/ALV-UjX8IbJfWUTnSn2_CXavbtKkli-sXoK4ShX4DlUjTbDehIafaZ0V=s64")) ,
+
+
                       color: colorScheme.primaryContainer,
                       shape: BoxShape.circle,
                     ),

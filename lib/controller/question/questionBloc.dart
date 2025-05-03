@@ -143,7 +143,7 @@ class QuestionBloc extends Bloc<QuestionEvent, QuestionState> {
   try{
     emit(QuestionLoadInProgress());
 
-    final response = await questionRepository.uploadQuestion(event.question);
+    final response = await questionRepository.createQuestion(event.question);
     emit(QuestionLoadSuccess(questions: [response]));
   }catch(e){
     emit(QuestionLoadFailure(e.toString()));
