@@ -8,6 +8,7 @@ import 'package:tour_ease/Services/ApiService.dart';
 import 'package:tour_ease/bloc/themeSwithBloc.dart';
 import 'package:tour_ease/bloc/rideResultsBloc.dart';
 import 'package:tour_ease/bloc/rideFilterBloc.dart';
+import 'package:tour_ease/controller/chat/chat_bloc.dart';
 import 'package:tour_ease/controller/rideSharing/RideBooking/ride_booking_bloc.dart';
 import 'package:tour_ease/controller/rideSharing/RideRequests/ride_request_bloc.dart';
 import 'package:tour_ease/controller/rideSharing/offers/offers_bloc.dart';
@@ -17,6 +18,7 @@ import 'package:tour_ease/controller/userManagment//initialize.dart';
 import 'package:tour_ease/controller/question/commets/comments_bloc.dart';
 import 'package:tour_ease/controller/question/questionBloc.dart';
 import 'package:tour_ease/controller/question/votes/votes_bloc.dart';
+import 'package:tour_ease/model/chat/chatRepo.dart';
 import 'package:tour_ease/model/rideSharing/RideBooking/RideBookingRepo.dart';
 import 'package:tour_ease/model/rideSharing/offer/offerRepo.dart';
 import 'package:tour_ease/model/userManagment/transportationProviderRepo.dart';
@@ -75,7 +77,9 @@ void main() async {
                 OfferRepoNodeJSApi(APIServiceNodeJS(baseUrlDeploied) ))..add(GetAllOffersEvent())),
         BlocProvider(
             create: (context) => BookingBloc(
-                bookingRepository: BookingRepositoryImpl(apiService: APIServiceNodeJS(baseUrlLocal))))
+                bookingRepository: BookingRepositoryImpl(apiService: APIServiceNodeJS(baseUrlDeploied)))),
+        BlocProvider(
+            create: (context) => ChatBloc(chatService: ChatService(apiBaseUrl: baseUrlDeploied, currentUserId: UserModel().id),currentUserId: UserModel().id))
       ],
       child: MyApp(),
     ),
@@ -114,3 +118,7 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
+
+
+

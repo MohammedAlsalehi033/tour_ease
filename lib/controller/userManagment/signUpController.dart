@@ -26,6 +26,7 @@ class SignUpWithFireBaseController implements SignUp {
         throw Exception('Firebase user creation failed');
       }
 
+
       final user = UserModel();
 
       user.updateUser(

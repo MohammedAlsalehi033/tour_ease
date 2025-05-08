@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:meta/meta.dart';
+import 'package:tour_ease/Services/ApiService.dart';
 import 'package:tour_ease/model/otherUser/otherUserModel.dart';
 import 'package:tour_ease/model/question/comments/commentModel.dart';
 import 'package:tour_ease/model/question/comments/commentRepo.dart';
@@ -10,6 +11,7 @@ part 'comments_state.dart';
 
 class CommentsBloc extends Bloc<CommentsEvent, CommentsState> {
 final CommentsRepo commentsRepo;
+
 
 
   CommentsBloc(this.commentsRepo) : super(CommentsInitial()) {

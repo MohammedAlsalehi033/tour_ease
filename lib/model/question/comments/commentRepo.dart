@@ -94,3 +94,23 @@ class CommentRepoNodeJSApi extends CommentsRepo {
     }
   }
 }
+
+class CommentRepoGraphQlApi extends CommentsRepo {
+  @override
+  Future<CommentModel> deleteComment(CommentModel comment, Question question) {
+    // TODO: implement deleteComment
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<List<CommentModel>> getAllComments(Question question, int page, int limit, String sort) {
+    // TODO: implement getAllComments
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<CommentModel> writeComment(CommentModel comment) {
+    // TODO: implement writeComment
+    throw UnimplementedError();
+  }
+}

@@ -1,65 +1,75 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tour_ease/controller/chat/chat_bloc.dart';
+import 'package:tour_ease/controller/chat/chat_event.dart';
+import 'package:tour_ease/controller/chat/chat_state.dart';
+import 'package:tour_ease/model/chat/chatRepo.dart';
 import 'package:tour_ease/model/chat/message.dart';
 
-class ChatScreen extends StatefulWidget {
-  final String userName;
-  final String avatarUrl;
+class ChatPage extends StatefulWidget {
+  final String currentUserId;
+  final String otherUserId;
+  final String apiBaseUrl;
+  final String otherUserName;
+  final String otherUserAvatar;
 
-  const ChatScreen({
+  const ChatPage({
     Key? key,
-    required this.userName,
-    required this.avatarUrl,
+    required this.currentUserId,
+    required this.otherUserId,
+    required this.apiBaseUrl,
+    required this.otherUserName,
+    required this.otherUserAvatar,
   }) : super(key: key);
 
   @override
-  State<ChatScreen> createState() => _ChatScreenState();
+  _ChatPageState createState() => _ChatPageState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatPageState extends State<ChatPage> {
   final TextEditingController _messageController = TextEditingController();
-  final List<Message> _messages = [
-    Message(
-      text: 'Hey, are you available tomorrow?',
-      sender: 'John Doe',
-      timestamp: '10:30 AM',
-      isMe: false,
-    ),
-    Message(
-      text: 'Yes, I’m free. What’s the plan?',
-      sender: 'You',
-      timestamp: '10:31 AM',
-      isMe: true,
-    ),
-    Message(
-      text: 'Let’s meet at the café at 5 PM.',
-      sender: 'John Doe',
-      timestamp: '10:32 AM',
-      isMe: false,
-    ),
-    Message(
-      text: 'Sounds good! See you there.',
-      sender: 'You',
-      timestamp: '10:33 AM',
-      isMe: true,
-    ),
-  ];
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+
+
+
+    // Load messages
+    context.read<ChatBloc>().add(LoadMessages(widget.otherUserId));
+  }
 
   void _sendMessage() {
-    final text = _messageController.text.trim();
-    if (text.isNotEmpty) {
-      setState(() {
-        _messages.add(
-          Message(
-            text: text,
-            sender: 'You',
-            timestamp: 'Now',
-            isMe: true,
-          ),
-        );
-        _messageController.clear();
-      });
+    if (_messageController.text.trim().isEmpty) return;
+
+    context.read<ChatBloc>().add(SendMessage(
+      content: _messageController.text.trim(),
+      receiverId: widget.otherUserId,
+    ));
+
+    _messageController.clear();
+
+    // Scroll to bottom after a short delay to ensure the UI has updated
+    Future.delayed(Duration(milliseconds: 100), _scrollToBottom);
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
     }
+  }
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -68,54 +78,117 @@ class _ChatScreenState extends State<ChatScreen> {
       appBar: AppBar(
         title: Row(
           children: [
-            CircleAvatar(
-              backgroundImage: NetworkImage(widget.avatarUrl),
-              radius: 16.r,
-            ),
+
             SizedBox(width: 8.w),
-            Text(widget.userName),
+            Text(widget.otherUserName),
           ],
         ),
+        elevation: 1,
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 8.w),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final message = _messages[index];
-                return _buildMessageBubble(context, message);
-              },
-            ),
-          ),
-          _buildMessageInputField(),
-        ],
+      body: BlocConsumer<ChatBloc, ChatState>(
+        listener: (context, state) {
+          if (state is ChatLoaded) {
+            Future.delayed(Duration(milliseconds: 100), _scrollToBottom);
+          }
+
+          if (state is ChatError) {
+            // Show error message
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message)),
+            );
+          }
+        },
+        builder: (context, state) {
+          return Column(
+            children: [
+              // Messages list
+              Expanded(
+                child: _buildMessagesList(state),
+              ),
+
+              // Message input
+              _buildMessageInputField(),
+            ],
+          );
+        },
       ),
     );
   }
 
+  Widget _buildMessagesList(ChatState state) {
+    if (state is ChatLoading) {
+      return Center(child: CircularProgressIndicator());
+    } else if (state is ChatError && (state is! ChatLoaded && state is! MessageSending)) {
+      return Center(child: Text('Error: ${state.message}'));
+    } else {
+      List<Message> messages = [];
+
+      if (state is ChatLoaded) {
+        messages = state.messages;
+      } else if (state is MessageSending) {
+        messages = state.messages;
+      }
+
+      if (messages.isEmpty) {
+        return Center(child: Text('No messages yet'));
+      }
+
+      return ListView.builder(
+        controller: _scrollController,
+        padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 8.w),
+        itemCount: messages.length,
+        itemBuilder: (context, index) {
+          final message = messages[index];
+          return _buildMessageBubble(context, message);
+        },
+      );
+    }
+  }
+
   Widget _buildMessageBubble(BuildContext context, Message message) {
     final theme = Theme.of(context);
-    final isMe = message.isMe;
+    final isMe = message.senderId == widget.currentUserId;
+
+    // Format timestamp
+    final timestamp = DateTime.now();
+    final now = DateTime.now();
+    String formattedTime;
+
+    if (timestamp.year == now.year &&
+        timestamp.month == now.month &&
+        timestamp.day == now.day) {
+      // Today, show only time
+      formattedTime = "${timestamp.hour}:${timestamp.minute.toString().padLeft(2, '0')}";
+    } else {
+      // Not today, show date and time
+      formattedTime = "${timestamp.day}/${timestamp.month} ${timestamp.hour}:${timestamp.minute.toString().padLeft(2, '0')}";
+    }
 
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
+        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
         margin: EdgeInsets.symmetric(vertical: 4.h, horizontal: 8.w),
         padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 12.w),
         decoration: BoxDecoration(
           color: isMe
               ? theme.colorScheme.primary
-              : theme.colorScheme.surfaceContainerHighest,
+              : theme.colorScheme.surfaceVariant,
           borderRadius: BorderRadius.circular(12.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 3,
+              offset: Offset(0, 1),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment:
           isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
             Text(
-              message.text,
+              message.content,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: isMe
                     ? theme.colorScheme.onPrimary
@@ -124,11 +197,12 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             SizedBox(height: 4.h),
             Text(
-              message.timestamp,
+              formattedTime,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: isMe
                     ? theme.colorScheme.onPrimary.withOpacity(0.7)
                     : theme.colorScheme.onSurface.withOpacity(0.6),
+                fontSize: 10.sp,
               ),
             ),
           ],
@@ -167,9 +241,9 @@ class _ChatScreenState extends State<ChatScreen> {
                     horizontal: 16.w,
                     vertical: 12.h,
                   ),
-
-
                 ),
+                textInputAction: TextInputAction.send,
+                onSubmitted: (_) => _sendMessage(),
               ),
             ),
           ),
@@ -202,4 +276,5 @@ class _ChatScreenState extends State<ChatScreen> {
         ],
       ),
     );
-  }}
+  }
+}
