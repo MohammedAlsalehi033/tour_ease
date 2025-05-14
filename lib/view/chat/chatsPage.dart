@@ -27,7 +27,6 @@ class _MessagesPageState extends State<MessagesPage> {
         if(state is ChatError) return Text(state.message);
         else if (state is ChatLoading) return Center(child: CircularProgressIndicator());
         else if (state is ChatsLoaded)  {
-          print(state.chats.toList().toString());
           return Scaffold(
             body: Builder(
               builder: (context) => ValueListenableBuilder(
@@ -48,8 +47,13 @@ class _MessagesPageState extends State<MessagesPage> {
             ),
           );
         }
-        else return Center(child: Text(state.toString()));
-      },
+        else {
+
+          return ElevatedButton(onPressed: () {
+            context.read<ChatBloc>().add(LoadChats());
+
+          },child: Text(state.toString()));
+      }}
     );
   }
 
@@ -102,8 +106,8 @@ class _MessagesPageState extends State<MessagesPage> {
           ],
         ),
       ),
-      onTap: () {
-        Navigator.push(
+      onTap: ()async {
+       await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => ChatPage(
@@ -115,6 +119,7 @@ class _MessagesPageState extends State<MessagesPage> {
             ),
           ),
         );
+
       },
     );
   }

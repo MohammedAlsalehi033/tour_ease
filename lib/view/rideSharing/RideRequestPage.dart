@@ -226,7 +226,11 @@ class _RideRequestPageState extends State<RideRequestPage> {
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) => MapScreen()),
-                                ),
+                                ).then((_){
+                                  setState(() {
+
+                                  });
+                                }),
                                 child: Container(
                                   padding: EdgeInsets.symmetric(
                                       horizontal: 16.w, vertical: 12.h),

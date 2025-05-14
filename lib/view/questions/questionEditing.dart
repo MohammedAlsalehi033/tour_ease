@@ -206,12 +206,22 @@ class _QuestionEditingPageState extends State<QuestionEditingPage> {
 
                         context.read<QuestionBloc>().add(EditQuestion(
                             question: Question(mediaUrls: [],
+                              createdAt: widget.question.createdAt,
+                              downvotes: widget.question.downvotes,
+                              upvotes: widget.question.upvotes,
+                              userName: widget.question.userName,
+                              votes: widget.question.votes,
+                              commentCount: widget.question.commentCount,
+                              updatedAt: widget.question.updatedAt,
+
                               id: widget.question.id,
                                 title: _titleController.text,
                                 description: _descriptionController.text,
                                 userId: UserModel().id,
                                 tags: _selectedTags)));
-                      },
+
+                        context.read<QuestionBloc>().add(FetchQuestions());
+                        },
                       style: ElevatedButton.styleFrom(
                         elevation: 0,
                         backgroundColor: colorScheme.primary,

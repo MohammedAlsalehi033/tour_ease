@@ -3,6 +3,7 @@
 import 'package:tour_ease/model/rideSharing/offer/offerModel.dart';
 import 'package:tour_ease/model/rideSharing/rideListing/rideListingModel.dart';
 import 'package:tour_ease/model/rideSharing/rideRequest/rideRequestModel.dart';
+import 'package:tour_ease/model/userManagment/user.dart';
 
 class ProviderBookingModel {
   final int id;
@@ -191,10 +192,18 @@ class TravelerBookingModel {
   }
 
   String getProviderId (){
+
+    print(listing);
+    print(offer);
+
     if (listing != null){
       return listing!.providerId;
     }
     else if (offer != null){
+      if (  offer!.senderId == UserModel().id){
+        return offer!.recipientId;
+
+      }
       return offer!.senderId;
     }
     return "";

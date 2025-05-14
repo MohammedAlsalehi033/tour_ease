@@ -169,7 +169,7 @@ class _TravelerRideRequestDetailsPageState extends State<TravelerRideRequestDeta
                     Icon(Icons.straight, size: 18, color: theme.colorScheme.secondary),
                     const SizedBox(width: 8),
                     Text(
-                      'Distance: ${model.distanceKm!.toStringAsFixed(1)} km',
+                      'Distance: ${model.distanceKm!} km',
                       style: theme.textTheme.bodyMedium,
                     ),
                   ],
@@ -254,7 +254,7 @@ class _TravelerRideRequestDetailsPageState extends State<TravelerRideRequestDeta
             icon: const Icon(Icons.check),
             label: const Text('Accept offer'),
             onPressed: () {
-              context.read<OfferBloc>().add(CreateOfferEvent(senderId: UserModel().id, recipientId: model.travelerId, pricePerSeat: model.budget, seatsRequested: model.seatsNeeded));
+              context.read<OfferBloc>().add(CreateOfferEvent(senderId: UserModel().id, recipientId: model.travelerId, pricePerSeat: model.budget, seatsRequested: model.seatsNeeded, message: "this is just a test for now", transportationRequestId: model.id));
 
                 ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('offer is submitted we will inform you if the user accepted')),

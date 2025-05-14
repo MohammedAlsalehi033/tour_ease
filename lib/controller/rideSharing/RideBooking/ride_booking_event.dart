@@ -10,7 +10,9 @@ class FetchTravelerBookingsRequested extends BookingEvent {
 
 
 }
+class BackToInit extends BookingEvent{
 
+}
 class FetchProviderBookingsRequested extends BookingEvent {
   final String providerId;
 

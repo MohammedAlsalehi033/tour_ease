@@ -46,6 +46,8 @@ class _NewTransportationProviderPageState
     context.read<BookingBloc>().add(FetchProviderBookingsRequested(providerId: UserModel().id));
   }
 
+
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -98,7 +100,6 @@ class _NewTransportationProviderPageState
 
                   else if(stateForBooking is ProviderBookingLoadSuccess){
                     final bookings = stateForBooking.providerBookings.where((element) => element.status.toLowerCase() == "pending" || element.status.toLowerCase() == "accepted" ).toList();
-                    print(stateForBooking.providerBookings[1].toJson());
                     if (bookings.length < 1){
                       return TabContainer(
                       color: colorScheme.surface,

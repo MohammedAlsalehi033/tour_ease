@@ -37,7 +37,6 @@ class _ChatPageState extends State<ChatPage> {
 
 
 
-    // Load messages
     context.read<ChatBloc>().add(LoadMessages(widget.otherUserId));
   }
 

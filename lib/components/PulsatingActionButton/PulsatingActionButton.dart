@@ -12,7 +12,7 @@ class PulsatingActionButton extends StatefulWidget {
     required this.onPressed,
     this.color = Colors.blue,
     this.textColor = Colors.white,
-    this.animationInterval = const Duration(seconds: 10),
+    this.animationInterval = const Duration(seconds: 3),
   }) : super(key: key);
 
   @override

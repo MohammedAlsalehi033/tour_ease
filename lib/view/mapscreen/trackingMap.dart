@@ -208,6 +208,7 @@ class _LocationTrackingMapState extends State<LocationTrackingMap> {
   }
 
   void _updateOtherUserMarker(LatLng position) {
+    print(otherUserId);
     final marker = Marker(
       markerId: MarkerId(otherUserId),
       position: position,

@@ -415,7 +415,11 @@ class _RideFilterPageState extends State<RideFilterPage> {
                                       .add(ApplyFilters());
 
 
-                                  Navigator.push(context  , MaterialPageRoute(builder: (context) => RideResultsPage(),));
+                                  Navigator.push(context  , MaterialPageRoute(builder: (context) => RideResultsPage(),)).then((_){
+                                    setState(() {
+
+                                    });
+                                  });
                                 },
                           style: ElevatedButton.styleFrom(
                             elevation: 0,

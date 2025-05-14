@@ -39,7 +39,6 @@ class _RidebookingscreenTravelerState extends State<RidebookingscreenTraveler> {
         }
       },
       builder: (context, state) {
-        print(state);
         if (state is BookingLoading) {
           return Center(
             child: CircularProgressIndicator(
@@ -61,6 +60,7 @@ class _RidebookingscreenTravelerState extends State<RidebookingscreenTraveler> {
                   final formattedDate = DateFormat('MMM d, yyyy - HH:mm').format(booking.createdAt.toLocal());
                   // Format status with proper capitalization
                   final status = booking.status.toUpperCase();
+                  print(booking.getProviderId());
 
                   return Card(
                     elevation: 3,

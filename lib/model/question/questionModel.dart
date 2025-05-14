@@ -57,4 +57,9 @@ class Question {
       'tags': tags,
     };
   }
+
+  @override
+  String toString() {
+    return 'Question{id: $id, title: $title, description: $description, userId: $userId, userName: $userName, upvotes: $upvotes, downvotes: $downvotes, createdAt: $createdAt, updatedAt: $updatedAt, tags: $tags, commentCount: $commentCount, mediaUrls: $mediaUrls, votes: $votes}';
+  }
 }

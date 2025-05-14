@@ -53,7 +53,7 @@ class RideListingModel {
       status: json['status'],
       mediaUrls: (json['mediaUrls'] as List<dynamic>).cast<String>(),
       createdAt: DateTime.parse(json['createdAt']),
-      distanceKm: json['distance_km']?.toDouble(),
+      distanceKm: json['route_distance_km']?.toDouble(),
       provider: TransportationProviderModel.fromJson(json['provider']),
     );
   }

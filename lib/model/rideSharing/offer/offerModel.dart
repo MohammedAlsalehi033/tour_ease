@@ -79,4 +79,9 @@ class OfferModel {
 
     return map;
   }
+
+  @override
+  String toString() {
+    return 'OfferModel{id: $id, senderId: $senderId, recipientId: $recipientId, pricePerSeat: $pricePerSeat, seatsRequested: $seatsRequested, message: $message, transportationListingId: $transportationListingId, transportationRequestId: $transportationRequestId, status: $status, createdAt: $createdAt, updatedAt: $updatedAt, sender: $sender, recipient: $recipient, listing: $listing, request: $request}';
+  }
 }

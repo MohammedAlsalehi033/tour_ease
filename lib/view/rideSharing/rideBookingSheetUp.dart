@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tour_ease/controller/rideSharing/offers/offers_bloc.dart';
+import 'package:tour_ease/controller/rideSharing/offers/offers_event.dart';
 import 'package:tour_ease/model/rideSharing/rideListing/rideListingModel.dart';
-import 'package:tour_ease/view/chat/chatDetailsPage.dart';
 import 'package:intl/intl.dart';
+import 'package:tour_ease/model/userManagment/user.dart';
 import 'dart:ui';
+
+import 'package:tour_ease/view/chat/chatDetailsPage.dart';
 
 class RideDetailsSheet extends StatefulWidget {
   final RideListingModel ride;
@@ -41,14 +46,7 @@ class _RideDetailsSheetState extends State<RideDetailsSheet> with SingleTickerPr
   }
 
   void _toggleCountering() {
-    setState(() {
-      isCountering = !isCountering;
-      if (isCountering) {
-        _animationController.forward();
-      } else {
-        _animationController.reverse();
-      }
-    });
+    context.read<OfferBloc>().add(CreateOfferEvent(transportationListingId: widget.ride.id , message: "test for now",senderId: UserModel().id, recipientId: widget.ride.providerId, pricePerSeat: widget.ride.pricePerSeat, seatsRequested: widget.ride.seatsAvailable));
   }
 
   @override
@@ -167,7 +165,7 @@ class _RideDetailsSheetState extends State<RideDetailsSheet> with SingleTickerPr
                 ],
               ),
             ),
-      
+
             // Flexible content with scrolling
             Flexible(
               child: SingleChildScrollView(
@@ -189,7 +187,7 @@ class _RideDetailsSheetState extends State<RideDetailsSheet> with SingleTickerPr
                               painter: ModernRoutePainter(accentColor),
                             ),
                           ),
-      
+
                           // Origin
                           Positioned(
                             left: 0,
@@ -220,7 +218,7 @@ class _RideDetailsSheetState extends State<RideDetailsSheet> with SingleTickerPr
                               ],
                             ),
                           ),
-      
+
                           // Destination
                           Positioned(
                             right: 0,
@@ -256,7 +254,7 @@ class _RideDetailsSheetState extends State<RideDetailsSheet> with SingleTickerPr
                       ),
                     ),
                     const SizedBox(height: 20),
-      
+
                     // Driver Card
                     Container(
                       decoration: cardDecoration,
@@ -367,7 +365,7 @@ class _RideDetailsSheetState extends State<RideDetailsSheet> with SingleTickerPr
                       ),
                     ),
                     const SizedBox(height: 20),
-      
+
                     // Vehicle and details card
                     Container(
                       decoration: cardDecoration,
@@ -410,7 +408,7 @@ class _RideDetailsSheetState extends State<RideDetailsSheet> with SingleTickerPr
                             ],
                           ),
                           const SizedBox(height: 16),
-      
+
                           // Vehicle details grid
                           Row(
                             children: [
@@ -439,7 +437,7 @@ class _RideDetailsSheetState extends State<RideDetailsSheet> with SingleTickerPr
                       ),
                     ),
                     const SizedBox(height: 20),
-      
+
                     // Price details card
                     Container(
                       decoration: cardDecoration,
@@ -509,7 +507,7 @@ class _RideDetailsSheetState extends State<RideDetailsSheet> with SingleTickerPr
                       ),
                     ),
                     const SizedBox(height: 20),
-      
+
                     // Counter offer section (animated)
                     SizeTransition(
                       sizeFactor: _animation,
@@ -526,7 +524,7 @@ class _RideDetailsSheetState extends State<RideDetailsSheet> with SingleTickerPr
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-      
+
                             const SizedBox(height: 20),
                             const SizedBox(height: 16),
                           ],
@@ -537,7 +535,7 @@ class _RideDetailsSheetState extends State<RideDetailsSheet> with SingleTickerPr
                 ),
               ),
             ),
-      
+
             // Action buttons
             Container(
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
@@ -591,13 +589,13 @@ class _RideDetailsSheetState extends State<RideDetailsSheet> with SingleTickerPr
                     ),
                   ),
                   const SizedBox(width: 12),
-      
+
                   // Primary action button (Chat or Send Offer)
                   Expanded(
                     flex: 3,
                     child: ElevatedButton(
                       onPressed: () {
-
+Navigator.push(context, MaterialPageRoute(builder: (context) => ChatPage(currentUserId: UserModel().id, otherUserId: widget.ride.providerId, apiBaseUrl: "apiBaseUrl", otherUserName: widget.ride.provider?.user.username ?? "N/A", otherUserAvatar: "otherUserAvatar"),));
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: accentColor,

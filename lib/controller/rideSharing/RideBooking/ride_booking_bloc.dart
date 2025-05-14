@@ -16,6 +16,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     // Register event handlers
     on<FetchTravelerBookingsRequested>(_onFetchTravelerBookingsRequested);
     on<FetchProviderBookingsRequested>(_onFetchProviderBookingsRequested);
+    on<BackToInit>((event, emit) {
+      emit(BookingInitial());
+    },);
     on<MarkBookingAsComplete>((event, emit) async{
       emit(BookingLoading());
       try{

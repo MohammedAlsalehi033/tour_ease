@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:tour_ease/controller/rideSharing/offers/offers_bloc.dart';
 import 'package:tour_ease/controller/rideSharing/offers/offers_state.dart';
 import 'package:tour_ease/controller/rideSharing/offers/offers_event.dart';
+import 'package:tour_ease/model/rideSharing/offer/offerModel.dart';
 import 'package:tour_ease/model/userManagment/user.dart';
 
 class NotifiactionScreen extends StatefulWidget {
@@ -67,6 +68,8 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
         }
       },
       builder: (context, state) {
+
+
         return Scaffold(
           appBar: AppBar(
             title: const Text("Notifications"),
@@ -97,7 +100,9 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
         ),
       );
     } else if (state is OffersLoaded) {
-      final offers = state.offers;
+
+
+      final List<OfferModel> offers = state.offers;
       if (offers.isEmpty) {
         return Center(
           child: Column(
@@ -332,24 +337,44 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
     String routeInfo = 'Trip details unavailable';
     String startLocation = 'N/A';
     String endLocation = 'N/A';
+    String tripDate = "Date not specified";
+    String tripTime = "Time not specified";
 
+    print(offer.toString());
+
+    // Handle listing data
     if (offer.listing != null) {
       startLocation = offer.listing!['startLocationText'] ?? 'N/A';
       endLocation = offer.listing!['endLocationText'] ?? 'N/A';
+
+      // Format trip details from listing
+      if (offer.listing!['departureTime'] != null) {
+        DateTime departureDateTime = DateTime.parse(offer.listing!['departureTime']);
+        tripDate = DateFormat('EEEE, MMM d').format(departureDateTime);
+        tripTime = DateFormat('h:mm a').format(departureDateTime);
+      }
 
       if (startLocation != 'N/A' && endLocation != 'N/A') {
         routeInfo = '$startLocation to $endLocation';
       }
     }
 
-    // Format trip details
-    final tripDate = offer.listing != null && offer.listing!['date'] != null
-        ? DateFormat('EEEE, MMM d').format(DateTime.parse(offer.listing!['date']))
-        : 'Date not specified';
+    // Handle request data
+    if (offer.request != null) {
+      startLocation = offer.request!['startLocationText'] ?? startLocation;
+      endLocation = offer.request!['endLocationText'] ?? endLocation;
 
-    final tripTime = offer.listing != null && offer.listing!['time'] != null
-        ? offer.listing!['time']
-        : 'Time not specified';
+      // Format trip details from request
+      if (offer.request!['departureTime'] != null) {
+        DateTime departureDateTime = DateTime.parse(offer.request!['departureTime']);
+        tripDate = DateFormat('EEEE, MMM d').format(departureDateTime);
+        tripTime = DateFormat('h:mm a').format(departureDateTime);
+      }
+
+      if (startLocation != 'N/A' && endLocation != 'N/A') {
+        routeInfo = '$startLocation to $endLocation';
+      }
+    }
 
     showModalBottomSheet(
       context: context,
@@ -566,7 +591,6 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
       },
     );
   }
-
   Widget _buildStatusIndicator(String status) {
     Color statusColor;
     IconData statusIcon;

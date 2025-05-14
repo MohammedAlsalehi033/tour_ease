@@ -274,6 +274,7 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
+    print(question.votes.toString());
     final userVote = question.votes?.firstWhere(
       (vote) => vote['userId'] == UserModel().id,
       orElse: () => null,
