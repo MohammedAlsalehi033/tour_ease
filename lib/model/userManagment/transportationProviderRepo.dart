@@ -80,13 +80,11 @@ class TransportationProviderRepoFromAPI extends TransportationProviderRepo {
 
   @override
   Future<TransportationProviderModel> createTransportationProvider(
-      TransportationProviderModel transportaitonProviderModel, // Assuming this model holds non-file input data like type, seats
+      TransportationProviderModel transportaitonProviderModel,
       List<XFile> vehicleMedia,
       List<XFile> licenseMedia) async {
 
-    // Assume 'dio' and 'baseUrl' are accessible/defined in the surrounding class context
-    // final Dio dio = Dio();
-    // final String baseUrl = 'YOUR_BASE_URL';
+
 
     List<MultipartFile> licenseFiles = [];
     if (licenseMedia != null) {

@@ -37,7 +37,6 @@ class _RideResultsPageState extends State<RideResultsPage> {
       
       body: BlocBuilder<RideResultBloc, RideResultState>(
         builder: (context, state) {
-          print(state.rides);
 
           if (state.isLoading) {
             return Center(

@@ -79,6 +79,7 @@ class OfferBloc extends Bloc<OfferEvent, OfferState> {
         booking: result['booking'],
         message: result['message'],
       ));
+
     } catch (e) {
       emit(OfferError(e.toString()));
     }

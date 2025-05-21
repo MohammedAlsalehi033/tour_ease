@@ -28,6 +28,12 @@ class _QuestionDetailsPageState extends State<QuestionDetailsPage> {
     _fetchComments();
   }
 
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+  }
+
   void _fetchComments({bool refresh = true}) {
     context.read<CommentsBloc>().add(FetchComments(
           page: 1,
@@ -38,10 +44,9 @@ class _QuestionDetailsPageState extends State<QuestionDetailsPage> {
         ));
   }
 
-  void _postComment() {
+  void _postComment() async {
     final commentText = _commentController.text.trim();
     if (commentText.isNotEmpty) {
-      // TODO: Implement the logic to post the comment
 
       context.read<CommentsBloc>().add(PostComment(CommentModel(
           id: 000,
@@ -54,6 +59,7 @@ class _QuestionDetailsPageState extends State<QuestionDetailsPage> {
               userName: UserModel().username))));
       _commentController.clear();
       _fetchComments();
+
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Comment cannot be empty.')),

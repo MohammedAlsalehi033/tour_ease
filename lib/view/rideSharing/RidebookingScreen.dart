@@ -4,6 +4,7 @@ import 'package:intl/intl.dart'; // For date formatting
 import 'package:tour_ease/controller/rideSharing/RideBooking/ride_booking_bloc.dart';
 import 'package:tour_ease/controller/rideSharing/RideBooking/ride_booking_event.dart';
 import 'package:tour_ease/controller/rideSharing/RideBooking/ride_booking_state.dart';
+import 'package:tour_ease/model/rideSharing/RideBooking/RideBooking.dart';
 import 'package:tour_ease/model/userManagment/user.dart';
 import 'package:tour_ease/view/mapscreen/trackingMap.dart';
 import 'package:tour_ease/view/rideSharing/RideSharingPage.dart';
@@ -54,14 +55,12 @@ class _RidebookingscreenTravelerState extends State<RidebookingscreenTraveler> {
               child: ListView.builder(
                 itemCount: state.travelerBookings.length,
                 itemBuilder: (context, index) {
-                  final booking = state.travelerBookings[index];
+                  final TravelerBookingModel booking = state.travelerBookings[index];
 
                   // Format date for better readability
                   final formattedDate = DateFormat('MMM d, yyyy - HH:mm').format(booking.createdAt.toLocal());
-                  // Format status with proper capitalization
                   final status = booking.status.toUpperCase();
-                  print(booking.getProviderId());
-
+                  print(booking.toString());
                   return Card(
                     elevation: 3,
                     margin: const EdgeInsets.symmetric(vertical: 8),

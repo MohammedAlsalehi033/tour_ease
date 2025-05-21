@@ -148,7 +148,6 @@ class TravelerBookingModel {
   });
 
   factory TravelerBookingModel.fromJson(Map<String, dynamic> json) {
-    // --- Safe Parsing Logic for Nested Models (Same as Provider model) ---
     RideListingModel? parsedListing;
     if (json['listing'] != null) {
       try {
@@ -162,8 +161,8 @@ class TravelerBookingModel {
         parsedOffer = OfferModel.fromJson(json['offer']);
       } catch (e) { print("Error parsing nested offer in TravelerBookingModel: $e"); }
     }
-    // --- End Safe Parsing ---
 
+    print(json);
     return TravelerBookingModel(
       id: json['id'],
       travelerId: json['travelerId'],
@@ -180,7 +179,6 @@ class TravelerBookingModel {
       request: json['request'] != null
           ? TravelerRideRequestModel.fromJson(json['request'])
           : null,
-      // No traveler parsing
       offer: parsedOffer,
     );
   }
@@ -210,6 +208,7 @@ class TravelerBookingModel {
   }
 
   Map<String, dynamic> toJson() {
+
     return {
       'id': id,
       'travelerId': travelerId,
@@ -230,7 +229,7 @@ class TravelerBookingModel {
 
   @override
   String toString() {
-    return 'TravelerBookingModel{id: $id, travelerId: $travelerId, listing: ${listing?.id}, offer: ${offer?.id}}';
+    return 'TravelerBookingModel{id: $id, travelerId: $travelerId, seatsBooked: $seatsBooked, luggage: $luggage, status: $status, totalPrice: $totalPrice, createdAt: $createdAt, bookingSource: $bookingSource, transportationListingId: $transportationListingId, transportationRequestId: $transportationRequestId, offerId: $offerId, listing: $listing, request: $request, offer: $offer}';
   }
 }
 

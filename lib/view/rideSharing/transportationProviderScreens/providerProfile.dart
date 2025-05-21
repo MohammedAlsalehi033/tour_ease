@@ -7,6 +7,7 @@ import 'package:tour_ease/controller/rideSharing/offers/offers_state.dart';
 import 'package:tour_ease/model/rideSharing/offer/offerModel.dart';
 import 'package:tour_ease/model/userManagment/transportationProvider.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tour_ease/model/userManagment/user.dart';
 
 class TransportationProviderProfile extends StatefulWidget {
   final TransportationProviderModel transportationProviderModel;
@@ -337,6 +338,7 @@ class _TransportationProviderProfileState extends State<TransportationProviderPr
     } else if (state is OfferError) {
       return Center(child: Text('Error: ${state.message} asdasdasdasdasdas'));
     } else {
+      context.read<OfferBloc>().add(GetReceivedOffersEvent(userId: UserModel().id));
       return const Center(child: Text('No offers available'));
     }
   }
