@@ -136,7 +136,7 @@ class ChatService {
       print('Message content: ${message.content}');
 
       final response = await http.post(
-        Uri.parse('$apiBaseUrl/api/messages'),
+        Uri.parse('$apiBaseUrl/api/ '),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'senderId': message.senderId,

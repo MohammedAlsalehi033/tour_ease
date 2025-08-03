@@ -5,43 +5,33 @@ import 'package:tour_ease/model/rideSharing/RideFilterData.dart'; // Assuming Ri
 import 'package:tour_ease/model/rideSharing/rideListing/rideListingModel.dart';
 import 'package:tour_ease/model/rideSharing/rideRequest/rideRequestModel.dart'; // For existing methods
 
-// Define the abstract repository interface
 abstract class RideRepository {
-  // Fetches ride listings based on filter criteria (Provider's perspective)
   Future<List<RideListingModel>> fetchRidesListing(RideFilterModel filter);
 
-  // Creates a new ride listing (Provider action)
   Future<RideListingModel> createRidesListing(RideListingModel rideListing);
 
-  // Creates a new ride request (Traveler action) - Renamed parameter for clarity
   Future<void> createRidesRequest(TravelerRideRequestModel rideRequest); // Use TravelerRideRequestModel for creation if needed, or a dedicated creation model
 
-  // Fetches ride requests based on filter criteria (Traveler's perspective)
   Future<List<TravelerRideRequestModel>> fetchRideRequests(RideFilterModel filter); // Added method signature
 }
 
-// Implementation of the RideRepository interface
 class RideRepositoryImpl implements RideRepository {
   final APIService apiService;
   final String baseUrl;
-  final Dio dio = Dio(); // Dio instance for making HTTP requests
+  final Dio dio = Dio();
 
-  // Constructor requiring an APIService instance
   RideRepositoryImpl({required this.apiService}) : baseUrl = apiService.baseUrl;
 
-  // Implementation to fetch ride listings
   @override
   Future<List<RideListingModel>> fetchRidesListing(
       RideFilterModel filter) async {
     try {
       final Map<String, dynamic> queryParameters = {};
 
-      // Add location filter if pickup coordinates are provided
       if (filter.pickupLocationCoordinates != null) {
         final coordinates = filter.pickupLocationCoordinates!;
         queryParameters['lat'] = coordinates.latitude;
         queryParameters['lng'] = coordinates.longitude;
-        // Add radius if needed by the API, e.g., queryParameters['radiusKm'] = filter.radius ?? 15;
       }
 
       // Add minimum seats filter
@@ -80,7 +70,7 @@ class RideRepositoryImpl implements RideRepository {
       // Make the GET request to the ride listing endpoint
       // Example URL was hardcoded, using queryParameters now
       final response = await dio.get(
-        "$baseUrl/api/searchForNearByListing", // Endpoint for listings
+        "$baseUrl/api/searchForNearByListing",
         queryParameters: queryParameters.isNotEmpty ? queryParameters : null, // Pass parameters if any
       );
 
