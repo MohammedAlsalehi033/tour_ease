@@ -302,7 +302,16 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
             children: [
               Row(
                 children: [
-                  Container(
+                  question.mediaUrls.length > 0 ? Container(
+          width: 48.w,
+              height: 48.h,
+              decoration: BoxDecoration(
+                image: DecorationImage(fit: BoxFit.fill,image: NetworkImage(question.mediaUrls.first)),
+
+
+                color: colorScheme.primaryContainer,
+                shape: BoxShape.circle,
+              ) ): Container(
                     width: 48.w,
                     height: 48.h,
                     decoration: BoxDecoration(

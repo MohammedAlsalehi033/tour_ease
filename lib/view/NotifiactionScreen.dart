@@ -159,6 +159,13 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
             default:
               statusColor = Colors.grey;
           }
+          final mediaUrls = offer.sender?['mediaUrls'];
+
+          final hasImage = mediaUrls != null && mediaUrls is List && mediaUrls.isNotEmpty;
+      final departureTime = DateTime.parse(offer.listing?["departureTime"]) ;
+
+      final hasDepartureTime = departureTime;
+          final isOutDated = DateTime.now().isAfter(departureTime);
 
           return Card(
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -182,8 +189,12 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
                       children: [
                         // Avatar for sender
                         CircleAvatar(
+                          backgroundImage: hasImage ? NetworkImage(mediaUrls[0]) : null,
+
                           backgroundColor: Theme.of(context).primaryColor.withOpacity(0.2),
-                          child: Text(
+                          child: hasImage
+                              ? null // If there is an image, the child should be null
+                              : Text(
                             senderName.isNotEmpty ? senderName[0].toUpperCase() : '?',
                             style: TextStyle(
                               color: Theme.of(context).primaryColor,
@@ -281,10 +292,14 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
                     if (offer.status.toLowerCase() == 'pending')
                       Padding(
                         padding: const EdgeInsets.only(top: 12),
-                        child: Row(
+                        child:  isOutDated ?  Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Center(child: Text("this offer is expired", style:  Theme.of(context).textTheme.titleMedium,)),
+                        ): Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             OutlinedButton(
+
                               onPressed: () => _handleOfferResponse(context, offer, 'rejected'),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: Colors.red,

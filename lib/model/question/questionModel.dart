@@ -1,9 +1,12 @@
+import 'package:tour_ease/model/userManagment/user.dart';
+
 class Question {
   int? id;
   final String title;
   final String description;
   final String userId;
   String? userName;
+  UserModel user;
   int? upvotes;
   int? downvotes;
   DateTime? createdAt;
@@ -19,6 +22,7 @@ class Question {
     required this.description,
     required this.userId,
     this.userName,
+    required this.user,
     this.upvotes = 0,
     this.downvotes = 0,
     this.createdAt,
@@ -45,7 +49,8 @@ class Question {
         tags: List<String>.from(json['tags'] ?? []),
         commentCount: json['_count']?['comments'] ?? 0,
         mediaUrls: List<String>.from(json['user']['mediaUrls'] as List) ?? [],
-        votes: json['vote']
+        votes: json['vote'], 
+        user: UserModel.fromJson(json['user'])
     );
   }
 

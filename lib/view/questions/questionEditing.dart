@@ -213,6 +213,7 @@ class _QuestionEditingPageState extends State<QuestionEditingPage> {
                               votes: widget.question.votes,
                               commentCount: widget.question.commentCount,
                               updatedAt: widget.question.updatedAt,
+                              user: UserModel(),
 
                               id: widget.question.id,
                                 title: _titleController.text,
