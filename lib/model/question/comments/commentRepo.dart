@@ -7,90 +7,63 @@ import 'package:tour_ease/model/question/questionModel.dart';
 abstract class CommentsRepo {
   Future<CommentModel> writeComment(CommentModel comment);
   Future<CommentModel> deleteComment(CommentModel comment, Question question);
-  Future<List<CommentModel>> getAllComments(Question question , int page, int limit, String sort);
+  Future<List<CommentModel>> getAllComments(Question question, int page, int limit, String sort);
 }
 
 class CommentRepoNodeJSApi extends CommentsRepo {
   final APIService apiService;
-  final String baseUrl;
-  final Dio dio = Dio();
-  CommentRepoNodeJSApi(this.apiService) : baseUrl = apiService.baseUrl;
+
+  CommentRepoNodeJSApi(this.apiService);
 
   @override
   Future<List<CommentModel>> getAllComments(Question question, int page, int limit, String sort) async {
     try {
-      String url = '$baseUrl/api/commments?page=$page&limit=$limit&id=${question.id}';
-      print(url);
-
-      final response = await dio.get(
-          url,
-          options: Options(contentType: "application/json"),
-
-          data: {
-          "questionId": question.id
-        }
-
+      return await apiService.get<List<CommentModel>>(
+        path: '/api/commments',
+        queryParams: {
+          'id': question.id.toString(),
+          'page': page.toString(),
+          'limit': limit.toString(),
+          'sort': sort,
+        },
+        fromJson: (json) => (json as List)
+            .map((comment) => CommentModel.fromJson(comment))
+            .toList(),
       );
-
-      if (response.statusCode == 200) {
-        final data = response.data;
-        if (data['success'] == true) {
-
-          final data2 = (data['data'] as List)
-              .map((comment) => CommentModel.fromJson(comment))
-              .toList();
-
-          return data2;
-        } else {
-          throw Exception('API request was not successful');
-        }
-      } else {
-        throw Exception('Failed to load questions: ${response.statusCode}');
-      }
     } catch (e) {
-
-      throw Exception('Error fetching questions: $e');
+      throw Exception('Error fetching comments: $e');
     }
   }
 
   @override
-  Future<CommentModel> deleteComment(CommentModel comment, Question question) {
-    // TODO: implement deleteComment
-    throw UnimplementedError();
+  Future<CommentModel> deleteComment(CommentModel comment, Question question) async {
+    try {
+      return await apiService.delete<CommentModel>(
+        path: '/api/commments/${comment.id}',
+        body: {
+          'questionId': question.id,
+        },
+        fromJson: (json) => CommentModel.fromJson(json['data']),
+      );
+    } catch (e) {
+      throw Exception('Error deleting comment: $e');
+    }
   }
 
   @override
-  Future<CommentModel> writeComment(CommentModel comment)async {
+  Future<CommentModel> writeComment(CommentModel comment) async {
     try {
-      String url = '$baseUrl/api/commments';
-      final response = await dio.post(
-          url,
-          options: Options(contentType: "application/json"),
-
-          data: {
-            "userId": comment.user.userid,
-            "questionId": comment.questionId,
-            "content": comment.content
-          }
-
+      return await apiService.post<CommentModel>(
+        path: '/api/commments',
+        body: {
+          "userId": comment.user.userid,
+          "questionId": comment.questionId,
+          "content": comment.content
+        },
+        fromJson: (json) => CommentModel.fromJson(json['data']),
       );
-
-      if (response.statusCode == 200) {
-        final data = response.data;
-        if (data['success'] == true) {
-
-          final data2 = data['data'];
-
-          return data2;
-        } else {
-          throw Exception('API request was not successful');
-        }
-      } else {
-        throw Exception('Failed to load questions: ${response.statusCode}');
-      }
     } catch (e) {
-
-      throw Exception('Error fetching questions: $e');
+      throw Exception('Error writing comment: $e');
     }
   }
 }
@@ -98,19 +71,16 @@ class CommentRepoNodeJSApi extends CommentsRepo {
 class CommentRepoGraphQlApi extends CommentsRepo {
   @override
   Future<CommentModel> deleteComment(CommentModel comment, Question question) {
-    // TODO: implement deleteComment
     throw UnimplementedError();
   }
 
   @override
   Future<List<CommentModel>> getAllComments(Question question, int page, int limit, String sort) {
-    // TODO: implement getAllComments
     throw UnimplementedError();
   }
 
   @override
   Future<CommentModel> writeComment(CommentModel comment) {
-    // TODO: implement writeComment
     throw UnimplementedError();
   }
 }

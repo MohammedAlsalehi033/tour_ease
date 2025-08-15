@@ -8,36 +8,21 @@ abstract class VoteRepo {
 
 class VotesRepoNodeAPI extends VoteRepo {
   final APIService apiService;
-  final String baseUrl;
-  final Dio dio = Dio();
 
-
-  VotesRepoNodeAPI(this.apiService) : baseUrl = apiService.baseUrl;
+  VotesRepoNodeAPI(this.apiService);
 
   @override
   Future<String> updateVote(bool isUpvote, Question question) async {
     try {
-      String url = '$baseUrl/api/questions/vote';
-      final response = await Dio().post(
-        url,
-        options: Options(contentType: "application/json"),
-        data: {
+      return await apiService.post<String>(
+        path: '/api/questions/vote',
+        body: {
           'id': question.id,
           'userId': question.userId,
           'isUpvote': isUpvote,
         },
+        fromJson: (json) => "Done",
       );
-
-      if (response.statusCode == 200) {
-        final data = response.data;
-        if (data['success'] == true) {
-          return "Done";
-        } else {
-          throw Exception('API request was not successful: ${data['message']}'); // Added message from the API response
-        }
-      } else {
-        throw Exception('Failed to update vote: ${response.statusCode}');
-      }
     } catch (e) {
       throw Exception('Error updating vote: $e');
     }

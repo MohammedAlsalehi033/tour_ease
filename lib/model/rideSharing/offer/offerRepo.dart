@@ -32,14 +32,10 @@ abstract class OffersRepo {
   Future<Map<String, dynamic>> getUserOfferStats(String userId);
 }
 
-
-
 class OfferRepoNodeJSApi extends OffersRepo {
   final APIService apiService;
-  final String baseUrl;
-  final Dio dio = Dio();
 
-  OfferRepoNodeJSApi(this.apiService) : baseUrl = apiService.baseUrl;
+  OfferRepoNodeJSApi(this.apiService);
 
   @override
   Future<List<OfferModel>> getAllOffers({
@@ -52,41 +48,24 @@ class OfferRepoNodeJSApi extends OffersRepo {
     int? listingId,
     int? requestId
   }) async {
-
-    final data =  {
-      "page": page,
-    "limit": limit,
-    "sort": sort,
-    "senderId": senderId,
-    "recipientId": recipientId,
-    "status": status,
-    "listingId": listingId,
-    "requestId": requestId,
-  };
-
     try {
-      final response = await dio.get(
-          '$baseUrl/api/offers',
-          options: Options(contentType: "application/json"),
+      final queryParams = <String, dynamic>{
+        'page': page.toString(),
+        'limit': limit.toString(),
+        'sort': sort,
+      };
+      if (senderId != null) queryParams['senderId'] = senderId;
+      if (recipientId != null) queryParams['recipientId'] = recipientId;
+      if (status != null) queryParams['status'] = status;
+      if (listingId != null) queryParams['listingId'] = listingId.toString();
+      if (requestId != null) queryParams['requestId'] = requestId.toString();
 
+      return await apiService.get<List<OfferModel>>(
+        path: '/api/offers',
+        queryParams: queryParams,
+        fromJson: (json) => (json as List).map((offer) => OfferModel.fromJson(offer)).toList(),
       );
-      if (response.statusCode == 200) {
-        final data = response.data;
-        if (data['success'] == true) {
-          final offers = (data['data'] as List)
-
-              .map((offer) => OfferModel.fromJson(offer))
-
-              .toList();
-          return offers;
-        } else {
-          throw Exception('API request was not successful');
-        }
-      } else {
-        throw Exception('Failed to load offers: ${response.statusCode}');
-      }
     } catch (e) {
-
       throw Exception('Error fetching offers: $e');
     }
   }
@@ -94,21 +73,10 @@ class OfferRepoNodeJSApi extends OffersRepo {
   @override
   Future<OfferModel> getOfferById(int id) async {
     try {
-      final response = await dio.get(
-        '$baseUrl/api/offers/$id',
-        options: Options(contentType: "application/json"),
+      return await apiService.get<OfferModel>(
+        path: '/api/offers/$id',
+        fromJson: (json) => OfferModel.fromJson(json),
       );
-
-      if (response.statusCode == 200) {
-        final data = response.data;
-        if (data['success'] == true) {
-          return OfferModel.fromJson(data['data']);
-        } else {
-          throw Exception('API request was not successful');
-        }
-      } else {
-        throw Exception('Failed to load offer: ${response.statusCode}');
-      }
     } catch (e) {
       throw Exception('Error fetching offer: $e');
     }
@@ -125,32 +93,21 @@ class OfferRepoNodeJSApi extends OffersRepo {
     int? transportationRequestId
   }) async {
     try {
-      print(recipientId);
-      print(senderId);
-      final response = await dio.post(
-          '$baseUrl/api/offers',
-          options: Options(contentType: "application/json"),
-          data: {
-            "senderId": senderId,
-            "recipientId": recipientId,
-            "pricePerSeat": pricePerSeat,
-            "seatsRequested": seatsRequested,
-            "message": message,
-            "transportationListingId": transportationListingId,
-            "transportationRequestId": transportationRequestId,
-          }
-      );
+      final body = <String, dynamic>{
+        'senderId': senderId,
+        'recipientId': recipientId,
+        'pricePerSeat': pricePerSeat,
+        'seatsRequested': seatsRequested,
+      };
+      if (message != null) body['message'] = message;
+      if (transportationListingId != null) body['transportationListingId'] = transportationListingId;
+      if (transportationRequestId != null) body['transportationRequestId'] = transportationRequestId;
 
-      if (response.statusCode == 201) {
-        final data = response.data;
-        if (data['success'] == true) {
-          return OfferModel.fromJson(data['data']);
-        } else {
-          throw Exception('API request was not successful');
-        }
-      } else {
-        throw Exception('Failed to create offer: ${response.statusCode}');
-      }
+      return await apiService.post<OfferModel>(
+        path: '/api/offers',
+        body: body,
+        fromJson: (json) => OfferModel.fromJson(json['data']),
+      );
     } catch (e) {
       throw Exception('Error creating offer: $e');
     }
@@ -159,25 +116,11 @@ class OfferRepoNodeJSApi extends OffersRepo {
   @override
   Future<Map<String, dynamic>> acceptOffer(int id) async {
     try {
-      final response = await dio.put(
-        '$baseUrl/api/offers/$id/accept',
-        options: Options(contentType: "application/json"),
+      return await apiService.put<Map<String, dynamic>>(
+        path: '/api/offers/$id/accept',
+        body: {},
+        fromJson: (json) => json['data'] as Map<String, dynamic>,
       );
-
-      if (response.statusCode == 200) {
-        final data = response.data;
-        if (data['success'] == true) {
-          return {
-            'offer': OfferModel.fromJson(data['data']['offer']),
-            'booking': data['data']['booking'],
-            'message': data['data']['message'],
-          };
-        } else {
-          throw Exception('API request was not successful');
-        }
-      } else {
-        throw Exception('Failed to accept offer: ${response.statusCode}');
-      }
     } catch (e) {
       throw Exception('Error accepting offer: $e');
     }
@@ -186,21 +129,11 @@ class OfferRepoNodeJSApi extends OffersRepo {
   @override
   Future<OfferModel> rejectOffer(int id) async {
     try {
-      final response = await dio.put(
-        '$baseUrl/api/offers/$id/reject',
-        options: Options(contentType: "application/json"),
+      return await apiService.put<OfferModel>(
+        path: '/api/offers/$id/reject',
+        body: {},
+        fromJson: (json) => OfferModel.fromJson(json['data']),
       );
-
-      if (response.statusCode == 200) {
-        final data = response.data;
-        if (data['success'] == true) {
-          return OfferModel.fromJson(data['data']);
-        } else {
-          throw Exception('API request was not successful');
-        }
-      } else {
-        throw Exception('Failed to reject offer: ${response.statusCode}');
-      }
     } catch (e) {
       throw Exception('Error rejecting offer: $e');
     }
@@ -209,29 +142,17 @@ class OfferRepoNodeJSApi extends OffersRepo {
   @override
   Future<List<OfferModel>> getReceivedOffers(String userId, {int page = 1, int limit = 10, String? status}) async {
     try {
-      String url = '$baseUrl/api/users/$userId/received-offers?page=$page&limit=$limit';
-      if (status != null) {
-        url += '&status=$status';
-      }
+      final queryParams = <String, dynamic>{
+        'page': page.toString(),
+        'limit': limit.toString(),
+      };
+      if (status != null) queryParams['status'] = status;
 
-      final response = await dio.get(
-        url,
-        options: Options(contentType: "application/json"),
+      return await apiService.get<List<OfferModel>>(
+        path: '/api/users/$userId/received-offers',
+        queryParams: queryParams,
+        fromJson: (json) => (json as List).map((offer) => OfferModel.fromJson(offer)).toList(),
       );
-
-      if (response.statusCode == 200) {
-        final data = response.data;
-        if (data['success'] == true) {
-          final offers = (data['data'] as List)
-              .map((offer) => OfferModel.fromJson(offer))
-              .toList();
-          return offers;
-        } else {
-          throw Exception('API request was not successful');
-        }
-      } else {
-        throw Exception('Failed to load received offers: ${response.statusCode}');
-      }
     } catch (e) {
       throw Exception('Error fetching received offers: $e');
     }
@@ -240,29 +161,17 @@ class OfferRepoNodeJSApi extends OffersRepo {
   @override
   Future<List<OfferModel>> getSentOffers(String userId, {int page = 1, int limit = 10, String? status}) async {
     try {
-      String url = '$baseUrl/api/users/$userId/sent-offers?page=$page&limit=$limit';
-      if (status != null) {
-        url += '&status=$status';
-      }
+      final queryParams = <String, dynamic>{
+        'page': page.toString(),
+        'limit': limit.toString(),
+      };
+      if (status != null) queryParams['status'] = status;
 
-      final response = await dio.get(
-        url,
-        options: Options(contentType: "application/json"),
+      return await apiService.get<List<OfferModel>>(
+        path: '/api/users/$userId/sent-offers',
+        queryParams: queryParams,
+        fromJson: (json) => (json as List).map((offer) => OfferModel.fromJson(offer)).toList(),
       );
-
-      if (response.statusCode == 200) {
-        final data = response.data;
-        if (data['success'] == true) {
-          final offers = (data['data'] as List)
-              .map((offer) => OfferModel.fromJson(offer))
-              .toList();
-          return offers;
-        } else {
-          throw Exception('API request was not successful');
-        }
-      } else {
-        throw Exception('Failed to load sent offers: ${response.statusCode}');
-      }
     } catch (e) {
       throw Exception('Error fetching sent offers: $e');
     }
@@ -271,29 +180,17 @@ class OfferRepoNodeJSApi extends OffersRepo {
   @override
   Future<List<OfferModel>> getOffersForListing(int listingId, {int page = 1, int limit = 10, String? status}) async {
     try {
-      String url = '$baseUrl/api/listings/$listingId/offers?page=$page&limit=$limit';
-      if (status != null) {
-        url += '&status=$status';
-      }
+      final queryParams = <String, dynamic>{
+        'page': page.toString(),
+        'limit': limit.toString(),
+      };
+      if (status != null) queryParams['status'] = status;
 
-      final response = await dio.get(
-        url,
-        options: Options(contentType: "application/json"),
+      return await apiService.get<List<OfferModel>>(
+        path: '/api/listings/$listingId/offers',
+        queryParams: queryParams,
+        fromJson: (json) => (json as List).map((offer) => OfferModel.fromJson(offer)).toList(),
       );
-
-      if (response.statusCode == 200) {
-        final data = response.data;
-        if (data['success'] == true) {
-          final offers = (data['data'] as List)
-              .map((offer) => OfferModel.fromJson(offer))
-              .toList();
-          return offers;
-        } else {
-          throw Exception('API request was not successful');
-        }
-      } else {
-        throw Exception('Failed to load listing offers: ${response.statusCode}');
-      }
     } catch (e) {
       throw Exception('Error fetching listing offers: $e');
     }
@@ -302,29 +199,17 @@ class OfferRepoNodeJSApi extends OffersRepo {
   @override
   Future<List<OfferModel>> getOffersForRequest(int requestId, {int page = 1, int limit = 10, String? status}) async {
     try {
-      String url = '$baseUrl/api/requests/$requestId/offers?page=$page&limit=$limit';
-      if (status != null) {
-        url += '&status=$status';
-      }
+      final queryParams = <String, dynamic>{
+        'page': page.toString(),
+        'limit': limit.toString(),
+      };
+      if (status != null) queryParams['status'] = status;
 
-      final response = await dio.get(
-        url,
-        options: Options(contentType: "application/json"),
+      return await apiService.get<List<OfferModel>>(
+        path: '/api/requests/$requestId/offers',
+        queryParams: queryParams,
+        fromJson: (json) => (json as List).map((offer) => OfferModel.fromJson(offer)).toList(),
       );
-
-      if (response.statusCode == 200) {
-        final data = response.data;
-        if (data['success'] == true) {
-          final offers = (data['data'] as List)
-              .map((offer) => OfferModel.fromJson(offer))
-              .toList();
-          return offers;
-        } else {
-          throw Exception('API request was not successful');
-        }
-      } else {
-        throw Exception('Failed to load request offers: ${response.statusCode}');
-      }
     } catch (e) {
       throw Exception('Error fetching request offers: $e');
     }
@@ -333,21 +218,10 @@ class OfferRepoNodeJSApi extends OffersRepo {
   @override
   Future<Map<String, dynamic>> getUserOfferStats(String userId) async {
     try {
-      final response = await dio.get(
-        '$baseUrl/api/users/$userId/offer-stats',
-        options: Options(contentType: "application/json"),
+      return await apiService.get<Map<String, dynamic>>(
+        path: '/api/users/$userId/offer-stats',
+        fromJson: (json) => json as Map<String, dynamic>,
       );
-
-      if (response.statusCode == 200) {
-        final data = response.data;
-        if (data['success'] == true) {
-          return data['data'];
-        } else {
-          throw Exception('API request was not successful');
-        }
-      } else {
-        throw Exception('Failed to load user offer stats: ${response.statusCode}');
-      }
     } catch (e) {
       throw Exception('Error fetching user offer stats: $e');
     }

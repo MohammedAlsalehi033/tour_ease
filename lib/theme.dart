@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppThemes {
   // Define consistent colors in one place for easier maintenance
@@ -13,8 +14,34 @@ class AppThemes {
   static const double _borderRadius = 12.0;
   static const double _buttonBorderRadius = 8.0;
 
-  // Define your typography scale
-  static const TextTheme _baseTextTheme = TextTheme(
+
+  static final TextTheme _baseTextTheme = GoogleFonts.interTextTheme().copyWith(
+    displayLarge: GoogleFonts.poppins(fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+    displayMedium: GoogleFonts.poppins(fontSize: 28, fontWeight: FontWeight.bold),
+    displaySmall: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold),
+    headlineLarge: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w600),
+    headlineMedium: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w600),
+    headlineSmall: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600),
+    // titleLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+    titleLarge:  GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600),
+    // titleMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+    titleMedium:  GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600),
+    // titleSmall: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+    titleSmall:  GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600),
+    // bodyLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
+    bodyLarge:  GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.normal),
+    // bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
+    bodyMedium:  GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.normal),
+    // bodySmall: TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
+    bodySmall:  GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.normal),
+    // labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+    labelLarge:  GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500),
+    // labelMedium: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+    labelMedium:  GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500),
+    // labelSmall: TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
+    labelSmall:  GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w500),
+  );
+    static const TextTheme _baseTextTheme2 = TextTheme(
     displayLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: -0.5),
     displayMedium: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
     displaySmall: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),

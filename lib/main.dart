@@ -18,6 +18,7 @@ import 'package:tour_ease/controller/userManagment//initialize.dart';
 import 'package:tour_ease/controller/question/commets/comments_bloc.dart';
 import 'package:tour_ease/controller/question/questionBloc.dart';
 import 'package:tour_ease/controller/question/votes/votes_bloc.dart';
+import 'package:tour_ease/controller/userManagment/JWTController.dart';
 import 'package:tour_ease/model/chat/chatRepo.dart';
 import 'package:tour_ease/model/rideSharing/RideBooking/RideBookingRepo.dart';
 import 'package:tour_ease/model/rideSharing/offer/offerRepo.dart';
@@ -32,56 +33,77 @@ import 'package:tour_ease/theme.dart';
 import 'package:tour_ease/view/auth.dart';
 import 'package:tour_ease/view/mainPage.dart';
 
+import 'package:flutter_bloc/flutter_bloc.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
   final baseUrlLocal = "http://10.0.2.2:3000";
   final baseUrlDeploied = "http://13.201.19.41:3003";
+
+  final userJWT = await getFirebaseIdToken();
+
+  final APIService apiService = APIServiceNodeJS(baseUrlDeploied, userJWT ?? "");
+
   runApp(
-    MultiBlocProvider(
-      providers: [
-        BlocProvider(
-          create: (context) => ThemeBloc(),
-        ),
-        BlocProvider(
-          create: (context) => RideFilterBloc(),
-        ),
-        BlocProvider(
-          create: (context) => RideResultBloc(
-            rideRepository: RideRepositoryImpl(
-                apiService: APIServiceNodeJS(baseUrlDeploied)),
+    // 3. Provide that single instance to the entire widget tree.
+    RepositoryProvider.value(
+      value: apiService,
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create: (context) => ThemeBloc(),
           ),
-        ),
-        BlocProvider(
-          create: (context) => QuestionBloc(
-              questionRepository:
-                  QuestionRepoFromAPI(APIServiceNodeJS(baseUrlDeploied))),
-        ),
-        BlocProvider(
-            create: (context) =>
-                VotesBloc(VotesRepoNodeAPI(APIServiceNodeJS(baseUrlDeploied)))),
-        BlocProvider(
-            create: (context) => CommentsBloc(
-                CommentRepoNodeJSApi(APIServiceNodeJS(baseUrlDeploied)))),
-        BlocProvider(
-            create: (context) => RideRequestBloc(rideRepository: RideRepositoryImpl(apiService: APIServiceNodeJS(baseUrlDeploied)))),
-        BlocProvider(
-            create: (context) => TransporationProviderBloc(
-                TransportationProviderRepoFromAPI(
-                    apiService: APIServiceNodeJS(baseUrlDeploied)),
-                RideRepositoryImpl(
-                    apiService: APIServiceNodeJS(baseUrlDeploied)))),
-        BlocProvider(
-            create: (context) => OfferBloc(
-                OfferRepoNodeJSApi(APIServiceNodeJS(baseUrlDeploied) ))..add(GetAllOffersEvent())),
-        BlocProvider(
-            create: (context) => BookingBloc(
-                bookingRepository: BookingRepositoryImpl(apiService: APIServiceNodeJS(baseUrlDeploied)))),
-        BlocProvider(
-            create: (context) => ChatBloc(chatService: ChatService(apiBaseUrl: baseUrlDeploied, currentUserId: UserModel().id),currentUserId: UserModel().id))
-      ],
-      child: MyApp(),
+          BlocProvider(
+            create: (context) => RideFilterBloc(),
+          ),
+          BlocProvider(
+            create: (context) => RideResultBloc(
+              // 4. Read the provided instance from the context.
+              rideRepository: RideRepositoryImpl(
+                  apiService: context.read<APIService>()),
+            ),
+          ),
+          BlocProvider(
+            create: (context) => QuestionBloc(
+                questionRepository:
+                QuestionRepoFromAPI(context.read<APIService>())),
+          ),
+          BlocProvider(
+              create: (context) =>
+                  VotesBloc(VotesRepoNodeAPI(context.read<APIService>()))),
+          BlocProvider(
+              create: (context) => CommentsBloc(
+                  CommentRepoNodeJSApi(context.read<APIService>()))),
+          BlocProvider(
+              create: (context) => RideRequestBloc(
+                  rideRepository:
+                  RideRepositoryImpl(apiService: context.read<APIService>()))),
+          BlocProvider(
+              create: (context) => TransporationProviderBloc(
+                  TransportationProviderRepoFromAPI(
+                      apiService: context.read<APIService>()),
+                  RideRepositoryImpl(
+                      apiService: context.read<APIService>()))),
+          BlocProvider(
+              create: (context) => OfferBloc(
+                  OfferRepoNodeJSApi(context.read<APIService>()))
+                ..add(GetAllOffersEvent())),
+          BlocProvider(
+              create: (context) => BookingBloc(
+                  bookingRepository: BookingRepositoryImpl(
+                      apiService: context.read<APIService>()))),
+          BlocProvider(
+              create: (context) => ChatBloc(
+                  chatService: ChatService(
+                      apiService: context.read<APIService>(),
+                      apiBaseUrl: baseUrlDeploied,
+                      currentUserId: UserModel().id),
+                  currentUserId: UserModel().id))
+        ],
+        child: MyApp(),
+      ),
     ),
   );
 }
