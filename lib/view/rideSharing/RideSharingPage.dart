@@ -28,8 +28,8 @@ class _RideFilterPageState extends State<RideFilterPage> {
 
     return BlocBuilder<RideFilterBloc, RideFilterState>(
       builder: (context, state) {
-        return Scaffold(appBar: AppBar(title: Text("join as a driver"),actions: [IconButton(onPressed: () {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => NewTransportationProviderPage(),));
+        return Scaffold(appBar: AppBar(title: Text("join as a driver"),actions: [IconButton(onPressed: ()  async {
+           Navigator.push(context, MaterialPageRoute(builder: (context) => NewTransportationProviderPage(),));
         }, icon: Icon(Icons.add))],),
           backgroundColor: colorScheme.surface,
           body: SafeArea(

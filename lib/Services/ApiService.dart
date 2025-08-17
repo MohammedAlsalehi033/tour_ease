@@ -76,12 +76,11 @@ class APIServiceNodeJS extends APIService {
         options: _getOptions(headers).copyWith(
         method: "GET")
       );
-      print(response.toString());
 
       if (response.statusCode == 200) {
         return fromJson(response.data["data"]);
       } else {
-        print(response);
+
 
         throw DioException(
           requestOptions: response.requestOptions,

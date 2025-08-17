@@ -9,7 +9,9 @@ import 'package:tour_ease/bloc/rideResultsBloc.dart';
 import 'package:tour_ease/bloc/rideFilterBloc.dart';
 import 'package:tour_ease/controller/chat/chat_bloc.dart';
 import 'package:tour_ease/controller/chat/messages_bloc.dart';
+import 'package:tour_ease/controller/rideSharing/RideBooking/provider/booking_for_provider_bloc.dart';
 import 'package:tour_ease/controller/rideSharing/RideBooking/ride_booking_bloc.dart';
+import 'package:tour_ease/controller/rideSharing/RideBooking/traveler/booking_for_traveler_bloc.dart';
 import 'package:tour_ease/controller/rideSharing/RideRequests/ride_request_bloc.dart';
 import 'package:tour_ease/controller/rideSharing/offers/offers_bloc.dart';
 import 'package:tour_ease/controller/rideSharing/offers/offers_event.dart';
@@ -93,6 +95,12 @@ void main() async {
           BlocProvider(
               create: (context) => BookingBloc(
                   bookingRepository: BookingRepositoryImpl(
+                      apiService: context.read<APIService>()))), BlocProvider(
+              create: (context) => BookingForTravelerBloc(
+                   BookingRepositoryImpl(
+                      apiService: context.read<APIService>()))), BlocProvider(
+              create: (context) => BookingForProviderBloc(
+                   BookingRepositoryImpl(
                       apiService: context.read<APIService>()))),
           BlocProvider(
               create: (context) => ChatBloc(

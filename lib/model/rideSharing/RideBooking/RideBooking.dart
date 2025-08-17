@@ -45,6 +45,7 @@ class ProviderBookingModel {
     RideListingModel? parsedListing;
     if (json['listing'] != null) {
       try {
+        print("Parsing nested listing in ProviderBookingModel: ${json['listing']}");
         parsedListing = RideListingModel.fromJson(json['listing']);
       } catch (e) { print("Error parsing nested listing in ProviderBookingModel: $e"); }
     }
@@ -73,7 +74,6 @@ class ProviderBookingModel {
       request: json['request'] != null
           ? TravelerRideRequestModel.fromJson(json['request'])
           : null,
-      // Parse traveler since it's expected in this model
       traveler: json['traveler'] != null
           ? BookingTravelerInfoModel.fromJson(json['traveler'])
           : null,

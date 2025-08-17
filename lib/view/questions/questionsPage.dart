@@ -45,6 +45,7 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
   }
 
   void _refreshQuestions() {
+    print(UserModel().id);
     context.read<QuestionBloc>().add(FetchQuestions(
           refresh: true,
           sort: 'newest',
@@ -282,9 +283,7 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
       orElse: () => <String, dynamic>{},
     );
     final userVoteType = userVote?['type'];
-    print(UserModel().id);
-    print(question.votes.toString());
-    print(UserModel().id == question.votes?[0]["userId"]);
+
 
     // Logic to generate initials for the avatar fallback
     final initials = question.userName != null && question.userName!.isNotEmpty

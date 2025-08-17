@@ -8,6 +8,7 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:tab_container/tab_container.dart';
+import 'package:tour_ease/controller/rideSharing/RideBooking/provider/booking_for_provider_bloc.dart';
 import 'package:tour_ease/controller/rideSharing/RideBooking/ride_booking_bloc.dart';
 import 'package:tour_ease/controller/rideSharing/RideBooking/ride_booking_event.dart';
 import 'package:tour_ease/controller/rideSharing/RideBooking/ride_booking_state.dart';
@@ -43,7 +44,8 @@ class _NewTransportationProviderPageState
         .read<TransporationProviderBloc>()
         .add(FetchCurrentTransportationProviderData());
 
-    context.read<BookingBloc>().add(FetchProviderBookingsRequested(providerId: UserModel().id));
+
+    context.read<BookingForProviderBloc>().add(FetchProviderBookingsRequested(UserModel().id));
   }
 
 
@@ -82,24 +84,27 @@ class _NewTransportationProviderPageState
           if (state is TransportationProviderdataLoaded) {
 
             final provider = state.transportationProviderModel;
-
             if (provider.accountStatus.toLowerCase() == 'active') {
-              return BlocBuilder<BookingBloc, BookingState>(
+              return BlocConsumer<BookingForProviderBloc, BookingForProviderState>(
+                listener: (context, state) {
+
+                },
                 builder: (context, stateForBooking) {
-                  if(stateForBooking is BookingLoading){
+                  print(stateForBooking);
+                  if(stateForBooking is BookingForProviderLoading){
                     return Center(
                       child: CircularProgressIndicator(
                         color: colorScheme.primary,
                       ),
                     );
                   }
-                  else if (stateForBooking is BookingLoadFailure){
+                  else if (stateForBooking is BookingForProviderLoadFailure){
                     return Text(stateForBooking.error);
 
                   }
 
-                  else if(stateForBooking is ProviderBookingLoadSuccess){
-                    final bookings = stateForBooking.providerBookings.where((element) => element.status.toLowerCase() == "pending" || element.status.toLowerCase() == "accepted" ).toList();
+                  else if(stateForBooking is BookingForProviderLoadSuccess){
+                    final bookings = stateForBooking.bookings.where((element) => element.status.toLowerCase() == "pending" || element.status.toLowerCase() == "accepted" ).toList();
                     if (bookings.length < 1){
                       return TabContainer(
                       color: colorScheme.surface,
@@ -303,7 +308,7 @@ context.read<BookingBloc>().add(MarkBookingAsComplete(bookingId: booking.id.toSt
                     }
                   }
                   else {
-                    return Text("something went south");
+                    return Text(state.toString());
                   }
             return Text(stateForBooking.toString());
 

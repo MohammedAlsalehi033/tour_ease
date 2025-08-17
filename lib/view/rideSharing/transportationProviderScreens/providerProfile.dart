@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:tour_ease/components/profileAvatar.dart';
 import 'package:tour_ease/controller/rideSharing/offers/offers_bloc.dart';
 import 'package:tour_ease/controller/rideSharing/offers/offers_event.dart';
 import 'package:tour_ease/controller/rideSharing/offers/offers_state.dart';
@@ -328,8 +329,7 @@ class _TransportationProviderProfileState extends State<TransportationProviderPr
     if (state is OfferLoading) {
       return const Center(child: CircularProgressIndicator());
     } else if (state is OffersLoaded) {
-      final offers = state.offers;
-      print(offers);
+      final offers = state.offers.where((element) => element.listing != null,).toList();
       return _buildOffersListView(offers, textTheme, colorScheme);
     } else if (state is SingleOfferLoaded) {
       // If we have a single offer, wrap it in a list for consistent rendering
@@ -353,6 +353,8 @@ class _TransportationProviderProfileState extends State<TransportationProviderPr
       itemCount: offers.length,
       itemBuilder: (context, index) {
         final offer = offers[index];
+        print(offer);
+        String userImage = offer.sender?["mediaUrls"] is List && offer.sender?["mediaUrls"]!.isNotEmpty ?  offer.sender!["mediaUrls"][0] : "" ;
         return Card(
           margin: EdgeInsets.only(bottom: 12.h),
           shape: RoundedRectangleBorder(
@@ -422,24 +424,91 @@ class _TransportationProviderProfileState extends State<TransportationProviderPr
                     color: colorScheme.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8.r),
                   ),
-                  child: Row(
+                  child: Column(
                     children: [
-                      Icon(
-                        Icons.attach_money,
-                        color: colorScheme.primary,
-                        size: 20.sp,
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.numbers,
+                            color: colorScheme.primary,
+                            size: 20.sp,
+                          ),
+                          SizedBox(width: 8.w),
+                          Text(
+                            'Id: ${offer.listing?["id"] ?? ""}',
+                            style: textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.primary,
+                            ),
+                          ),
+                        ],
                       ),
-                      SizedBox(width: 8.w),
-                      Text(
-                        'Price: ${offer.pricePerSeat}',
-                        style: textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: colorScheme.primary,
-                        ),
+
+                      SizedBox(height: 20.h,),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.attach_money,
+                            color: colorScheme.primary,
+                            size: 20.sp,
+                          ),
+                          SizedBox(width: 8.w),
+                          Text(
+                            'Price: ${offer.pricePerSeat}',
+                            style: textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      SizedBox(height: 20.h,),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.arrow_back,
+                            color: colorScheme.primary,
+                            size: 20.sp,
+                          ),
+                          SizedBox(width: 8.w),
+                          Container(width: 210.w,
+                            child: Text(
+                              'From: ${offer.listing?["startLocationText"] ?? ""}',
+                              style: textTheme.bodyMedium?.copyWith(
+                                overflow: TextOverflow.clip,
+                                fontWeight: FontWeight.bold,
+                                color: colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 20.h,),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.arrow_forward,
+                            color: colorScheme.primary,
+                            size: 20.sp,
+                          ),
+                          SizedBox(width: 8.w),
+                          Container(width: 210.w,
+                            child: Text(
+                              'To: ${offer.listing?["endLocationText"] ?? ""}',
+                              style: textTheme.bodyMedium?.copyWith(
+                                overflow: TextOverflow.clip,
+                                fontWeight: FontWeight.bold,
+                                color: colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
+
                 SizedBox(height: 12.h),
 
                 // Offer details
@@ -456,16 +525,14 @@ class _TransportationProviderProfileState extends State<TransportationProviderPr
                     style: textTheme.bodyMedium,
                   ),
                   SizedBox(height: 12.h),
+
+                  SizedBox(height: 12.h),
                 ],
 
                 // User information
                 Row(
                   children: [
-                    CircleAvatar(
-                      radius: 16.r,
-                      child: Icon(Icons.person, size: 20.sp)
-                          
-                    ),
+                    ProfileAvatar(imageURL: userImage, userName: offer.sender?["username"] ?? "", radius: 20.r),
                     SizedBox(width: 8.w),
                     Text(
                       offer.status,

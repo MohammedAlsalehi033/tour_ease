@@ -48,6 +48,8 @@ class UserModel {
     this.createdAt = createdAt ?? this.createdAt;
     this.updatedAt = updatedAt ?? this.updatedAt;
     this.roles = roles ?? this.roles;
+    print(this.id);
+
   }
 
   static UserModel fromJson(Map<String, dynamic> json) {

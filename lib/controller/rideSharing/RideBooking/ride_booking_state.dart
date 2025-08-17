@@ -12,22 +12,22 @@ class BookingInitial extends BookingState {}
 
 class BookingLoading extends BookingState {}
 
-class TravelerBookingLoadSuccess extends BookingState {
-  final List<TravelerBookingModel> travelerBookings;
+// class TravelerBookingLoadSuccess extends BookingState {
+//   final List<TravelerBookingModel> travelerBookings;
+//
+//   const TravelerBookingLoadSuccess(this.travelerBookings);
+//
+//
+// }
 
-  const TravelerBookingLoadSuccess(this.travelerBookings);
-
-
-}
-
-class ProviderBookingLoadSuccess extends BookingState {
-  final List<ProviderBookingModel> providerBookings;
-
-  const ProviderBookingLoadSuccess(this.providerBookings);
-
-  @override
-  List<Object> get props => [providerBookings];
-}
+// class ProviderBookingLoadSuccess extends BookingState {
+//   final List<ProviderBookingModel> providerBookings;
+//
+//   const ProviderBookingLoadSuccess(this.providerBookings);
+//
+//   @override
+//   List<Object> get props => [providerBookings];
+// }
 
 class BookingLoadFailure extends BookingState {
   final String error;

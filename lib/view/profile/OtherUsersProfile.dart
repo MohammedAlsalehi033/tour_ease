@@ -48,14 +48,14 @@ class _OtherUserProfileState extends State<OtherUserProfile> {
           ProfileAvatar(imageURL: widget.imageURL, userName:widget.userName , radius: 50.r,userId: UserModel().id, clickable: true,),
           SizedBox(height: 16.h),
           Text(
-            UserModel().email,
+            widget.userName,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
           SizedBox(height: 8.h),
           Text(
-            UserModel().email,
+            "",
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
             ),

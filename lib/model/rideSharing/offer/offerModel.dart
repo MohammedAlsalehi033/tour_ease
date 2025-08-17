@@ -31,8 +31,8 @@ class OfferModel {
     this.updatedAt,
     this.sender,
     this.recipient,
-    this.listing,  // Added listing field
-    this.request,  // Added request field
+    this.listing,
+    this.request,
   });
 
   factory OfferModel.fromJson(Map<String, dynamic> json) {
@@ -50,8 +50,8 @@ class OfferModel {
       updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
       sender: json['sender'],
       recipient: json['recipient'],
-      listing: json['listing'],  // Added listing field
-      request: json['request'],  // Added request field
+      listing: json['listing'],
+      request: json['request'],
     );
   }
 

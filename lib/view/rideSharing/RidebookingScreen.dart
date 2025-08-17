@@ -4,6 +4,7 @@ import 'package:intl/intl.dart'; // For date formatting
 import 'package:tour_ease/controller/rideSharing/RideBooking/ride_booking_bloc.dart';
 import 'package:tour_ease/controller/rideSharing/RideBooking/ride_booking_event.dart';
 import 'package:tour_ease/controller/rideSharing/RideBooking/ride_booking_state.dart';
+import 'package:tour_ease/controller/rideSharing/RideBooking/traveler/booking_for_traveler_bloc.dart';
 import 'package:tour_ease/model/rideSharing/RideBooking/RideBooking.dart';
 import 'package:tour_ease/model/userManagment/user.dart';
 import 'package:tour_ease/view/mapscreen/trackingMap.dart';
@@ -21,41 +22,44 @@ class _RidebookingscreenTravelerState extends State<RidebookingscreenTraveler> {
   void initState() {
     super.initState();
     // Load traveler bookings
-    context.read<BookingBloc>().add(FetchTravelerBookingsRequested(travelerId: UserModel().id));
+    context.read<BookingForTravelerBloc>().add(FetchTravelerBookingsRequested(UserModel().id));
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return BlocConsumer<BookingBloc, BookingState>(
+    return BlocConsumer<BookingForTravelerBloc, BookingForTravelerState>(
       listener: (context, state) {
-        if (state is BookingLoadFailure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error fetching bookings: ${state.error}'),
-              backgroundColor: theme.colorScheme.error,
-            ),
-          );
-        }
+        // if (state is BookingLoadFailure) {
+        //   ScaffoldMessenger.of(context).showSnackBar(
+        //     SnackBar(
+        //       content: Text('Error fetching bookings: ${state.error}'),
+        //       backgroundColor: theme.colorScheme.error,
+        //     ),
+        //   );
+        // }
       },
       builder: (context, state) {
-        if (state is BookingLoading) {
+        if (state is BookingForTravelerLoading) {
           return Center(
             child: CircularProgressIndicator(
               color: theme.colorScheme.primary,
             ),
           );
-        } else if (state is TravelerBookingLoadSuccess) {
-          final bool hasBookings = state.travelerBookings.isNotEmpty;
+        }
+
+        else if (state is BookingForTravelerLoadSuccess) {
+
+          final bool hasBookings = state.bookings.isNotEmpty;
 
           if (hasBookings) {
             return Padding(
               padding: const EdgeInsets.all(12.0),
               child: ListView.builder(
-                itemCount: state.travelerBookings.length,
+                itemCount: state.bookings.length,
                 itemBuilder: (context, index) {
-                  final TravelerBookingModel booking = state.travelerBookings[index];
+                  final TravelerBookingModel booking = state.bookings[index];
 
                   // Format date for better readability
                   final formattedDate = DateFormat('MMM d, yyyy - HH:mm').format(booking.createdAt.toLocal());
@@ -174,7 +178,8 @@ class _RidebookingscreenTravelerState extends State<RidebookingscreenTraveler> {
           } else {
             return RideFilterPage();
           }
-        } else if (state is BookingLoadFailure) {
+        }
+        else if (state is BookingLoadFailure) {
           return Center(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -201,8 +206,8 @@ class _RidebookingscreenTravelerState extends State<RidebookingscreenTraveler> {
                   const SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: () {
-                      context.read<BookingBloc>().add(
-                          FetchTravelerBookingsRequested(travelerId: UserModel().id)
+                      context.read<BookingForTravelerBloc>().add(
+                          FetchTravelerBookingsRequested(UserModel().id)
                       );
                     },
                     child: const Text('Retry'),
@@ -218,10 +223,11 @@ class _RidebookingscreenTravelerState extends State<RidebookingscreenTraveler> {
               style: theme.textTheme.bodyLarge,
             ),
           );
-        } else {
+        }
+        else {
           return Center(
             child: Text(
-              "Please check your bookings",
+              "Please check your bookings ${state}",
               style: theme.textTheme.bodyLarge,
             ),
           );

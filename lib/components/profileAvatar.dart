@@ -26,7 +26,7 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
         radius: widget.radius,
         backgroundColor: Theme.of(context).primaryColor,
         backgroundImage:widget.imageURL != null ?  NetworkImage(widget.imageURL!) : null ,
-        child:widget.imageURL == null ? Text(widget.userName[0].toUpperCase(), style: Theme.of(context).textTheme.headlineLarge!.copyWith(color: Colors.white),) : null,
+        child:widget.imageURL == null  || widget.imageURL!.isEmpty ? Text(widget.userName[0].toUpperCase(), style: Theme.of(context).textTheme.headlineLarge!.copyWith(color: Colors.white),) : null,
       ),
     );
   }

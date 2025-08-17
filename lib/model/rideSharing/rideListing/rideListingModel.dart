@@ -38,25 +38,41 @@ class RideListingModel {
   });
 
   factory RideListingModel.fromJson(Map<String, dynamic> json) {
+    // --- Safe Parsing Logic for Nested Provider ---
+    TransportationProviderModel? parsedProvider;
+    // Check if 'provider' exists and is a valid map before parsing
+    if (json['provider'] != null && json['provider'] is Map<String, dynamic>) {
+      try {
+        parsedProvider = TransportationProviderModel.fromJson(json['provider']);
+      } catch (e) {
+        print("Error parsing nested provider in RideListingModel: $e");
+        // Optionally assign null or a default object on error
+        parsedProvider = null;
+      }
+    }
+    // --- End Safe Parsing ---
+
     return RideListingModel(
       id: json['id'],
       providerId: json['providerId'],
-      startLocationLat: json['startLocationLat']?.toDouble(),
-      startLocationLng: json['startLocationLng']?.toDouble(),
+      startLocationLat: json['startLocationLat']?.toDouble() ?? 0,
+      startLocationLng: json['startLocationLng']?.toDouble() ?? 0,
       startLocationText: json['startLocationText'],
       endLocationLat: json['endLocationLat']?.toDouble(),
       endLocationLng: json['endLocationLng']?.toDouble(),
       endLocationText: json['endLocationText'],
       departureTime: DateTime.parse(json['departureTime']),
-      pricePerSeat: double.parse(json['pricePerSeat'].toString()),
+      pricePerSeat: double.tryParse(json['pricePerSeat'].toString()) ?? 0.0, // Use tryParse for safety
       seatsAvailable: json['seatsAvailable'],
       status: json['status'],
-      mediaUrls: (json['mediaUrls'] as List<dynamic>).cast<String>(),
+      mediaUrls: (json['mediaUrls'] as List<dynamic>?)?.cast<String>() ?? [], // Safer list parsing
       createdAt: DateTime.parse(json['createdAt']),
       distanceKm: json['route_distance_km']?.toDouble(),
-      provider: TransportationProviderModel.fromJson(json['provider']),
+      provider: parsedProvider, // Use the safely parsed object
     );
   }
+
+
 
 
   static List<RideListingModel> parseApiResponse(Map<String, dynamic> response) {
