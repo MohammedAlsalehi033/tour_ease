@@ -52,12 +52,14 @@ class UserModel {
 
   static UserModel fromJson(Map<String, dynamic> json) {
     try {
+
+
       _instance.id = json['id'] ?? '';
       _instance.username = json['username'] ?? '';
       _instance.email = json['email'] ?? '';
       _instance.passwordHash = json['passwordHash'] ?? '';
 
-      // Handle mediaUrls which might be null or not a List
+
       if (json['mediaUrls'] != null) {
         _instance.mediaUrls = List<String>.from(json['mediaUrls']);
       } else {

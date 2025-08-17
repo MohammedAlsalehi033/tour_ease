@@ -4,8 +4,12 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tour_ease/controller/chat/chat_bloc.dart';
 import 'package:tour_ease/controller/chat/chat_event.dart';
 import 'package:tour_ease/controller/chat/chat_state.dart';
+import 'package:tour_ease/controller/chat/messages_bloc.dart' as messages_bloc;
+
+
 import 'package:tour_ease/model/chat/chatRepo.dart';
 import 'package:tour_ease/model/chat/message.dart';
+
 
 class ChatPage extends StatefulWidget {
   final String currentUserId;
@@ -37,7 +41,7 @@ class _ChatPageState extends State<ChatPage> {
 
 
 
-    context.read<ChatBloc>().add(LoadMessages(widget.otherUserId));
+    context.read<messages_bloc.MessagesBloc>().add(messages_bloc.LoadMessages(otherUserId: widget.otherUserId));
   }
 
   void _sendMessage() {
@@ -84,13 +88,13 @@ class _ChatPageState extends State<ChatPage> {
         ),
         elevation: 1,
       ),
-      body: BlocConsumer<ChatBloc, ChatState>(
+      body: BlocConsumer<messages_bloc.MessagesBloc, messages_bloc.MessagesState>(
         listener: (context, state) {
-          if (state is ChatLoaded) {
+          if (state is messages_bloc.MessagesLoaded) {
             Future.delayed(Duration(milliseconds: 100), _scrollToBottom);
           }
 
-          if (state is ChatError) {
+          if (state is messages_bloc.MessagesError) {
             // Show error message
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.message)),
@@ -114,20 +118,17 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  Widget _buildMessagesList(ChatState state) {
-    if (state is ChatLoading) {
+  Widget _buildMessagesList(messages_bloc.MessagesState state) {
+    if (state is messages_bloc.MessagesLoading) {
       return Center(child: CircularProgressIndicator());
-    } else if (state is ChatError && (state is! ChatLoaded && state is! MessageSending)) {
+    } else if (state is messages_bloc.MessagesError && (state is! messages_bloc.MessagesLoaded && state is! messages_bloc.MessagesLoading)) {
       return Center(child: Text('Error: ${state.message}'));
     } else {
       List<Message> messages = [];
 
-      if (state is ChatLoaded) {
-        messages = state.messages;
-      } else if (state is MessageSending) {
+      if (state is messages_bloc.MessagesLoaded) {
         messages = state.messages;
       }
-
       if (messages.isEmpty) {
         return Center(child: Text('No messages yet'));
       }

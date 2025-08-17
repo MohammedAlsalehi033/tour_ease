@@ -31,7 +31,6 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<MessageDeleted>(_onMessageDeleted);
     on<ResetChat>(_onResetChat);
 
-    // Initialize socket connection
     _setupSocketConnection();
   }
 

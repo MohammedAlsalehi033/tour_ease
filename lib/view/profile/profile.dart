@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tour_ease/components/profileAvatar.dart';
 import 'package:tour_ease/model/userManagment/user.dart';
 import 'package:tour_ease/view/auth.dart';
 
@@ -49,10 +50,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return Center(
       child: Column(
         children: [
-          CircleAvatar(
-            radius: 60.r,
-            backgroundImage: NetworkImage('https://picsum.photos/200/200?random=1'),
-          ),
+          ProfileAvatar(imageURL: UserModel().mediaUrls[0], userName:UserModel().username , radius: 50.r,userId: UserModel().id, clickable: false,),
           SizedBox(height: 16.h),
           Text(
             UserModel().email,

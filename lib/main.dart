@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -9,6 +8,7 @@ import 'package:tour_ease/bloc/themeSwithBloc.dart';
 import 'package:tour_ease/bloc/rideResultsBloc.dart';
 import 'package:tour_ease/bloc/rideFilterBloc.dart';
 import 'package:tour_ease/controller/chat/chat_bloc.dart';
+import 'package:tour_ease/controller/chat/messages_bloc.dart';
 import 'package:tour_ease/controller/rideSharing/RideBooking/ride_booking_bloc.dart';
 import 'package:tour_ease/controller/rideSharing/RideRequests/ride_request_bloc.dart';
 import 'package:tour_ease/controller/rideSharing/offers/offers_bloc.dart';
@@ -101,7 +101,10 @@ void main() async {
                       apiBaseUrl: baseUrlDeploied,
                       currentUserId: UserModel().id),
                   currentUserId: UserModel().id))
-        ],
+        ,BlocProvider(create: (context) => MessagesBloc(chatService: ChatService(
+              apiService: context.read<APIService>(),
+              apiBaseUrl: baseUrlDeploied,
+              currentUserId: UserModel().id),),)],
         child: MyApp(),
       ),
     ),

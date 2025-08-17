@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tour_ease/components/profileAvatar.dart';
 import 'package:tour_ease/controller/chat/chat_bloc.dart';
 import 'package:tour_ease/controller/chat/chat_event.dart';
 import 'package:tour_ease/controller/chat/chat_state.dart';
@@ -59,16 +60,18 @@ class _MessagesPageState extends State<MessagesPage> {
 
   Widget _buildChatItem(BuildContext context, Chat chat) {
     return ListTile(
-      leading: CircleAvatar(
-        // Use a default avatar if avatarUrl is empty
-        backgroundImage: chat.avatarUrl.isNotEmpty
-            ? NetworkImage(chat.avatarUrl)
-            : null,
-        child: chat.avatarUrl.isEmpty
-            ? Text(chat.userName.isNotEmpty ? chat.userName[0].toUpperCase() : '?')
-            : null,
-        radius: 24.r,
-      ),
+      leading:         ProfileAvatar(imageURL: chat.avatarUrl, userName: chat.userName, radius: 25.r),
+
+      // leading: CircleAvatar(
+      //   // Use a default avatar if avatarUrl is empty
+      //   backgroundImage: chat.avatarUrl.isNotEmpty
+      //       ? NetworkImage(chat.avatarUrl)
+      //       : null,
+      //   child: chat.avatarUrl.isEmpty
+      //       ? Text(chat.userName.isNotEmpty ? chat.userName[0].toUpperCase() : '?')
+      //       : null,
+      //   radius: 24.r,
+      // ),
       title: Text(
         chat.userName,
         style: Theme.of(context).textTheme.titleMedium?.copyWith(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tour_ease/components/profileAvatar.dart';
 import 'package:tour_ease/controller/question/questionBloc.dart';
 import 'package:tour_ease/controller/question/votes/votes_bloc.dart';
 import 'package:tour_ease/model/userManagment/user.dart';
@@ -269,8 +270,7 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
     return filteredQuestions.length;
   }
 
-  // **IMPROVEMENT**: A completely redesigned question card widget.
-// This is a drop-in replacement for your original function.
+
   Widget _buildQuestionItem(BuildContext context, Question question) {
     final bloc = BlocProvider.of<VotesBloc>(context);
     final colorScheme = Theme.of(context).colorScheme;
@@ -279,9 +279,12 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
     // Safer way to get user vote type to avoid null errors
     final userVote = question.votes?.firstWhere(
           (vote) => vote['userId'] == UserModel().id,
-      orElse: () => <String, dynamic>{}, // Return an empty map if not found
+      orElse: () => <String, dynamic>{},
     );
     final userVoteType = userVote?['type'];
+    print(UserModel().id);
+    print(question.votes.toString());
+    print(UserModel().id == question.votes?[0]["userId"]);
 
     // Logic to generate initials for the avatar fallback
     final initials = question.userName != null && question.userName!.isNotEmpty
@@ -318,13 +321,16 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
               // **IMPROVEMENT**: Using ListTile for a clean, aligned header.
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                leading: CircleAvatar(
-                  backgroundColor: colorScheme.primaryContainer,
-                  backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
-                  child: avatarUrl == null
-                      ? Text(initials, style: TextStyle(color: colorScheme.onPrimaryContainer, fontWeight: FontWeight.bold))
-                      : null,
-                ),
+              leading: ProfileAvatar(imageURL: avatarUrl, userName: question.userName!, radius: 20.r)
+
+              // leading: CircleAvatar(
+                //   backgroundColor: colorScheme.primaryContainer,
+                //   backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
+                //   child: avatarUrl == null
+                //       ? Text(initials, style: TextStyle(color: colorScheme.onPrimaryContainer, fontWeight: FontWeight.bold))
+                //       : null,
+                // )
+                ,
                 title: Text(
                     question.userName ?? "Anonymous",
                     style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)

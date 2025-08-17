@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+import 'package:tour_ease/components/profileAvatar.dart';
 import 'package:tour_ease/controller/question/commets/comments_bloc.dart';
 import 'package:tour_ease/controller/question/questionBloc.dart';
 import 'package:tour_ease/model/userManagment/user.dart';
@@ -75,6 +76,7 @@ class _QuestionDetailsPageState extends State<QuestionDetailsPage> {
 
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: theme.colorScheme.primary,
         title: Text(
           "Question Details",
           style: textTheme.titleLarge?.copyWith(
@@ -88,7 +90,6 @@ class _QuestionDetailsPageState extends State<QuestionDetailsPage> {
           ),
         ),
       ),
-      backgroundColor: colorScheme.background,
       body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 16.w),
         child: Column(
@@ -112,7 +113,6 @@ class _QuestionDetailsPageState extends State<QuestionDetailsPage> {
                     return _buildCommentList(state, theme, _fetchComments);
                   },
                 ),
-                SizedBox(height: 24.h),
                 _buildCommentInput(theme),
               ],
             )
@@ -188,6 +188,7 @@ Navigator.push(context, MaterialPageRoute(builder: (context) => QuestionEditingP
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
     final userName = widget.question.userName;
+    final userImage = widget.question.mediaUrls[0];
     final formattedDate =
         DateFormat('MMM d, yyyy').format(widget.question.createdAt!);
     final formattedTime =
@@ -195,17 +196,19 @@ Navigator.push(context, MaterialPageRoute(builder: (context) => QuestionEditingP
 
     return Row(
       children: [
-        CircleAvatar(
-          radius: 20.r,
-          backgroundColor: colorScheme.primaryContainer,
-          child: Text(
-            userName != null && userName.isNotEmpty
-                ? userName[0].toUpperCase()
-                : '?',
-            style: textTheme.titleMedium
-                ?.copyWith(color: colorScheme.onPrimaryContainer),
-          ),
-        ),
+        ProfileAvatar(imageURL: userImage, userName: userName!, radius: 20.r),
+
+        // CircleAvatar(
+        //   radius: 20.r,
+        //   backgroundColor: colorScheme.primaryContainer,
+        //   child:  userImage.isEmpty ? Text(
+        //     userName != null && userName.isNotEmpty
+        //         ? userName[0].toUpperCase()
+        //         : '?',
+        //     style: textTheme.titleMedium
+        //         ?.copyWith(color: colorScheme.onPrimaryContainer),
+        //   ) : Image.network( userImage),
+        // ),
         SizedBox(width: 12.w),
         Expanded(
           child: Column(
@@ -339,27 +342,30 @@ Navigator.push(context, MaterialPageRoute(builder: (context) => QuestionEditingP
                   ?.copyWith(color: colorScheme.onSurfaceVariant)));
     }
 
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: EdgeInsets.only(top: 8.h),
-      itemCount: state is CommentsLoaded ? state.comments.length : 0,
-      separatorBuilder: (context, index) => Divider(
-          height: 1.h, color: colorScheme.outlineVariant.withOpacity(0.3)),
-      itemBuilder: (context, index) {
-        if (state is CommentsLoaded) {
-          final comment = state.comments[index];
-          return _buildCommentCard(comment, theme);
-        } else {
-          return const SizedBox.shrink();
-        }
-      },
+    return Container(height: 300.h,
+      child: ListView.separated(
+
+        shrinkWrap: true,
+        padding: EdgeInsets.only(top: 8.h),
+        itemCount: state is CommentsLoaded ? state.comments.length : 0,
+        separatorBuilder: (context, index) => Divider(
+            height: 1.h, color: colorScheme.outlineVariant.withOpacity(0.3)),
+        itemBuilder: (context, index) {
+          if (state is CommentsLoaded) {
+            final comment = state.comments[index];
+            return _buildCommentCard(comment, theme);
+          } else {
+            return const SizedBox.shrink();
+          }
+        },
+      ),
     );
   }
 
   Widget _buildCommentCard(CommentModel comment, ThemeData theme) {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final commentUserAvatar = comment.user.mediaUrls;
 
     return Padding(
       padding: EdgeInsets.symmetric(
@@ -367,18 +373,22 @@ Navigator.push(context, MaterialPageRoute(builder: (context) => QuestionEditingP
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 22.r, // Slightly larger avatar
-            backgroundColor: colorScheme.primaryContainer,
-            child: Text(
-              comment.user.userName != null && comment.user.userName!.isNotEmpty
-                  ? comment.user.userName![0].toUpperCase()
-                  : '?',
-              style: textTheme.titleMedium
-                  ?.copyWith(color: colorScheme.onPrimaryContainer),
-            ),
-          ),
-          SizedBox(width: 12.w),
+          ProfileAvatar(imageURL: commentUserAvatar.first, userName: comment.user.userName, radius: 22.r)
+
+          // CircleAvatar(
+          //
+          //   radius: 22.r, // Slightly larger avatar
+          //   backgroundColor: colorScheme.primaryContainer,
+          //   backgroundImage: commentUserAvatar.isNotEmpty ? NetworkImage(commentUserAvatar[0]) : null ,
+          //   child: commentUserAvatar.isEmpty ? Text(
+          //     comment.user.userName != null && comment.user.userName!.isNotEmpty
+          //         ? comment.user.userName![0].toUpperCase()
+          //         : '?',
+          //     style: textTheme.titleMedium
+          //         ?.copyWith(color: colorScheme.onPrimaryContainer),
+          //   ):  null,
+          // ),
+          ,SizedBox(width: 12.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -415,8 +425,7 @@ Navigator.push(context, MaterialPageRoute(builder: (context) => QuestionEditingP
     final textTheme = theme.textTheme;
 
     return Container(
-      margin: EdgeInsets.only(top: 16.h), // Add some space above the input
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 0.h),
       decoration: BoxDecoration(
         color: colorScheme
             .surface, // Use the surface color for a subtle background
