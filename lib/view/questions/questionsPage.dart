@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 // ANIMATION: Import the animation package
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+import 'package:tour_ease/components/debouncer.dart';
 import 'package:tour_ease/components/profileAvatar.dart';
 import 'package:tour_ease/controller/question/questionBloc.dart';
 import 'package:tour_ease/controller/question/votes/votes_bloc.dart';
@@ -12,7 +13,8 @@ import 'package:tour_ease/view/questions/questionMaking.dart';
 import 'package:tour_ease/view/questions/questionQetails.dart';
 
 class QuestionsScreen extends StatefulWidget {
-  const QuestionsScreen({super.key});
+  final String userID;
+  const QuestionsScreen({super.key, required this.userID});
 
   @override
   State<QuestionsScreen> createState() => _QuestionsScreenState();
@@ -23,6 +25,7 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _selectedTag = "All";
   final _scrollController = ScrollController();
+  final _debouncer = Debouncer(milliseconds: 500);
 
   @override
   void initState() {
@@ -35,6 +38,7 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
   void dispose() {
     _scrollController.dispose();
     _searchController.dispose();
+    _debouncer.dispose();
     super.dispose();
   }
 
@@ -48,7 +52,7 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
   }
 
   void _refreshQuestions() {
-    print(UserModel().id);
+
     context.read<QuestionBloc>().add(FetchQuestions(
       refresh: true,
       sort: 'newest',
@@ -108,6 +112,8 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print(UserModel().id);
+    print(widget.userID + "-----------------------");
     return Scaffold(
       body: SafeArea(
         child: BlocBuilder<QuestionBloc, QuestionState>(
@@ -132,6 +138,14 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                           ),
                         ),
                         onChanged: (value) {
+                         _debouncer.run(() {
+                           setState(() {
+                             context.read<QuestionBloc>().add(SearchQuestions(query: value));
+                           });
+                         },);
+
+                        },
+                        onSubmitted: (value) {
                           setState(() {});
                         },
                       ),

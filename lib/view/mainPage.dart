@@ -36,7 +36,7 @@ class _MainPageState extends State<MainPage> {
     RidebookingscreenTraveler(),
     TripPlannerPage(),
     MessagesPage(),
-    QuestionsScreen(),
+    QuestionsScreen(userID: UserModel().id,),
     ProfilePage(),
   ];
 

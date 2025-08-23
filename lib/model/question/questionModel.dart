@@ -34,24 +34,30 @@ class Question {
   });
 
   factory Question.fromJson(Map<String, dynamic> json) {
-    return Question(
-      id: json['id'],
-      title: json['title'],
-      description: json['description'],
-      userId: json['userId'],
-      userName: json['user']['username'],
-      upvotes: json['upvotes'],
-      downvotes: json['downvotes'],
-      createdAt:
+    try {
+      return Question(
+          id: json['id'],
+          title: json['title'],
+          description: json['description'],
+          userId: json['userId'],
+          userName: json['user']['username'],
+          upvotes: json['upvotes'],
+          downvotes: json['downvotes'],
+          createdAt:
           json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
-      updatedAt:
+          updatedAt:
           json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
-        tags: List<String>.from(json['tags'] ?? []),
-        commentCount: json['_count']?['comments'] ?? 0,
-        mediaUrls: List<String>.from(json['user']['mediaUrls'] as List) ?? [],
-        votes: json['vote'], 
-        user: UserModel.fromJson(json['user'])
-    );
+          tags: List<String>.from(json['tags'] ?? []),
+          commentCount: json['_count']?['comments'] ?? 0,
+          mediaUrls: List<String>.from(json['user']['mediaUrls'] as List) ?? [],
+          votes: [],
+          user: UserModel.fromJson(json['user'])
+      );
+    }catch(e) {
+      print(json);
+    rethrow;
+    }
+
   }
 
   Map<String, dynamic> toJson() {

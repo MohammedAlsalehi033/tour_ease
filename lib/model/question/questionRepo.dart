@@ -8,6 +8,7 @@ abstract class QuestionsRepo {
   Future<Question> createQuestion(Question question);
   Future<Question> editQuestion(Question question);
   Future<void> deleteQuestion(Question question);
+  Future<List<Question>> searchQuestions(String query);
 }
 
 class QuestionRepoFromAPI extends QuestionsRepo {
@@ -87,6 +88,25 @@ class QuestionRepoFromAPI extends QuestionsRepo {
           throw Exception('Error deleting question: $e');
         }
   }
+
+  @override
+  Future<List<Question>> searchQuestions(String query) {
+    try{
+      return apiService.get<List<Question>>(
+        path: '/api/questions/search',
+        queryParams: {'query': query},
+        fromJson: (json) => (json as List)
+            .map((questionJson) => Question.fromJson(questionJson))
+            .toList(),
+      );
+    }
+        catch(e){
+          throw Exception('Error searching questions: $e');
+
+    }
+  }
+
+
 
 
 }

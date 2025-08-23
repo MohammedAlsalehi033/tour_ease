@@ -86,6 +86,11 @@ class DeleteQuestion extends QuestionEvent{
   DeleteQuestion({required this.question});
 }
 
+class SearchQuestions extends QuestionEvent {
+  final String query;
+  SearchQuestions({required this.query});
+}
+
 class QuestionBloc extends Bloc<QuestionEvent, QuestionState> {
   final QuestionsRepo questionRepository;
   final int itemsPerPage = 10;
@@ -95,6 +100,8 @@ class QuestionBloc extends Bloc<QuestionEvent, QuestionState> {
     on<PostQuestion>(_onPostQuestion);
     on<EditQuestion>(_onEditQuestion);
     on<DeleteQuestion>(_onDeleteQuestion);
+    on<SearchQuestions>(_onSearchQuestions);
+
   }
 
   Future<void> _onFetchQuestions(
@@ -179,6 +186,16 @@ class QuestionBloc extends Bloc<QuestionEvent, QuestionState> {
       final response = await questionRepository.deleteQuestion(event.question);
       final allQuestions = await questionRepository.getQuestions();
       emit(QuestionLoadSuccess(questions: allQuestions));
+    }catch(e){
+      emit(QuestionLoadFailure(e.toString()));
+    }
+
+  }
+  Future<void> _onSearchQuestions(SearchQuestions event, Emitter<QuestionState> emit) async {
+    try{
+      emit(QuestionLoadInProgress());
+      final response = await questionRepository.searchQuestions(event.query);
+      emit(QuestionLoadSuccess(questions: response));
     }catch(e){
       emit(QuestionLoadFailure(e.toString()));
     }
