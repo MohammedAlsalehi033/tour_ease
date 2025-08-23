@@ -1,3 +1,4 @@
+import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -85,18 +86,31 @@ class _MessagesPageState extends State<MessagesPage> {
 
     return InkWell(
       onTap: () async {
+        // --- ANIMATION ADDED HERE ---
+        // Replaced MaterialPageRoute with PageRouteBuilder for a custom slide transition
         await Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => ChatPage(
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) => ChatPage(
               otherUserId: chat.partnerId,
               currentUserId: UserModel().id,
               apiBaseUrl: "http://10.0.2.2:300/api",
               otherUserAvatar: chat.avatarUrl,
               otherUserName: chat.userName,
             ),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+
+              return SharedAxisTransition(
+                animation: animation,
+                secondaryAnimation: secondaryAnimation,
+                transitionType: SharedAxisTransitionType.scaled, // or vertical, or scaled
+                child: child,
+              );
+            },
+            transitionDuration: const Duration(milliseconds: 300),
           ),
         );
+        // --- END OF ANIMATION CHANGE ---
         context.read<ChatBloc>().add(LoadChats());
       },
       // Give the InkWell some padding to increase tap area and visual spacing
