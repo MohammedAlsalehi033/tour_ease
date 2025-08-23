@@ -46,7 +46,7 @@ void main() async {
 
   final userJWT = await getFirebaseIdToken();
 
-  final APIService apiService = APIServiceNodeJS(baseUrlLocal, userJWT ?? "");
+  final APIService apiService = APIServiceNodeJS(baseUrlDeploied, userJWT ?? "");
 
   runApp(
     // 3. Provide that single instance to the entire widget tree.
