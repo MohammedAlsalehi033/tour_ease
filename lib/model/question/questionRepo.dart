@@ -7,6 +7,7 @@ abstract class QuestionsRepo {
   Future<Question> getQuestionById(String id);
   Future<Question> createQuestion(Question question);
   Future<Question> editQuestion(Question question);
+  Future<void> deleteQuestion(Question question);
 }
 
 class QuestionRepoFromAPI extends QuestionsRepo {
@@ -74,4 +75,18 @@ class QuestionRepoFromAPI extends QuestionsRepo {
       throw Exception('Error editing question: $e');
     }
   }
+
+  @override
+  Future<void> deleteQuestion(Question question) {
+    try{
+      return apiService.delete<void>(
+        path: '/api/questions/${question.id}', fromJson: (json) {  },
+      );
+    }
+        catch(e){
+          throw Exception('Error deleting question: $e');
+        }
+  }
+
+
 }

@@ -162,10 +162,12 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
           final mediaUrls = offer.sender?['mediaUrls'];
 
           final hasImage = mediaUrls != null && mediaUrls is List && mediaUrls.isNotEmpty;
-      final departureTime = DateTime.parse(offer.listing?["departureTime"]) ;
 
-      final hasDepartureTime = departureTime;
-          final isOutDated = DateTime.now().isAfter(departureTime);
+          final bool hasDepartureTime = offer.listing?["departureTime"] != null;
+
+      final departureTime = hasDepartureTime ? DateTime.parse(offer.listing?["departureTime"]) : null;
+      final isOutDated = hasDepartureTime ? DateTime.now().isAfter(departureTime!) : false ;
+
 
           return Card(
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),

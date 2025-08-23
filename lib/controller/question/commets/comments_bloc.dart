@@ -57,12 +57,12 @@ class CommentsBloc extends Bloc<CommentsEvent, CommentsState> {
         final currentState = state;
 
         // Post the comment asynchronously
-        await commentsRepo.writeComment(event.commentModel);
+     final response =   await commentsRepo.writeComment(event.commentModel);
 
         // Add the new comment to the current list if we're in loaded state
         if (currentState is CommentsLoaded) {
           // Add the new comment to the list (at the beginning for immediacy)
-          final updatedComments = [event.commentModel, ...currentState.comments];
+          final updatedComments = [response, ...currentState.comments];
 
           emit(CommentsLoaded(
             comments: updatedComments,

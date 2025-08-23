@@ -17,16 +17,7 @@ class CommentModel {
   });
 
   factory CommentModel.fromJson(Map<String, dynamic> json) {
-    if (json['id'] == null ||
-        json['questionId'] == null ||
-        json['content'] == null ||
-        json['createdAt'] == null ||
-        json['user'] == null ||
-        json['user']['id'] == null ||
-        json['user']['username'] == null ||
-        json['user']['mediaUrls'] == null) {
-      throw FormatException("Invalid JSON structure for CommentModel: Missing required fields.");
-    }
+  print(json);
 
     try {
       return CommentModel(

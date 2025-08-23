@@ -532,7 +532,7 @@ class _TransportationProviderProfileState extends State<TransportationProviderPr
                 // User information
                 Row(
                   children: [
-                    ProfileAvatar(imageURL: userImage, userName: offer.sender?["username"] ?? "", radius: 20.r),
+                    ProfileAvatar(imageURL: userImage, userName: offer.sender?["username"] ?? "", radius: 20.r, userId: offer.senderId,),
                     SizedBox(width: 8.w),
                     Text(
                       offer.status,

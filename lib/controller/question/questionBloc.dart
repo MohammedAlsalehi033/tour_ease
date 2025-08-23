@@ -2,6 +2,7 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import 'package:tour_ease/model/question/questionModel.dart';
 import 'package:tour_ease/model/question/questionRepo.dart';
 
@@ -80,6 +81,11 @@ class EditQuestion extends QuestionEvent{
   EditQuestion({required this.question});
 }
 
+class DeleteQuestion extends QuestionEvent{
+  final Question question;
+  DeleteQuestion({required this.question});
+}
+
 class QuestionBloc extends Bloc<QuestionEvent, QuestionState> {
   final QuestionsRepo questionRepository;
   final int itemsPerPage = 10;
@@ -88,6 +94,7 @@ class QuestionBloc extends Bloc<QuestionEvent, QuestionState> {
     on<FetchQuestions>(_onFetchQuestions);
     on<PostQuestion>(_onPostQuestion);
     on<EditQuestion>(_onEditQuestion);
+    on<DeleteQuestion>(_onDeleteQuestion);
   }
 
   Future<void> _onFetchQuestions(
@@ -165,6 +172,17 @@ class QuestionBloc extends Bloc<QuestionEvent, QuestionState> {
 
       emit(QuestionLoadFailure(e.toString()));
     }
+  }
+  Future<void> _onDeleteQuestion(DeleteQuestion event, Emitter<QuestionState> emit) async {
+    try{
+      emit(QuestionLoadInProgress());
+      final response = await questionRepository.deleteQuestion(event.question);
+      final allQuestions = await questionRepository.getQuestions();
+      emit(QuestionLoadSuccess(questions: allQuestions));
+    }catch(e){
+      emit(QuestionLoadFailure(e.toString()));
+    }
+
   }
 
 

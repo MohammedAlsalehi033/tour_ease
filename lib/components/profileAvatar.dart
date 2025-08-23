@@ -6,10 +6,10 @@ class ProfileAvatar extends StatefulWidget {
   final String? imageURL;
   final String userName;
   final double radius;
-  final String? userId;
+  final String userId;
    final bool clickable;
 
-  const ProfileAvatar({super.key, required this.imageURL, required this.userName, required this.radius, this.userId,  this.clickable = true});
+  const ProfileAvatar({super.key, required this.imageURL, required this.userName, required this.radius,required this.userId,  this.clickable = true});
 
   @override
   State<ProfileAvatar> createState() => _ProfileAvatarState();

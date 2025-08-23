@@ -179,66 +179,119 @@ class _QuestionEditingPageState extends State<QuestionEditingPage> {
   builder: (context, state) {
 
     if(state is QuestionLoadInProgress){
-      return ElevatedButton(
-        onPressed: () {},
-        style: ElevatedButton.styleFrom(
-          elevation: 0,
-          backgroundColor: Colors.grey,
-          foregroundColor:  Colors.grey,
-          padding: EdgeInsets.symmetric(vertical: 12.h),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8.r),
+      return Row(
+        children: [
+          ElevatedButton(
+            onPressed: () {},
+            style: ElevatedButton.styleFrom(
+              elevation: 0,
+              backgroundColor: Colors.grey,
+              foregroundColor:  Colors.grey,
+              padding: EdgeInsets.symmetric(vertical: 12.h),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              textStyle: textTheme.labelMedium?.copyWith(
+                fontWeight: FontWeight.w500,
+                letterSpacing: 0.5,
+                fontSize: 16.sp,
+              ),
+            ),
+            child: const Text('Post Question'),
           ),
-          textStyle: textTheme.labelMedium?.copyWith(
-            fontWeight: FontWeight.w500,
-            letterSpacing: 0.5,
-            fontSize: 16.sp,
-          ),
-        ),
-        child: const Text('Post Question'),
+        ],
       );
     }
     else if (state is QuestionLoadFailure){
       return Text(state.error);
     }
-    return ElevatedButton(
-                      onPressed: () {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        Expanded(
+          child: ElevatedButton(
+                            onPressed: () {
 
-                        context.read<QuestionBloc>().add(EditQuestion(
-                            question: Question(mediaUrls: [],
-                              createdAt: widget.question.createdAt,
-                              downvotes: widget.question.downvotes,
-                              upvotes: widget.question.upvotes,
-                              userName: widget.question.userName,
-                              votes: widget.question.votes,
-                              commentCount: widget.question.commentCount,
-                              updatedAt: widget.question.updatedAt,
-                              user: UserModel(),
+                              context.read<QuestionBloc>().add(EditQuestion(
+                                  question: Question(mediaUrls: [],
+                                    createdAt: widget.question.createdAt,
+                                    downvotes: widget.question.downvotes,
+                                    upvotes: widget.question.upvotes,
+                                    userName: widget.question.userName,
+                                    votes: widget.question.votes,
+                                    commentCount: widget.question.commentCount,
+                                    updatedAt: widget.question.updatedAt,
+                                    user: UserModel(),
 
-                              id: widget.question.id,
-                                title: _titleController.text,
-                                description: _descriptionController.text,
-                                userId: UserModel().id,
-                                tags: _selectedTags)));
+                                    id: widget.question.id,
+                                      title: _titleController.text,
+                                      description: _descriptionController.text,
+                                      userId: UserModel().id,
+                                      tags: _selectedTags)));
 
-                        context.read<QuestionBloc>().add(FetchQuestions());
-                        },
-                      style: ElevatedButton.styleFrom(
-                        elevation: 0,
-                        backgroundColor: colorScheme.primary,
-                        foregroundColor: colorScheme.onPrimary,
-                        padding: EdgeInsets.symmetric(vertical: 12.h),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.r),
-                        ),
-                        textStyle: textTheme.labelMedium?.copyWith(
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: 0.5,
-                          fontSize: 16.sp,
-                        ),
-                      ),
-                      child: const Text('Post Question'),
-                    );
+                              context.read<QuestionBloc>().add(FetchQuestions());
+                              },
+                            style: ElevatedButton.styleFrom(
+                              elevation: 0,
+                              backgroundColor: colorScheme.primary,
+                              foregroundColor: colorScheme.onPrimary,
+                              padding: EdgeInsets.symmetric(vertical: 12.h),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8.r),
+                              ),
+                              textStyle: textTheme.labelMedium?.copyWith(
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: 0.5,
+                                fontSize: 16.sp,
+                              ),
+                            ),
+                            child: const Text('Post Question'),
+                          ),
+        ),
+        SizedBox(width: 12.w),
+        Expanded(
+          child: ElevatedButton(
+                            onPressed: () {
+
+                              context.read<QuestionBloc>().add(DeleteQuestion(
+                                  question: Question(mediaUrls: [],
+                                    createdAt: widget.question.createdAt,
+                                    downvotes: widget.question.downvotes,
+                                    upvotes: widget.question.upvotes,
+                                    userName: widget.question.userName,
+                                    votes: widget.question.votes,
+                                    commentCount: widget.question.commentCount,
+                                    updatedAt: widget.question.updatedAt,
+                                    user: UserModel(),
+
+                                    id: widget.question.id,
+                                      title: _titleController.text,
+                                      description: _descriptionController.text,
+                                      userId: UserModel().id,
+                                      tags: _selectedTags)));
+
+                              context.read<QuestionBloc>().add(FetchQuestions());
+                              Navigator.pop(context);
+                              },
+                            style: ElevatedButton.styleFrom(
+                              elevation: 0,
+                              backgroundColor: colorScheme.error,
+                              foregroundColor: colorScheme.onPrimary,
+                              padding: EdgeInsets.symmetric(vertical: 12.h),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8.r),
+                              ),
+                              textStyle: textTheme.labelMedium?.copyWith(
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: 0.5,
+                                fontSize: 16.sp,
+                              ),
+                            ),
+                            child: const Text('Delete Question'),
+                          ),
+        ),
+      ],
+    );
   },
 );
                   },
