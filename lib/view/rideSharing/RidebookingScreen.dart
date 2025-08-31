@@ -51,7 +51,8 @@ class _RidebookingscreenTravelerState extends State<RidebookingscreenTraveler> {
 
         else if (state is BookingForTravelerLoadSuccess) {
 
-          final bool hasBookings = state.bookings.isNotEmpty;
+          final bookings = state.bookings.where((e) => e.status != "completed");
+          final bool hasBookings = bookings.isNotEmpty;
 
           if (hasBookings) {
             return Padding(

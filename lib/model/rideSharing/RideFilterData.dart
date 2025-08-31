@@ -56,8 +56,8 @@ class RideFilterModel {
 
   factory RideFilterModel.initial() {
     return RideFilterModel(
-      startTime: Time(hour: 11, minute: 30, second: 20),
-      endTime: Time(hour: 11, minute: 30, second: 20),
+      startTime: Time(hour: 00, minute: 00, second: 00),
+      endTime: Time(hour: 23, minute: 59, second: 00),
     );
   }
 

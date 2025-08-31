@@ -89,30 +89,55 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
   void _handleVote(Question question, String newVoteType) {
     final currentUserId = UserModel().id;
 
+    // Find the user's existing vote, if any.
+    final existingVoteIndex = question.votes?.indexWhere((vote) => vote['userId'] == currentUserId) ?? -1;
+    String? previousVoteType;
+
+    if (existingVoteIndex != -1) {
+      previousVoteType = question.votes?[existingVoteIndex]['type'];
+    }
+
     setState(() {
-      question.votes?.removeWhere((vote) => vote['userId'] == currentUserId);
-
-      question.votes?.add({
-        'userId': currentUserId,
-        'type': newVoteType,
-      });
-
-      if (newVoteType == 'UPVOTE') {
-        question.upvotes = question.upvotes! + 1;
-        if (question.downvotes! > 0)
+      // Case 1: User is canceling their vote (e.g., tapping upvote when it's already upvoted)
+      if (previousVoteType == newVoteType) {
+        question.votes?.removeAt(existingVoteIndex);
+        if (newVoteType == 'UPVOTE') {
+          question.upvotes = question.upvotes! - 1;
+        } else {
           question.downvotes = question.downvotes! - 1;
-      } else {
-        question.downvotes = question.downvotes! + 1;
-        if (question.upvotes! > 0) question.upvotes = question.upvotes! - 1;
+        }
+      }
+      // Case 2: User is changing their vote (e.g., from downvote to upvote)
+      else if (previousVoteType != null) {
+        question.votes?[existingVoteIndex]['type'] = newVoteType; // Update the vote type
+        if (newVoteType == 'UPVOTE') {
+          question.upvotes = question.upvotes! + 1;
+          question.downvotes = question.downvotes! - 1;
+        } else { // newVoteType is 'DOWNVOTE'
+          question.downvotes = question.downvotes! + 1;
+          question.upvotes = question.upvotes! - 1;
+        }
+      }
+      // Case 3: User is casting a new vote
+      else {
+        question.votes?.add({'userId': currentUserId, 'type': newVoteType});
+        if (newVoteType == 'UPVOTE') {
+          question.upvotes = question.upvotes! + 1;
+        } else {
+          question.downvotes = question.downvotes! + 1;
+        }
       }
     });
+
+    // You can now adjust your BLoC event if needed,
+    // though the existing one might work fine as the backend should handle the logic.
+    // The key is that the local (optimistic) UI update is now correct.
   }
-  // --- END OF UNCHANGED LOGIC ---
 
 
   @override
   Widget build(BuildContext context) {
-    print(UserModel().id);
+    print("currentUser1: ${UserModel().id}");
     print(widget.userID + "-----------------------");
     return Scaffold(
       body: SafeArea(

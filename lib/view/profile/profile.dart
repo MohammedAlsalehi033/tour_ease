@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tour_ease/components/profileAvatar.dart';
 import 'package:tour_ease/model/userManagment/user.dart';
 import 'package:tour_ease/view/auth.dart';
+import 'package:tour_ease/view/profile/rideHistory.dart';
 
 class ProfilePage extends StatefulWidget {
 
@@ -50,7 +51,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return Center(
       child: Column(
         children: [
-          ProfileAvatar(imageURL: UserModel().mediaUrls[0], userName:UserModel().username , radius: 50.r,userId: UserModel().id, clickable: false,),
+          ProfileAvatar(imageURL: null, userName:UserModel().username , radius: 50.r,userId: UserModel().id, clickable: false,),
           SizedBox(height: 16.h),
           Text(
             UserModel().email,
@@ -88,6 +89,14 @@ class _ProfilePageState extends State<ProfilePage> {
           title: 'Notifications',
           onTap: () {
             // Navigate to notifications settings
+          },
+        ),
+        _buildSettingItem(
+          context,
+          icon: Icons.car_repair,
+          title: 'Ride History',
+          onTap: () {
+Navigator.push(context, MaterialPageRoute(builder: (context) => RideHistory(),));
           },
         ),
         _buildSettingItem(
