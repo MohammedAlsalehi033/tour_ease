@@ -106,13 +106,13 @@ void main() async {
               create: (context) => ChatBloc(
                   chatService: ChatService(
                       apiService: context.read<APIService>(),
-                      apiBaseUrl: baseUrlDeploied,
+                      apiBaseUrl: context.read<APIService>().baseUrl,
                       currentUserId: UserModel().id),
                   currentUserId: UserModel().id))
         ,BlocProvider(create: (context) => MessagesBloc(chatService: ChatService(
               apiService: context.read<APIService>(),
-              apiBaseUrl: baseUrlDeploied,
-              currentUserId: UserModel().id),),)],
+              apiBaseUrl: context.read<APIService>().baseUrl,
+              currentUserId: UserModel().id), currentUserId: UserModel().id,),)],
         child: MyApp(),
       ),
     ),

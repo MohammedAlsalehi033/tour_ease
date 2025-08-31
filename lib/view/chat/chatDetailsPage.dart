@@ -1,20 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:tour_ease/controller/chat/chat_bloc.dart';
-import 'package:tour_ease/controller/chat/chat_event.dart';
-import 'package:tour_ease/controller/chat/chat_state.dart';
-import 'package:tour_ease/controller/chat/messages_bloc.dart' as messages_bloc;
-
-
-import 'package:tour_ease/model/chat/chatRepo.dart';
+// We no longer need the old ChatBloc here, only the new MessagesBloc
+import 'package:tour_ease/controller/chat/messages_bloc.dart';
 import 'package:tour_ease/model/chat/message.dart';
-
 
 class ChatPage extends StatefulWidget {
   final String currentUserId;
   final String otherUserId;
-  final String apiBaseUrl;
+  final String apiBaseUrl; // This might not be needed if your ChatService handles it
   final String otherUserName;
   final String otherUserAvatar;
 
@@ -38,31 +32,28 @@ class _ChatPageState extends State<ChatPage> {
   @override
   void initState() {
     super.initState();
-
-
-
-    context.read<messages_bloc.MessagesBloc>().add(messages_bloc.LoadMessages(otherUserId: widget.otherUserId));
+    // Dispatch the event to load initial messages
+    context.read<MessagesBloc>().add(LoadMessages(otherUserId: widget.otherUserId));
   }
 
   void _sendMessage() {
-    if (_messageController.text.trim().isEmpty) return;
+    final content = _messageController.text.trim();
+    if (content.isEmpty) return;
 
-    context.read<ChatBloc>().add(SendMessage(
-      content: _messageController.text.trim(),
+    // FIXED: Use named parameters for the event as defined in messages_event.dart
+    context.read<MessagesBloc>().add(SendMessage(
+      content: content,
       receiverId: widget.otherUserId,
     ));
 
     _messageController.clear();
-
-    // Scroll to bottom after a short delay to ensure the UI has updated
-    Future.delayed(Duration(milliseconds: 100), _scrollToBottom);
   }
 
   void _scrollToBottom() {
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
         _scrollController.position.maxScrollExtent,
-        duration: Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 300),
         curve: Curves.easeOut,
       );
     }
@@ -81,21 +72,25 @@ class _ChatPageState extends State<ChatPage> {
       appBar: AppBar(
         title: Row(
           children: [
-
+            // You can add back the CircleAvatar if you have the image URL
+            // CircleAvatar(
+            //   backgroundImage: NetworkImage(widget.otherUserAvatar),
+            // ),
             SizedBox(width: 8.w),
             Text(widget.otherUserName),
           ],
         ),
         elevation: 1,
       ),
-      body: BlocConsumer<messages_bloc.MessagesBloc, messages_bloc.MessagesState>(
+      // Use BlocConsumer to both rebuild the UI and listen for side-effects
+      body: BlocConsumer<MessagesBloc, MessagesState>(
         listener: (context, state) {
-          if (state is messages_bloc.MessagesLoaded) {
-            Future.delayed(Duration(milliseconds: 100), _scrollToBottom);
+          // Scroll to bottom every time the list of messages is successfully updated
+          if (state is MessagesLoaded) {
+            Future.delayed(const Duration(milliseconds: 100), _scrollToBottom);
           }
-
-          if (state is messages_bloc.MessagesError) {
-            // Show error message
+          // Show an error message if something goes wrong
+          if (state is MessagesError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.message)),
             );
@@ -104,12 +99,9 @@ class _ChatPageState extends State<ChatPage> {
         builder: (context, state) {
           return Column(
             children: [
-              // Messages list
               Expanded(
                 child: _buildMessagesList(state),
               ),
-
-              // Message input
               _buildMessageInputField(),
             ],
           );
@@ -118,30 +110,28 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  Widget _buildMessagesList(messages_bloc.MessagesState state) {
-    if (state is messages_bloc.MessagesLoading) {
-      return Center(child: CircularProgressIndicator());
-    } else if (state is messages_bloc.MessagesError && (state is! messages_bloc.MessagesLoaded && state is! messages_bloc.MessagesLoading)) {
-      return Center(child: Text('Error: ${state.message}'));
-    } else {
-      List<Message> messages = [];
-
-      if (state is messages_bloc.MessagesLoaded) {
-        messages = state.messages;
+  Widget _buildMessagesList(MessagesState state) {
+    // The builder's logic is now much cleaner
+    if (state is MessagesLoaded) {
+      if (state.messages.isEmpty) {
+        return const Center(child: Text('No messages yet. Start the conversation!'));
       }
-      if (messages.isEmpty) {
-        return Center(child: Text('No messages yet'));
-      }
-
       return ListView.builder(
         controller: _scrollController,
         padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 8.w),
-        itemCount: messages.length,
+        itemCount: state.messages.length,
         itemBuilder: (context, index) {
-          final message = messages[index];
+          final message = state.messages[index];
           return _buildMessageBubble(context, message);
         },
       );
+    } else if (state is MessagesLoading) {
+      return const Center(child: CircularProgressIndicator());
+    } else if (state is MessagesError) {
+      return Center(child: Text('Error: ${state.message}'));
+    } else {
+      // For MessagesInitial state
+      return const Center(child: Text('Loading chat...'));
     }
   }
 
@@ -149,24 +139,27 @@ class _ChatPageState extends State<ChatPage> {
     final theme = Theme.of(context);
     final isMe = message.senderId == widget.currentUserId;
 
-    // Format timestamp
-    final timestamp = DateTime.now();
+    // MAJOR FIX: Parse the message's actual timestamp, don't use DateTime.now()
+    // Use tryParse for safety against malformed date strings.
+    final timestamp = DateTime.tryParse(message.createdAt) ?? DateTime.now();
     final now = DateTime.now();
     String formattedTime;
 
     if (timestamp.year == now.year &&
         timestamp.month == now.month &&
         timestamp.day == now.day) {
-      // Today, show only time
+      // Today: Show only time (e.g., 17:11)
       formattedTime = "${timestamp.hour}:${timestamp.minute.toString().padLeft(2, '0')}";
     } else {
-      // Not today, show date and time
-      formattedTime = "${timestamp.day}/${timestamp.month} ${timestamp.hour}:${timestamp.minute.toString().padLeft(2, '0')}";
+      // Not today: Show date and time (e.g., 31/8 17:11)
+      formattedTime =
+      "${timestamp.day}/${timestamp.month} ${timestamp.hour}:${timestamp.minute.toString().padLeft(2, '0')}";
     }
 
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
+        // ... (rest of your styling is good)
         constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
         margin: EdgeInsets.symmetric(vertical: 4.h, horizontal: 8.w),
         padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 12.w),
@@ -211,6 +204,7 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
+  // No changes needed here, this part is perfect.
   Widget _buildMessageInputField() {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
@@ -218,6 +212,7 @@ class _ChatPageState extends State<ChatPage> {
         children: [
           Expanded(
             child: Container(
+              // ... styling
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surfaceVariant,
                 borderRadius: BorderRadius.circular(24.r),
@@ -249,6 +244,7 @@ class _ChatPageState extends State<ChatPage> {
           ),
           SizedBox(width: 8.w),
           Container(
+            // ... styling
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
@@ -269,7 +265,7 @@ class _ChatPageState extends State<ChatPage> {
             ),
             child: IconButton(
               onPressed: _sendMessage,
-              icon: Icon(Icons.send),
+              icon: const Icon(Icons.send),
               color: Theme.of(context).colorScheme.onPrimary,
             ),
           ),

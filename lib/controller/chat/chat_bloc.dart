@@ -4,6 +4,7 @@ import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:tour_ease/model/chat/chat.dart';
 import 'package:tour_ease/model/chat/chatRepo.dart';
 import 'package:tour_ease/model/chat/message.dart';
+import 'package:tour_ease/model/userManagment/user.dart';
 import 'chat_event.dart';
 import 'chat_state.dart';
 
@@ -26,7 +27,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   }) : super(ChatInitial()) {
     on<LoadChats>(_onLoadChats);
     on<LoadMessages>(_onLoadMessages);
-    on<SendMessage>(_onSendMessage);
+    // on<SendMessage>(_onSendMessage);
     on<MessageReceived>(_onMessageReceived);
     on<MessageDeleted>(_onMessageDeleted);
     on<ResetChat>(_onResetChat);
@@ -77,64 +78,64 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     }
   }
 
-  Future<void> _onSendMessage(SendMessage event, Emitter<ChatState> emit) async {
-    if (event.content.trim().isEmpty) return;
-
-    // Create temp message for optimistic UI update
-    final tempMessage = Message.createTemp(
-      senderId: currentUserId,
-      receiverId: event.receiverId,
-      content: event.content,
-    );
-
-    // Copy current state messages
-    List<Message> currentMessages = [];
-    if (state is ChatLoaded) {
-      currentMessages = List.from((state as ChatLoaded).messages);
-    }
-
-    // Add temp message to list
-    currentMessages.add(tempMessage);
-    emit(MessageSending(currentMessages));
-
-    try {
-      // Send the message to server
-      final sentMessage = await chatService.sendMessage(tempMessage);
-
-      if (state is MessageSending || state is ChatLoaded) {
-        // Get current messages
-        List<Message> updatedMessages = [];
-        if (state is MessageSending) {
-          updatedMessages = List.from((state as MessageSending).messages);
-        } else if (state is ChatLoaded) {
-          updatedMessages = List.from((state as ChatLoaded).messages);
-        }
-
-        // Replace temp message with actual message
-        final tempIndex = updatedMessages.indexWhere((m) => m.id == tempMessage.id);
-        if (tempIndex != -1) {
-          updatedMessages[tempIndex] = sentMessage;
-        }
-
-        emit(ChatLoaded(updatedMessages));
-      }
-    } catch (e) {
-      // Error handling - remove temp message
-      if (state is MessageSending || state is ChatLoaded) {
-        List<Message> updatedMessages = [];
-        if (state is MessageSending) {
-          updatedMessages = List.from((state as MessageSending).messages);
-        } else if (state is ChatLoaded) {
-          updatedMessages = List.from((state as ChatLoaded).messages);
-        }
-
-        updatedMessages.removeWhere((m) => m.id == tempMessage.id);
-        emit(ChatLoaded(updatedMessages));
-      }
-
-      emit(ChatError(e.toString()));
-    }
-  }
+  // Future<void> _onSendMessage(SendMessage event, Emitter<ChatState> emit) async {
+  //   if (event.content.trim().isEmpty) return;
+  //
+  //   // Create temp message for optimistic UI update
+  //   final tempMessage = Message.createTemp(
+  //     senderId: currentUserId,
+  //     receiverId: event.receiverId,
+  //     content: event.content,
+  //   );
+  //
+  //   // Copy current state messages
+  //   List<Message> currentMessages = [];
+  //   if (state is ChatLoaded) {
+  //     currentMessages = List.from((state as ChatLoaded).messages);
+  //   }
+  //
+  //   // Add temp message to list
+  //   currentMessages.add(tempMessage);
+  //   emit(MessageSending(currentMessages));
+  //
+  //   try {
+  //     // Send the message to server
+  //     final sentMessage = await chatService.sendMessage(tempMessage);
+  //
+  //     if (state is MessageSending || state is ChatLoaded) {
+  //       // Get current messages
+  //       List<Message> updatedMessages = [];
+  //       if (state is MessageSending) {
+  //         updatedMessages = List.from((state as MessageSending).messages);
+  //       } else if (state is ChatLoaded) {
+  //         updatedMessages = List.from((state as ChatLoaded).messages);
+  //       }
+  //
+  //       // Replace temp message with actual message
+  //       final tempIndex = updatedMessages.indexWhere((m) => m.id == tempMessage.id);
+  //       if (tempIndex != -1) {
+  //         updatedMessages[tempIndex] = sentMessage;
+  //       }
+  //
+  //       emit(ChatLoaded(updatedMessages));
+  //     }
+  //   } catch (e) {
+  //     // Error handling - remove temp message
+  //     if (state is MessageSending || state is ChatLoaded) {
+  //       List<Message> updatedMessages = [];
+  //       if (state is MessageSending) {
+  //         updatedMessages = List.from((state as MessageSending).messages);
+  //       } else if (state is ChatLoaded) {
+  //         updatedMessages = List.from((state as ChatLoaded).messages);
+  //       }
+  //
+  //       updatedMessages.removeWhere((m) => m.id == tempMessage.id);
+  //       emit(ChatLoaded(updatedMessages));
+  //     }
+  //
+  //     emit(ChatError(e.toString()));
+  //   }
+  // }
 
   void _onMessageReceived(MessageReceived event, Emitter<ChatState> emit) {
     print('Processing MessageReceived event in bloc');

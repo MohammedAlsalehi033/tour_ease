@@ -63,7 +63,7 @@ class _MainPageState extends State<MainPage> {
        return Scaffold(extendBody: true,
             appBar: AppBar(
               title: Text(
-                UserModel().email,
+                UserModel().id,
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               actions: [Themeswitch(),
