@@ -16,7 +16,7 @@ class UserInitializer {
 
     try {
       final response = await dio.get(
-        'http://13.201.19.41:3003/api/getUserById',
+        'http://52.66.238.242:3003/api/getUserById',
         queryParameters: {
           "id": currentUser.uid,
         },

@@ -42,7 +42,7 @@ void main() async {
   await Firebase.initializeApp();
 
   final baseUrlLocal = "http://10.0.2.2:3000";
-  final baseUrlDeploied = "http://13.201.19.41:3003";
+  final baseUrlDeploied = "http://52.66.238.242:3003";
 
   final userJWT = await getFirebaseIdToken();
 

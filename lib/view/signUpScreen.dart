@@ -147,7 +147,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   }
 
                   try {
-                    final signUpController = SignUpWithFireBaseController(UserRepoFireBase(apiService: APIServiceNodeJS("http://13.201.19.41:3003","")));
+                    final signUpController = SignUpWithFireBaseController(UserRepoFireBase(apiService: APIServiceNodeJS("http://52.66.238.242:3003","")));
                     final user = await signUpController.signUpWithEmailAndPassword(email, password);
 
                     Navigator.pushAndRemoveUntil(
