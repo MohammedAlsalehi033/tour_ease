@@ -185,7 +185,7 @@ Future<void> _uploadFcmTokenOnce(BuildContext context, String userId) async {
 
     final APIService api = context.read<APIService>();
     await api.post(
-      path: '/FCMToken/' + userId,
+      path: '/api/FCMToken/' + userId,
       body: {'fcmToken': token},
       fromJson: (json) => json,
     );
