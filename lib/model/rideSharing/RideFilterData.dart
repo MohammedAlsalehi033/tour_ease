@@ -22,7 +22,7 @@ class RideFilterModel {
     this.luggageCapacity = 1,
     this.pickupLocation = '',
     this.destination = '',
-    this.priceRange = const RangeValues(20, 100),
+    this.priceRange = const RangeValues(500, 20000),
     this.destinationCoordinates = const LatLng(10, 10),
     this.pickupLocationCoordinates = const LatLng(10, 10),
   });

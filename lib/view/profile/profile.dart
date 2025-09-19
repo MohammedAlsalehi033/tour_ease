@@ -5,6 +5,10 @@ import 'package:tour_ease/components/profileAvatar.dart';
 import 'package:tour_ease/model/userManagment/user.dart';
 import 'package:tour_ease/view/auth.dart';
 import 'package:tour_ease/view/profile/rideHistory.dart';
+import 'package:tour_ease/view/profile/updateProfilePicture.dart';
+import 'package:tour_ease/view/profile/notificationsSettings.dart';
+import 'package:tour_ease/view/profile/privacySettings.dart';
+import 'package:tour_ease/view/profile/helpSupport.dart';
 
 class ProfilePage extends StatefulWidget {
 
@@ -51,17 +55,61 @@ class _ProfilePageState extends State<ProfilePage> {
     return Center(
       child: Column(
         children: [
-          ProfileAvatar(imageURL: null, userName:UserModel().username , radius: 50.r,userId: UserModel().id, clickable: false,),
+          GestureDetector(
+            onTap: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const UpdateProfilePicturePage(),
+                ),
+              );
+              if (result == true) {
+                // Refresh the profile if picture was updated
+                setState(() {});
+              }
+            },
+            child: Stack(
+              children: [
+                ProfileAvatar(
+                  imageURL: UserModel().mediaUrls[0],
+                  userName: UserModel().username, 
+                  radius: 50.r,
+                  userId: UserModel().id, 
+                  clickable: false,
+                ),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    padding: EdgeInsets.all(4.w),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.surface,
+                        width: 2,
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.camera_alt,
+                      size: 16.sp,
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
           SizedBox(height: 16.h),
           Text(
-            UserModel().email,
+            UserModel().username,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
           SizedBox(height: 8.h),
           Text(
-              UserModel().email,
+            UserModel().email,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
             ),
@@ -88,7 +136,12 @@ class _ProfilePageState extends State<ProfilePage> {
           icon: Icons.notifications,
           title: 'Notifications',
           onTap: () {
-            // Navigate to notifications settings
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const NotificationsSettingsPage(),
+              ),
+            );
           },
         ),
         _buildSettingItem(
@@ -104,7 +157,12 @@ Navigator.push(context, MaterialPageRoute(builder: (context) => RideHistory(),))
           icon: Icons.lock,
           title: 'Privacy',
           onTap: () {
-            // Navigate to privacy settings
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const PrivacySettingsPage(),
+              ),
+            );
           },
         ),
         _buildSettingItem(
@@ -112,7 +170,7 @@ Navigator.push(context, MaterialPageRoute(builder: (context) => RideHistory(),))
           icon: Icons.color_lens,
           title: 'Theme',
           onTap: () {
-            // Navigate to theme settings
+            _showThemeDialog(context);
           },
         ),
         _buildSettingItem(
@@ -120,7 +178,12 @@ Navigator.push(context, MaterialPageRoute(builder: (context) => RideHistory(),))
           icon: Icons.help,
           title: 'Help & Support',
           onTap: () {
-            // Navigate to help & support
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const HelpSupportPage(),
+              ),
+            );
           },
         ),
       ],
@@ -163,6 +226,68 @@ Navigator.push(context, MaterialPageRoute(builder: (context) => RideHistory(),))
           ),
         ),
         child: Text('Logout'),
+      ),
+    );
+  }
+
+  void _showThemeDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Choose Theme'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.light_mode),
+              title: const Text('Light Theme'),
+              onTap: () {
+                Navigator.pop(context);
+                // TODO: Implement theme switching
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Light theme selected'),
+                    backgroundColor: Colors.blue,
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.dark_mode),
+              title: const Text('Dark Theme'),
+              onTap: () {
+                Navigator.pop(context);
+                // TODO: Implement theme switching
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Dark theme selected'),
+                    backgroundColor: Colors.blue,
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.auto_mode),
+              title: const Text('System Default'),
+              onTap: () {
+                Navigator.pop(context);
+                // TODO: Implement theme switching
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('System theme selected'),
+                    backgroundColor: Colors.blue,
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
       ),
     );
   }

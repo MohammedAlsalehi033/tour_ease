@@ -9,6 +9,7 @@ import 'package:tour_ease/bloc/rideResultsBloc.dart';
 import 'package:tour_ease/bloc/rideFilterBloc.dart';
 import 'package:tour_ease/controller/chat/chat_bloc.dart';
 import 'package:tour_ease/controller/chat/messages_bloc.dart';
+import 'package:tour_ease/controller/report/report_bloc.dart';
 import 'package:tour_ease/controller/rideSharing/RideBooking/provider/booking_for_provider_bloc.dart';
 import 'package:tour_ease/controller/rideSharing/RideBooking/ride_booking_bloc.dart';
 import 'package:tour_ease/controller/rideSharing/RideBooking/traveler/booking_for_traveler_bloc.dart';
@@ -16,12 +17,13 @@ import 'package:tour_ease/controller/rideSharing/RideRequests/ride_request_bloc.
 import 'package:tour_ease/controller/rideSharing/offers/offers_bloc.dart';
 import 'package:tour_ease/controller/rideSharing/offers/offers_event.dart';
 import 'package:tour_ease/controller/rideSharing/transportationProvider/transporation_provider_bloc.dart';
-import 'package:tour_ease/controller/userManagment//initialize.dart';
+import 'package:tour_ease/controller/userManagment/JWTController.dart';
 import 'package:tour_ease/controller/question/commets/comments_bloc.dart';
 import 'package:tour_ease/controller/question/questionBloc.dart';
 import 'package:tour_ease/controller/question/votes/votes_bloc.dart';
-import 'package:tour_ease/controller/userManagment/JWTController.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:tour_ease/model/chat/chatRepo.dart';
+import 'package:tour_ease/model/report/report_repository.dart';
 import 'package:tour_ease/model/rideSharing/RideBooking/RideBookingRepo.dart';
 import 'package:tour_ease/model/rideSharing/offer/offerRepo.dart';
 import 'package:tour_ease/model/userManagment/transportationProviderRepo.dart';
@@ -30,19 +32,31 @@ import 'package:tour_ease/model/question/comments/commentRepo.dart';
 import 'package:tour_ease/model/question/questionRepo.dart';
 import 'package:tour_ease/model/question/votes/votesRepo.dart';
 import 'package:tour_ease/model/rideSharing/rideListing/rideRepository.dart';
-import 'package:tour_ease/testingthings/test.dart';
 import 'package:tour_ease/theme.dart';
 import 'package:tour_ease/view/auth.dart';
 import 'package:tour_ease/view/mainPage.dart';
+import 'package:tour_ease/Services/notification_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
-  final baseUrlLocal = "http://10.0.2.2:3000";
-  final baseUrlDeploied = "http://52.66.238.242:3003";
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  await NotificationService().initialize();
+
+  // Always print FCM token at app start
+  try {
+    final String? startupToken = await NotificationService().getToken();
+    if (startupToken != null) {
+      // ignore: avoid_print
+      print('FCM at startup: ' + startupToken);
+    }
+  } catch (_) {}
+
+  // final baseUrlLocal = "http://10.0.2.2:3000";
+  final baseUrlDeploied = "https://api.tourease.me";
 
   final userJWT = await getFirebaseIdToken();
 
@@ -112,7 +126,9 @@ void main() async {
         ,BlocProvider(create: (context) => MessagesBloc(chatService: ChatService(
               apiService: context.read<APIService>(),
               apiBaseUrl: context.read<APIService>().baseUrl,
-              currentUserId: UserModel().id), currentUserId: UserModel().id,),)],
+              currentUserId: UserModel().id), currentUserId: UserModel().id,),),
+        BlocProvider(create: (context) => ReportBloc(reportRepository: ReportRepoFromAPI(apiService) ),)
+        ],
         child: MyApp(),
       ),
     ),
@@ -144,11 +160,42 @@ class MyApp extends StatelessWidget {
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
         if (snapshot.hasData && snapshot.data != null) {
+          // Upload FCM token only once per user (first login)
+          final String uid = snapshot.data!.uid;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _uploadFcmTokenOnce(context, uid);
+          });
           return const MainPage();
         }
         return const AuthScreen();
       },
     );
+  }
+}
+
+Future<void> _uploadFcmTokenOnce(BuildContext context, String userId) async {
+  try {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String key = 'fcm_uploaded_' + userId;
+    final bool alreadyUploaded = prefs.getBool(key) ?? false;
+    if (alreadyUploaded) return;
+
+    final String? token = await NotificationService().getToken();
+    if (token == null || token.isEmpty) return;
+
+    final APIService api = context.read<APIService>();
+    await api.post(
+      path: '/FCMToken/' + userId,
+      body: {'fcmToken': token},
+      fromJson: (json) => json,
+    );
+
+    await prefs.setBool(key, true);
+    // ignore: avoid_print
+    print('Uploaded FCM for first login of ' + userId);
+  } catch (e) {
+    // ignore: avoid_print
+    print('Failed first-time FCM upload: ' + e.toString());
   }
 }
 

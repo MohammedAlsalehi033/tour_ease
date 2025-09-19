@@ -1,8 +1,5 @@
 
 import 'package:dio/dio.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:tour_ease/controller/userManagment/JWTController.dart';
-import 'package:tour_ease/model/userManagment/user.dart';
 
 
 
@@ -38,6 +35,13 @@ abstract class APIService {
     dynamic body, // Added optional body for DELETE requests
     Map<String, String>? headers,
   });
+
+  Future<R> postMultipart<R>({
+    required String path,
+    required FormData formData,
+    required R Function(dynamic json) fromJson,
+    Map<String, String>? headers,
+  });
 }
 
 class APIServiceNodeJS extends APIService {
@@ -49,7 +53,7 @@ class APIServiceNodeJS extends APIService {
     // --- SET YOUR APP-WIDE DEFAULT HEADERS HERE ---
     _dio.options.headers['Content-Type'] = 'application/json; charset=UTF-8';
 
-    if (authToken != null) {
+    if (authToken.isNotEmpty) {
       _dio.options.headers['Authorization'] = 'Bearer $authToken';
     }
     // ---------------------------------------------
@@ -178,6 +182,36 @@ class APIServiceNodeJS extends APIService {
       }
     } on DioException catch (e) {
       throw Exception('Failed to execute DELETE request: $e');
+    }
+  }
+
+  @override
+  Future<R> postMultipart<R>({
+    required String path,
+    required FormData formData,
+    required R Function(dynamic json) fromJson,
+    Map<String, String>? headers,
+  }) async {
+    try {
+      final response = await _dio.post(
+        path,
+        data: formData,
+        options: _getOptions(headers).copyWith(
+          contentType: 'multipart/form-data',
+        ),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return fromJson(response.data);
+      } else {
+        throw DioException(
+          requestOptions: response.requestOptions,
+          response: response,
+          message: 'Failed to upload file: ${response.statusCode}',
+        );
+      }
+    } on DioException catch (e) {
+      throw Exception('Failed to execute multipart POST request: $e');
     }
   }
 }

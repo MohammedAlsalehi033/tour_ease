@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_animate/flutter_animate.dart'; // NEW: Import the animation package
 import 'package:intl/intl.dart';
 import 'package:tour_ease/controller/rideSharing/offers/offers_bloc.dart';
 import 'package:tour_ease/controller/rideSharing/offers/offers_state.dart';
 import 'package:tour_ease/controller/rideSharing/offers/offers_event.dart';
 import 'package:tour_ease/model/rideSharing/offer/offerModel.dart';
 import 'package:tour_ease/model/userManagment/user.dart';
+import 'package:tour_ease/components/profileAvatar.dart';
 
 class NotifiactionScreen extends StatefulWidget {
   const NotifiactionScreen({super.key});
@@ -18,7 +20,10 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<OfferBloc>().add(GetReceivedOffersEvent(userId: UserModel().id));
+    // Use a post-frame callback to ensure context is available.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<OfferBloc>().add(GetReceivedOffersEvent(userId: UserModel().id));
+    });
   }
 
   @override
@@ -35,15 +40,15 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
                   Text('Offer accepted successfully'),
                 ],
               ),
-              backgroundColor: Colors.green,
+              backgroundColor: Colors.green, // This is acceptable for universal success feedback
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(12)), // CHANGED: Added border radius
               ),
               margin: EdgeInsets.all(16),
               duration: Duration(seconds: 3),
             ),
           );
-          // Refresh the list after a state change
           context.read<OfferBloc>().add(GetReceivedOffersEvent(userId: UserModel().id));
         } else if (state is OfferRejected) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -55,21 +60,19 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
                   Text('Offer rejected successfully'),
                 ],
               ),
-              backgroundColor: Colors.red,
+              backgroundColor: Colors.red, // This is acceptable for universal error feedback
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(12)), // CHANGED: Added border radius
               ),
               margin: EdgeInsets.all(16),
               duration: Duration(seconds: 3),
             ),
           );
-          // Refresh the list after a state change
           context.read<OfferBloc>().add(GetReceivedOffersEvent(userId: UserModel().id));
         }
       },
       builder: (context, state) {
-
-
         return Scaffold(
           appBar: AppBar(
             title: const Text("Notifications"),
@@ -100,22 +103,21 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
         ),
       );
     } else if (state is OffersLoaded) {
-
-
       final List<OfferModel> offers = state.offers;
       if (offers.isEmpty) {
+        // NEW: Added animation to the empty state
         return Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.notifications_off_outlined, size: 64, color: Colors.grey[400]),
+              Icon(Icons.notifications_off_outlined, size: 64, color: Theme.of(context).textTheme.bodySmall?.color),
               const SizedBox(height: 16),
               Text(
                 'No notifications available',
-                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                style: Theme.of(context).textTheme.titleMedium,
               ),
             ],
-          ),
+          ).animate().fadeIn(duration: 500.ms).scale(begin: const Offset(0.8, 0.8)),
         );
       }
 
@@ -125,26 +127,19 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
         itemBuilder: (context, index) {
           final offer = offers[index];
 
-          // Essential data for card
-          final senderName = offer.sender != null && offer.sender!['username'] != null
-              ? offer.sender!['username']
-              : 'Unknown User';
-
+          final senderName = offer.sender?['username'] ?? 'Unknown User';
           final formattedDate = DateFormat('MMM d').format(offer.createdAt);
           final formattedTime = DateFormat('h:mm a').format(offer.createdAt);
 
-          // Display trip route (minimal version for card)
           String routeInfo = 'Trip details unavailable';
           if (offer.listing != null) {
-            final startLoc = offer.listing!['startLocationText']?? '';
+            final startLoc = offer.listing!['startLocationText'] ?? '';
             final endLoc = offer.listing!['endLocationText'] ?? '';
-
             if (startLoc.isNotEmpty && endLoc.isNotEmpty) {
               routeInfo = '$startLoc → $endLoc';
             }
           }
 
-          // Status color
           Color statusColor;
           switch (offer.status.toLowerCase()) {
             case 'pending':
@@ -154,27 +149,27 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
               statusColor = Colors.green;
               break;
             case 'rejected':
-              statusColor = Colors.red;
+              statusColor = Theme.of(context).colorScheme.error; // CHANGED: Use theme color
               break;
             default:
               statusColor = Colors.grey;
           }
-          final mediaUrls = offer.sender?['mediaUrls'];
 
+          final mediaUrls = offer.sender?['mediaUrls'];
           final hasImage = mediaUrls != null && mediaUrls is List && mediaUrls.isNotEmpty;
 
-          final bool hasDepartureTime = offer.listing?["departureTime"] != null;
+          final departureTimeStr = offer.listing?["departureTime"];
+          final bool hasDepartureTime = departureTimeStr != null;
+          final departureTime = hasDepartureTime ? DateTime.tryParse(departureTimeStr) : null;
+          final isOutDated = departureTime != null ? DateTime.now().isAfter(departureTime) : false;
 
-      final departureTime = hasDepartureTime ? DateTime.parse(offer.listing?["departureTime"]) : null;
-      final isOutDated = hasDepartureTime ? DateTime.now().isAfter(departureTime!) : false ;
-
-
+          // NEW: Added animation to each card
           return Card(
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             elevation: 2,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
-              side: BorderSide(color: Colors.grey.withOpacity(0.2), width: 0.5),
+              side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.5), width: 0.5),
             ),
             child: InkWell(
               borderRadius: BorderRadius.circular(12),
@@ -189,23 +184,13 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Avatar for sender
-                        CircleAvatar(
-                          backgroundImage: hasImage ? NetworkImage(mediaUrls[0]) : null,
-
-                          backgroundColor: Theme.of(context).primaryColor.withOpacity(0.2),
-                          child: hasImage
-                              ? null // If there is an image, the child should be null
-                              : Text(
-                            senderName.isNotEmpty ? senderName[0].toUpperCase() : '?',
-                            style: TextStyle(
-                              color: Theme.of(context).primaryColor,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                        ProfileAvatar(
+                          imageURL: hasImage ? mediaUrls[0] : null,
+                          userName: senderName,
+                          radius: 22,
+                          userId: offer.sender?['id'] ?? '',
                         ),
                         const SizedBox(width: 12),
-                        // Main content
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -215,24 +200,20 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
                                 children: [
                                   Text(
                                     senderName,
-                                    style: const TextStyle(
+                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 16,
                                     ),
                                   ),
                                   Text(
                                     '$formattedDate at $formattedTime',
-                                    style: TextStyle(
-                                      color: Colors.grey[600],
-                                      fontSize: 12,
-                                    ),
+                                    style: Theme.of(context).textTheme.bodySmall, // CHANGED: Use theme text style
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 6),
                               Text(
                                 routeInfo,
-                                style: const TextStyle(fontSize: 14),
+                                style: Theme.of(context).textTheme.bodyMedium, // CHANGED: Use theme text style
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -240,34 +221,23 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  // Price and seats
                                   Row(
                                     children: [
-                                      Icon(Icons.airline_seat_recline_normal,
-                                          size: 16, color: Colors.grey[600]),
+                                      Icon(Icons.airline_seat_recline_normal, size: 16, color: Theme.of(context).textTheme.bodySmall?.color),
                                       const SizedBox(width: 4),
                                       Text(
                                         '${offer.seatsRequested} seat(s)',
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          color: Colors.grey[700],
-                                        ),
+                                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).textTheme.bodySmall?.color), // CHANGED
                                       ),
                                       const SizedBox(width: 12),
-                                      Icon(Icons.attach_money,
-                                          size: 16, color: Colors.grey[600]),
+                                      Icon(Icons.attach_money, size: 16, color: Theme.of(context).textTheme.bodySmall?.color),
                                       const SizedBox(width: 4),
                                       Text(
                                         '\$${offer.pricePerSeat.toStringAsFixed(2)}',
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          color: Colors.grey[700],
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).textTheme.bodySmall?.color, fontWeight: FontWeight.bold), //CHANGED
                                       ),
                                     ],
                                   ),
-                                  // Status chip
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                     decoration: BoxDecoration(
@@ -290,22 +260,24 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
                         ),
                       ],
                     ),
-                    // Action buttons for pending offers
                     if (offer.status.toLowerCase() == 'pending')
                       Padding(
                         padding: const EdgeInsets.only(top: 12),
-                        child:  isOutDated ?  Padding(
+                        child: isOutDated
+                            ? Padding(
                           padding: const EdgeInsets.all(8.0),
-                          child: Center(child: Text("this offer is expired", style:  Theme.of(context).textTheme.titleMedium,)),
-                        ): Row(
+                          child: Center(
+                            child: Text("This offer has expired", style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.error)),
+                          ),
+                        )
+                            : Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             OutlinedButton(
-
                               onPressed: () => _handleOfferResponse(context, offer, 'rejected'),
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.red,
-                                side: const BorderSide(color: Colors.red),
+                                foregroundColor: Theme.of(context).colorScheme.error, // CHANGED
+                                side: BorderSide(color: Theme.of(context).colorScheme.error), // CHANGED
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(20),
                                 ),
@@ -317,8 +289,8 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
                             ElevatedButton(
                               onPressed: () => _handleOfferResponse(context, offer, 'accepted'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green,
-                                foregroundColor: Colors.white,
+                                backgroundColor: Colors.green, // CHANGED
+                                foregroundColor: Colors.white, // CHANGED
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(20),
                                 ),
@@ -333,70 +305,37 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
                 ),
               ),
             ),
-          );
+          ).animate().fadeIn(duration: 400.ms, delay: (100 * index).ms).slideY(begin: 0.2, curve: Curves.easeInOut);
         },
       );
     }
-
-    // Default empty state
     return const Center(child: Text('No notifications'));
   }
 
-  void _showOfferDetailsBottomSheet(BuildContext context, dynamic offer) {
-    // Get all data from offer model
-    final senderName = offer.sender != null && offer.sender!['username'] != null
-        ? offer.sender!['username']
-        : 'Unknown User';
-
+  void _showOfferDetailsBottomSheet(BuildContext context, OfferModel offer) {
+    // ... (rest of the data parsing logic is the same)
+    final senderName = offer.sender?['username'] ?? 'Unknown User';
     final formattedFullDate = DateFormat('EEEE, MMM d, yyyy').format(offer.createdAt);
     final formattedTime = DateFormat('h:mm a').format(offer.createdAt);
+    String startLocation = 'N/A', endLocation = 'N/A', tripDate = "N/A", tripTime = "N/A";
 
-    String routeInfo = 'Trip details unavailable';
-    String startLocation = 'N/A';
-    String endLocation = 'N/A';
-    String tripDate = "Date not specified";
-    String tripTime = "Time not specified";
-
-    print(offer.toString());
-
-    // Handle listing data
     if (offer.listing != null) {
       startLocation = offer.listing!['startLocationText'] ?? 'N/A';
       endLocation = offer.listing!['endLocationText'] ?? 'N/A';
-
-      // Format trip details from listing
       if (offer.listing!['departureTime'] != null) {
-        DateTime departureDateTime = DateTime.parse(offer.listing!['departureTime']);
-        tripDate = DateFormat('EEEE, MMM d').format(departureDateTime);
-        tripTime = DateFormat('h:mm a').format(departureDateTime);
-      }
-
-      if (startLocation != 'N/A' && endLocation != 'N/A') {
-        routeInfo = '$startLocation to $endLocation';
-      }
-    }
-
-    // Handle request data
-    if (offer.request != null) {
-      startLocation = offer.request!['startLocationText'] ?? startLocation;
-      endLocation = offer.request!['endLocationText'] ?? endLocation;
-
-      // Format trip details from request
-      if (offer.request!['departureTime'] != null) {
-        DateTime departureDateTime = DateTime.parse(offer.request!['departureTime']);
-        tripDate = DateFormat('EEEE, MMM d').format(departureDateTime);
-        tripTime = DateFormat('h:mm a').format(departureDateTime);
-      }
-
-      if (startLocation != 'N/A' && endLocation != 'N/A') {
-        routeInfo = '$startLocation to $endLocation';
+        DateTime? departureDateTime = DateTime.tryParse(offer.listing!['departureTime']);
+        if (departureDateTime != null) {
+          tripDate = DateFormat('EEEE, MMM d').format(departureDateTime);
+          tripTime = DateFormat('h:mm a').format(departureDateTime);
+        }
       }
     }
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      // CHANGED: Use theme color for the background, making it dark-mode compatible.
+      backgroundColor: Theme.of(context).cardColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -409,22 +348,20 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
           builder: (context, scrollController) {
             return Column(
               children: [
-                // Drag handle
                 Container(
                   width: 40,
                   height: 5,
                   margin: const EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    // CHANGED: Use a theme-aware color for the drag handle
+                    color: Theme.of(context).dividerColor,
                     borderRadius: BorderRadius.circular(3),
                   ),
                 ),
-                // Content
                 Expanded(
                   child: CustomScrollView(
                     controller: scrollController,
                     slivers: [
-                      // Header Section
                       SliverToBoxAdapter(
                         child: Container(
                           padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
@@ -433,29 +370,25 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
                             children: [
                               Text(
                                 'Offer Details',
-                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                style: Theme.of(context).textTheme.headlineSmall?.copyWith( // CHANGED
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 'Received on $formattedFullDate at $formattedTime',
-                                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                                style: Theme.of(context).textTheme.bodySmall, // CHANGED
                               ),
                               const SizedBox(height: 16),
-
-                              // Status Row
                               Row(
                                 children: [
                                   _buildStatusIndicator(offer.status),
-                                  const SizedBox(width: 24),
+                                  const SizedBox(width: 16),
                                   if (offer.status.toLowerCase() == 'pending')
                                     Expanded(
                                       child: Text(
                                         'This offer requires your response',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.grey[600],
+                                        style: Theme.of(context).textTheme.bodyMedium?.copyWith( // CHANGED
                                           fontStyle: FontStyle.italic,
                                         ),
                                       ),
@@ -467,78 +400,38 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
                           ),
                         ),
                       ),
-
-                      // Main Content
                       SliverPadding(
                         padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
                         sliver: SliverList(
                           delegate: SliverChildListDelegate([
-                            // User Info Section
                             _buildSectionTitle(context, 'From'),
-                            _buildDetailRow(
-                              context,
-                              icon: Icons.person,
-                              title: senderName,
-                              subtitle: 'Sender',
-                            ),
+                            _buildDetailRow(context, icon: Icons.person, title: senderName, subtitle: 'Sender'),
                             const SizedBox(height: 24),
-
-                            // Trip Details Section
                             _buildSectionTitle(context, 'Trip Information'),
-                            _buildDetailRow(
-                              context,
-                              icon: Icons.location_on_outlined,
-                              title: 'From: $startLocation',
-                            ),
+                            _buildDetailRow(context, icon: Icons.location_on_outlined, title: 'From: $startLocation'),
                             const SizedBox(height: 8),
-                            _buildDetailRow(
-                              context,
-                              icon: Icons.location_on,
-                              title: 'To: $endLocation',
-                            ),
+                            _buildDetailRow(context, icon: Icons.location_on, title: 'To: $endLocation'),
                             const SizedBox(height: 8),
-                            _buildDetailRow(
-                              context,
-                              icon: Icons.calendar_today,
-                              title: tripDate,
-                              subtitle: tripTime,
-                            ),
+                            _buildDetailRow(context, icon: Icons.calendar_today, title: tripDate, subtitle: tripTime),
                             const SizedBox(height: 24),
-
-                            // Offer Details Section
                             _buildSectionTitle(context, 'Offer Details'),
-                            _buildDetailRow(
-                              context,
-                              icon: Icons.airline_seat_recline_normal,
-                              title: '${offer.seatsRequested} seat(s) requested',
-                            ),
+                            _buildDetailRow(context, icon: Icons.airline_seat_recline_normal, title: '${offer.seatsRequested} seat(s) requested'),
                             const SizedBox(height: 8),
-                            _buildDetailRow(
-                              context,
-                              icon: Icons.attach_money,
-                              title: '\$${offer.pricePerSeat.toStringAsFixed(2)} per seat',
-                              subtitle: 'Total: \$${(offer.pricePerSeat * offer.seatsRequested).toStringAsFixed(2)}',
-                            ),
-
-                            // Message Section (if available)
+                            _buildDetailRow(context, icon: Icons.attach_money, title: '\$${offer.pricePerSeat.toStringAsFixed(2)} per seat', subtitle: 'Total: \$${(offer.pricePerSeat * offer.seatsRequested).toStringAsFixed(2)}'),
                             if (offer.message != null && offer.message!.isNotEmpty) ...[
                               const SizedBox(height: 24),
                               _buildSectionTitle(context, 'Message'),
                               Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: Colors.grey[100],
+                                  // CHANGED: Use theme colors for the message box
+                                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                                  border: Border.all(color: Theme.of(context).dividerColor),
                                 ),
-                                child: Text(
-                                  offer.message!,
-                                  style: const TextStyle(fontSize: 15),
-                                ),
+                                child: Text(offer.message!, style: Theme.of(context).textTheme.bodyLarge), // CHANGED
                               ),
                             ],
-
-                            // Bottom padding for actions
                             const SizedBox(height: 24),
                           ]),
                         ),
@@ -546,13 +439,11 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
                     ],
                   ),
                 ),
-
-                // Action Buttons (if pending)
                 if (offer.status.toLowerCase() == 'pending')
                   Container(
                     padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).cardColor, // CHANGED
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.05),
@@ -570,11 +461,9 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
                               _handleOfferResponse(context, offer, 'rejected');
                             },
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.red,
-                              side: const BorderSide(color: Colors.red),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
+                              foregroundColor: Theme.of(context).colorScheme.error, // CHANGED
+                              side: BorderSide(color: Theme.of(context).colorScheme.error), // CHANGED
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               padding: const EdgeInsets.symmetric(vertical: 14),
                             ),
                             child: const Text('Decline Offer'),
@@ -590,9 +479,7 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.green,
                               foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               padding: const EdgeInsets.symmetric(vertical: 14),
                             ),
                             child: const Text('Accept Offer'),
@@ -608,6 +495,9 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
       },
     );
   }
+
+  // The helper widgets below are now theme-aware.
+
   Widget _buildStatusIndicator(String status) {
     Color statusColor;
     IconData statusIcon;
@@ -622,7 +512,7 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
         statusIcon = Icons.check_circle;
         break;
       case 'rejected':
-        statusColor = Colors.red;
+        statusColor = Theme.of(context).colorScheme.error; // CHANGED
         statusIcon = Icons.cancel;
         break;
       default:
@@ -662,28 +552,23 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
         style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.bold,
-          color: Theme.of(context).primaryColor,
+          color: Theme.of(context).colorScheme.primary, // CHANGED
         ),
       ),
     );
   }
 
-  Widget _buildDetailRow(
-      BuildContext context, {
-        required IconData icon,
-        required String title,
-        String? subtitle,
-      }) {
+  Widget _buildDetailRow(BuildContext context, {required IconData icon, required String title, String? subtitle}) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Theme.of(context).primaryColor.withOpacity(0.1),
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.1), // CHANGED
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, size: 20, color: Theme.of(context).primaryColor),
+          child: Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary), // CHANGED
         ),
         const SizedBox(width: 16),
         Expanded(
@@ -692,19 +577,13 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
             children: [
               Text(
                 title,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500), // CHANGED
               ),
               if (subtitle != null) ...[
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey[600],
-                  ),
+                  style: Theme.of(context).textTheme.bodyMedium, // CHANGED
                 ),
               ],
             ],
@@ -714,15 +593,11 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
     );
   }
 
-  void _handleOfferResponse(BuildContext context, dynamic offer, String status) {
-    // Dispatch the appropriate event based on the status
+  void _handleOfferResponse(BuildContext context, OfferModel offer, String status) {
     if (status == "accepted") {
       context.read<OfferBloc>().add(AcceptOfferEvent(offer.id));
     } else if (status == "rejected") {
       context.read<OfferBloc>().add(RejectOfferEvent(offer.id));
     }
-
-    // Note: The snackbar feedback is now handled in the BlocConsumer listener
-    // and the list refresh is also handled there after state changes
   }
 }

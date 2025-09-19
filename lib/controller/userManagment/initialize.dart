@@ -16,7 +16,7 @@ class UserInitializer {
 
     try {
       final response = await dio.get(
-        'http://52.66.238.242:3003/api/getUserById',
+        'https://api.tourease.me/api/getUserById',
         queryParameters: {
           "id": currentUser.uid,
         },

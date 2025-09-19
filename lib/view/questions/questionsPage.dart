@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 // ANIMATION: Import the animation package
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+import 'package:tour_ease/components/animations/fade_page_route.dart';
 import 'package:tour_ease/components/debouncer.dart';
 import 'package:tour_ease/components/profileAvatar.dart';
 import 'package:tour_ease/controller/question/questionBloc.dart';
@@ -290,6 +291,8 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
     return filteredQuestions.length;
   }
 
+// In: questions/QuestionsScreen.dart
+
   Widget _buildQuestionItem(BuildContext context, Question question) {
     final bloc = BlocProvider.of<VotesBloc>(context);
     final colorScheme = Theme.of(context).colorScheme;
@@ -307,7 +310,9 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
       ),
       child: InkWell(
         onTap: () {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => QuestionDetailsPage(question: question)));
+          // MODIFICATION: Use a custom PageRoute for a cleaner transition (optional but recommended)
+          // We will create this FadePageRoute in Step 3. For now, know this is where it goes.
+          Navigator.push(context, FadePageRoute(builder: (context) => QuestionDetailsPage(question: question)));
         },
         borderRadius: BorderRadius.circular(16.r),
         child: Padding(
@@ -317,7 +322,11 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
             children: [
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                leading: ProfileAvatar(imageURL: avatarUrl, userName: question.userName ?? '?', radius: 20.r,userId: question.userId,),
+                // HERO WIDGET #1: Wrap the ProfileAvatar
+                leading: Hero(
+                  tag: 'avatar_${question.id}', // Unique tag for the avatar
+                  child: ProfileAvatar(imageURL: avatarUrl, userName: question.userName ?? '?', radius: 20.r, userId: question.userId),
+                ),
                 title: Text(question.userName ?? "Anonymous", style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
                 subtitle: Text(
                   "Asked on ${question.updatedAt.toString().substring(0, 10)}",
@@ -326,13 +335,22 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                 trailing: Icon(Icons.more_vert, color: colorScheme.onSurfaceVariant),
               ),
               SizedBox(height: 12.h),
-              Text(
-                question.title,
-                style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600, height: 1.3),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              // HERO WIDGET #2: Wrap the Question Title Text
+              Hero(
+                tag: 'title_${question.id}', // Unique tag for the title
+                // The Material widget prevents text style animation glitches
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: Text(
+                    question.title,
+                    style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600, height: 1.3),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ),
               SizedBox(height: 8.h),
+              // ... The rest of the widget remains the same
               Text(
                 question.description,
                 style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
@@ -405,7 +423,6 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
       ),
     );
   }
-
   Widget _buildVoteButton({required BuildContext context, required IconData icon, required String label, required bool isSelected, required VoidCallback? onTap}) {
     final colorScheme = Theme.of(context).colorScheme;
     final Color selectedColor = colorScheme.primary;

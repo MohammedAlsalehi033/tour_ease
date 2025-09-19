@@ -11,7 +11,7 @@ import 'package:tab_container/tab_container.dart';
 import 'package:tour_ease/controller/rideSharing/RideBooking/provider/booking_for_provider_bloc.dart';
 import 'package:tour_ease/controller/rideSharing/RideBooking/ride_booking_bloc.dart';
 import 'package:tour_ease/controller/rideSharing/RideBooking/ride_booking_event.dart';
-import 'package:tour_ease/controller/rideSharing/RideBooking/ride_booking_state.dart';
+// removed unused ride_booking_state import
 import 'package:tour_ease/controller/rideSharing/RideRequests/ride_request_bloc.dart';
 import 'package:tour_ease/controller/rideSharing/transportationProvider/transporation_provider_bloc.dart';
 import 'package:tour_ease/model/rideSharing/RideFilterData.dart';
@@ -20,12 +20,13 @@ import 'package:tour_ease/model/userManagment/UserModelTempForNow.dart';
 import 'package:tour_ease/model/userManagment/transportationProvider.dart';
 
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
+// removed duplicate intl import
 import 'package:tour_ease/model/userManagment/user.dart';
 import 'package:tour_ease/view/mapscreen/trackingMap.dart';
 import 'package:tour_ease/view/rideSharing/transportationProviderScreens/TravelBookingForm.dart';
 import 'package:tour_ease/view/rideSharing/transportationProviderScreens/providerProfile.dart';
 import 'package:tour_ease/view/rideSharing/transportationProviderScreens/viewRequestDetails.dart';
+import 'package:tour_ease/components/profileAvatar.dart';
 
 class NewTransportationProviderPage extends StatefulWidget {
   const NewTransportationProviderPage({super.key});
@@ -218,6 +219,29 @@ class _NewTransportationProviderPageState
                                     ),
                                     const Divider(height: 24),
 
+                                    // Traveler info
+                                    Row(
+                                      children: [
+                                        ProfileAvatar(
+                                          imageURL: (booking.traveler != null && booking.traveler!.mediaUrls.isNotEmpty)
+                                              ? booking.traveler!.mediaUrls.first
+                                              : null,
+                                          userName: booking.traveler?.username ?? 'Traveler',
+                                          radius: 18,
+                                          userId: booking.traveler?.id ?? '',
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            booking.traveler?.username ?? 'Traveler',
+                                            style: theme.textTheme.titleSmall,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+
                                     // Journey details
                                     if (booking.listing != null) ...[
                                       _buildInfoRow(
@@ -270,7 +294,7 @@ class _NewTransportationProviderPageState
                                     _buildInfoRow(
                                       Icons.attach_money,
                                       'Total Price',
-                                      '${booking.totalPrice.toStringAsFixed(2)} USD',
+                                      'PKR ${booking.totalPrice.toStringAsFixed(2)}',
                                       theme,
                                     ),
 

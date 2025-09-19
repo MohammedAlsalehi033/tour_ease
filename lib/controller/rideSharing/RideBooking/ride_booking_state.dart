@@ -1,6 +1,5 @@
 // file: bloc/booking/booking_state.dart
 
-import 'package:tour_ease/model/rideSharing/RideBooking/RideBooking.dart';
 
 abstract class BookingState  {
   const BookingState();
@@ -11,6 +10,11 @@ abstract class BookingState  {
 class BookingInitial extends BookingState {}
 
 class BookingLoading extends BookingState {}
+
+class BookingMarkedComplete extends BookingState {
+  final int bookingId;
+  BookingMarkedComplete(this.bookingId);
+}
 
 // class TravelerBookingLoadSuccess extends BookingState {
 //   final List<TravelerBookingModel> travelerBookings;

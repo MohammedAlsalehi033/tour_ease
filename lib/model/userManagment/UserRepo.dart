@@ -17,7 +17,7 @@ final APIService apiService;
   UserRepoFireBase({required this.apiService});
 
 Future<Response> createUser(UserModel user) async {
-  const apiUrl = 'http://52.66.238.242:3003/api/createUser';
+  const apiUrl = 'https://api.tourease.me/api/createUser';
 
   try {
     final response = await Dio().post(

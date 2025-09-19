@@ -22,10 +22,10 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     on<MarkBookingAsComplete>((event, emit) async{
       emit(BookingLoading());
       try{
-        final bookings = await _bookingRepository.markBookingAsComplete(event.bookingId);
+        await _bookingRepository.markBookingAsComplete(event.bookingId);
+        emit(BookingMarkedComplete(int.tryParse(event.bookingId) ?? 0));
       }catch(e){
-
-
+        emit(BookingLoadFailure(e.toString()));
       }
     },);
   }

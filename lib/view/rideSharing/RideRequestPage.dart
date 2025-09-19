@@ -132,9 +132,7 @@ class _RideRequestPageState extends State<RideRequestPage> {
           isEndLocationValid &&
           isBudgetValid &&
           isSeatsValid) {
-        isSubmitting = true;
-
-
+        setState(() { isSubmitting = true; });
         context.read<RideRequestBloc>().add(CreateRideRequest(
             startLocationText: rideFilterState.filterModel.pickupLocation,
             endLocationText: rideFilterState.filterModel.destination,
@@ -149,19 +147,6 @@ class _RideRequestPageState extends State<RideRequestPage> {
             departureTime: _getDepartureDateTime(),
             seatsNeeded: seatsNeeded,
             budget: budget));
-        Future.delayed(Duration(seconds: 1), () {
-          setState(() {
-            isSubmitting = false;
-            isSubmitSuccess = true;
-
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Ride request submitted successfully!'),
-                backgroundColor: Colors.green,
-              ),
-            );
-          });
-        });
       } else {
       }
     });
@@ -189,7 +174,23 @@ class _RideRequestPageState extends State<RideRequestPage> {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
 
-    return BlocBuilder<RideFilterBloc, RideFilterState>(
+    return BlocListener<RideRequestBloc, RideRequestState>(
+      listener: (context, reqState) {
+        if (reqState is RideRequestLoading) {
+          setState(() { isSubmitting = true; });
+        } else if (reqState is RideRequestCreationSuccess) {
+          setState(() { isSubmitting = false; isSubmitSuccess = true; });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Ride request submitted successfully!'), backgroundColor: Colors.green),
+          );
+        } else if (reqState is RideRequestError) {
+          setState(() { isSubmitting = false; });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(reqState.error), backgroundColor: Theme.of(context).colorScheme.error),
+          );
+        }
+      },
+      child: BlocBuilder<RideFilterBloc, RideFilterState>(
       builder: (context, state) {
         return Scaffold(
           appBar: AppBar(
@@ -202,6 +203,8 @@ class _RideRequestPageState extends State<RideRequestPage> {
           body: SafeArea(
             child: Column(
               children: [
+                if (isSubmitting)
+                  LinearProgressIndicator(minHeight: 2),
                 Expanded(
                   child: SingleChildScrollView(
                     child: AnimationLimiter(
@@ -497,14 +500,9 @@ class _RideRequestPageState extends State<RideRequestPage> {
                       SizedBox(width: 16.w),
                       BlocBuilder<RideRequestBloc, RideRequestState>(
                         builder: (context, state) {
-
-                          if (state is RideRequestError){
-                            print(state.error);
-                            return Text(state.error);
-                          }
                           return Expanded(flex: 2,
                             child: ElevatedButton(
-                              onPressed: isSubmitting ? null : _submitRequest,
+                              onPressed: (isSubmitting || state is RideRequestLoading) ? null : _submitRequest,
                               style: ElevatedButton.styleFrom(
                                 elevation: 0,
                                 backgroundColor: colorScheme.primary,
@@ -544,6 +542,7 @@ class _RideRequestPageState extends State<RideRequestPage> {
           ),
         );
       },
+    ),
     );
   }
 

@@ -24,7 +24,7 @@ class _TravelerRideRequestDetailsPageState extends State<TravelerRideRequestDeta
     final colorScheme = theme.colorScheme;
 
     final dateFormat = DateFormat('MMM dd, yyyy • h:mm a');
-    final currencyFormat = NumberFormat.currency(symbol: '\$');
+    final currencyFormat = NumberFormat.currency(symbol: 'PKR ');
 
     return BlocBuilder<OfferBloc, OfferState>(
   builder: (context, state) {
@@ -185,7 +185,7 @@ class _TravelerRideRequestDetailsPageState extends State<TravelerRideRequestDeta
     final theme = Theme.of(context);
     final model = widget.travelerRideRequestModel;
     final dateFormat = DateFormat('MMM dd, yyyy • h:mm a');
-    final currencyFormat = NumberFormat.currency(symbol: '\$');
+    final currencyFormat = NumberFormat.currency(symbol: 'PKR ');
 
     return Card(
       elevation: 2,

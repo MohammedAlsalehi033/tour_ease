@@ -258,20 +258,20 @@ class _RideFilterPageState extends State<RideFilterPage> {
                               SizedBox(height: 32.h),
 
                               // Price Range
-                              _buildSectionTitle('Price range', theme),
+                              _buildSectionTitle('Price range (PKR)', theme),
                               SizedBox(height: 8.h),
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    '\$${state.filterModel.priceRange.start.round()}',
+                                    'PKR ${state.filterModel.priceRange.start.round()}',
                                     style: textTheme.bodyMedium?.copyWith(
                                       color: colorScheme.onSurface,
                                     ),
                                   ),
                                   Text(
-                                    '\$${state.filterModel.priceRange.end.round()}',
+                                    'PKR ${state.filterModel.priceRange.end.round()}',
                                     style: textTheme.bodyMedium?.copyWith(
                                       color: colorScheme.onSurface,
                                     ),
@@ -293,12 +293,12 @@ class _RideFilterPageState extends State<RideFilterPage> {
                                 ),
                                 child: RangeSlider(
                                   values: state.filterModel.priceRange,
-                                  min: 0,
-                                  max: 200,
-                                  divisions: 20,
+                                  min: 500,
+                                  max: 20000,
+                                  divisions: 39,
                                   labels: RangeLabels(
-                                    '\$${state.filterModel.priceRange.start.round()}',
-                                    '\$${state.filterModel.priceRange.end.round()}',
+                                    'PKR ${state.filterModel.priceRange.start.round()}',
+                                    'PKR ${state.filterModel.priceRange.end.round()}',
                                   ),
                                   onChanged: (RangeValues values) {
                                     context
