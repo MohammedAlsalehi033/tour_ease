@@ -23,12 +23,12 @@ class ChatService {
     print('Attempting to connect socket to: $apiBaseUrl');
 
     _socket = IO.io(
-        apiBaseUrl, // Pass the FULL URL, including https://
-        IO.OptionBuilder()
-            .setTransports(['websocket', 'polling']) // Prioritize websocket
-            .disableAutoConnect() // IMPORTANT: We will connect manually
-            .setExtraHeaders({'userId': currentUserId})
-            .build()
+      apiBaseUrl, // Pass the FULL URL, including https://
+      IO.OptionBuilder()
+          .setTransports(['websocket', 'polling']) // Prioritize websocket
+          .disableAutoConnect() // IMPORTANT: We will connect manually
+          .setExtraHeaders({'userId': currentUserId})
+          .build()
     );
 
     // Attach all event listeners BEFORE connecting
@@ -40,7 +40,7 @@ class ChatService {
     _socket!.onConnectError((data) => print('❌ Connection Error: $data'));
     _socket!.onError((error) => print('⚠️ Socket Error: $error'));
     _socket!.onDisconnect((reason) => print('🔌 Socket disconnected: $reason'));
-
+    
     // For debugging, listen to any event
     _socket!.onAny((event, data) {
       print('📨 Event received: "$event" with data: $data');
@@ -61,7 +61,7 @@ class ChatService {
       _socket?.connect(); // Try to reconnect if not connected
     }
   }
-
+  
   // --- All other methods (fetchMessages, sendMessage, etc.) remain the same ---
   // (Your existing methods for fetching/sending messages are fine)
 
