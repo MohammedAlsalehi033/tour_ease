@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "442077525561",
+    "firebase_url": "https://tourease-544c3-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "tourease-544c3",
+    "storage_bucket": "tourease-544c3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:442077525561:android:fb29682f0454560b16bfe8",
+        "android_client_info": {
+          "package_name": "com.example.tour_ease"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAdx1W94LXcJMze73vtU2LjNwVsa84_4k4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
