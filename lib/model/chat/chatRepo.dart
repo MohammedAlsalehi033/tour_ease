@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:tour_ease/Services/ApiService.dart';
 import 'package:tour_ease/model/chat/chat.dart';
@@ -16,46 +15,55 @@ class ChatService {
     required this.apiService
   });
 
+  // --- CORRECTED AND SIMPLIFIED initSocket METHOD ---
   IO.Socket initSocket() {
-    print('Connecting to socket at: $apiBaseUrl');
+    // Always dispose of an old socket instance before creating a new one
+    dispose();
+
+    print('Attempting to connect socket to: $apiBaseUrl');
+
     _socket = IO.io(
-        apiBaseUrl,
+        apiBaseUrl, // Pass the FULL URL, including https://
         IO.OptionBuilder()
-            .setTransports(['websocket'])
-            .disableAutoConnect()
-            .enableForceNew()
-            .enableAutoConnect()
+            .setTransports(['websocket', 'polling']) // Prioritize websocket
+            .disableAutoConnect() // IMPORTANT: We will connect manually
             .setExtraHeaders({'userId': currentUserId})
             .build()
     );
 
+    // Attach all event listeners BEFORE connecting
     _socket!.onConnect((_) {
+      print('✅ Socket connected successfully! ID: ${_socket!.id}');
       _socket!.emit('user_connected', currentUserId);
-      print('Emitted user_connected event with userId: $currentUserId');
     });
 
-    _socket!.onConnectError((data) => print('Connection error: $data'));
-    _socket!.onDisconnect((_) => print('Socket disconnected'));
-    _socket!.onError((error) => print('Socket error: $error'));
+    _socket!.onConnectError((data) => print('❌ Connection Error: $data'));
+    _socket!.onError((error) => print('⚠️ Socket Error: $error'));
+    _socket!.onDisconnect((reason) => print('🔌 Socket disconnected: $reason'));
+
+    // For debugging, listen to any event
     _socket!.onAny((event, data) {
-      print('Received socket event: $event');
-      print('Event data: $data');
+      print('📨 Event received: "$event" with data: $data');
     });
 
+    // Manually initiate the connection
     _socket!.connect();
+
     return _socket!;
   }
 
   void emitEvent(String eventName, dynamic data) {
-    if (_socket != null && _socket!.connected) {
+    if (_socket?.connected ?? false) {
       _socket!.emit(eventName, data);
-      print('Emitted event: $eventName');
-      print('Event data: $data');
+      print('Emitted event: $eventName with data: $data');
     } else {
-      print('Cannot emit event: Socket not connected');
-      _socket?.connect();
+      print('Cannot emit event: Socket not connected. Attempting to reconnect...');
+      _socket?.connect(); // Try to reconnect if not connected
     }
   }
+
+  // --- All other methods (fetchMessages, sendMessage, etc.) remain the same ---
+  // (Your existing methods for fetching/sending messages are fine)
 
   void emitTyping(String receiverId, bool isTyping) {
     emitEvent('typing', {
@@ -100,9 +108,6 @@ class ChatService {
 
   Future<Message> sendMessage(Message message) async {
     try {
-      print('Sending message from ${message.senderId} to ${message.receiverId}');
-      print('Message content: ${message.content}');
-
       final response = await apiService.post<Message>(
         path: '/api/messages',
         body: {
@@ -112,8 +117,6 @@ class ChatService {
         },
         fromJson: (json) => Message.fromJson(json['data']),
       );
-
-      print('Message sent successfully');
       return response;
     } catch (e) {
       print('Error sending message: $e');
@@ -122,7 +125,7 @@ class ChatService {
   }
 
   bool isSocketConnected() {
-    return _socket != null && _socket!.connected;
+    return _socket?.connected ?? false;
   }
 
   void reconnectSocket() {
@@ -134,10 +137,10 @@ class ChatService {
 
   void dispose() {
     if (_socket != null) {
-      print('Disconnecting socket');
+      print('Disconnecting and disposing of socket...');
       _socket!.disconnect();
       _socket!.dispose();
-      print('Socket disposed');
+      _socket = null;
     }
   }
 }
