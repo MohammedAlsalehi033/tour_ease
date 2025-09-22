@@ -19,8 +19,8 @@ abstract class ReviewsRepository {
 
 class ReviewsRepositoryApi implements ReviewsRepository {
   final APIService apiService;
-
   ReviewsRepositoryApi(this.apiService);
+
 
   @override
   Future<ReviewModel> createTransportationBookingReview({
@@ -46,7 +46,7 @@ class ReviewsRepositoryApi implements ReviewsRepository {
   @override
   Future<ReviewStats> getDriverStats({required String driverId}) async {
     return await apiService.get<ReviewStats>(
-      path: '/api/reviews/stats/TRANSPORTATION_LISTING/$driverId',
+      path: '/api/reviews/stats/TRANSPORTATION_PROVIDER/$driverId',
       fromJson: (json) => ReviewStats.fromApiResponse({'data': json}),
     );
   }

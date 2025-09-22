@@ -66,7 +66,7 @@ class _RidebookingscreenTravelerState extends State<RidebookingscreenTraveler> {
 
           else if (state is BookingForTravelerLoadSuccess) {
 
-            final bookings = state.bookings.where((e) => e.status != "completed");
+            final bookings = state.bookings.where((e) => e.status != "complete" && e.status != "cancelled" && e.status != "canceled");
             final bool hasBookings = bookings.isNotEmpty;
 
             if (hasBookings) {

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:tour_ease/controller/rideSharing/RideBooking/ride_booking_bloc.dart';
-import 'package:tour_ease/controller/rideSharing/RideBooking/ride_booking_state.dart';
+import 'package:tour_ease/Services/ApiService.dart';
 import 'package:tour_ease/controller/rideSharing/RideBooking/traveler/booking_for_traveler_bloc.dart';
+import 'package:tour_ease/model/reviews/reviews_repo.dart';
 import 'package:tour_ease/model/userManagment/user.dart';
 
 // --- Placeholder Models (Replace with your actual models) ---
@@ -73,11 +73,13 @@ class RideHistory extends StatefulWidget {
 }
 
 class _RideHistoryState extends State<RideHistory> {
+  final TextEditingController reviewController = TextEditingController();
+                                  double rating = 0;
+
   @override
   void initState() {
     super.initState();
     // TODO: Replace UserModel().id with the actual ID of the logged-in user.
-    // For example: context.read<AuthBloc>().state.user.id
     BlocProvider.of<BookingForTravelerBloc>(context)
         .add(FetchTravelerBookingsRequested(UserModel().id));
   }
@@ -85,7 +87,10 @@ class _RideHistoryState extends State<RideHistory> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    
 
+  final api = context.read<APIService>();
+  final repo = ReviewsRepositoryApi(api);
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Ride History'),
@@ -216,7 +221,103 @@ class _RideHistoryState extends State<RideHistory> {
                           ),
 
 
-                        ],
+                        Center(
+                          child: ElevatedButton(
+                            style: theme.elevatedButtonTheme.style?.copyWith(
+                              backgroundColor: MaterialStateProperty.all(Colors.amberAccent),
+                            ),
+                            onPressed: () {
+                                // Show a bottom sheet to write a review
+                                showModalBottomSheet(
+                                context: context,
+                                shape: const RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                                ),
+                                isScrollControlled: true,
+                                builder: (context) {
+                                
+                                  return Padding(
+                                  padding: EdgeInsets.only(
+                                    bottom: MediaQuery.of(context).viewInsets.bottom,
+                                    left: 20,
+                                    right: 20,
+                                    top: 20,
+                                  ),
+                                  child: StatefulBuilder(
+                                    builder: (context, setState) {
+                                    return Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                      const Text(
+                                        "Write a Review",
+                                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      // Simple star rating row
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: List.generate(5, (index) {
+                                        return IconButton(
+                                          icon: Icon(
+                                          index < rating ? Icons.star : Icons.star_border,
+                                          color: Colors.amber,
+                                          ),
+                                          onPressed: () {
+                                          setState(() {
+                                            rating = index + 1.0;
+                                          });
+                                          },
+                                        );
+                                        }),
+                                      ),
+                                      TextField(
+                                        controller: reviewController,
+                                        maxLines: 3,
+                                        decoration: const InputDecoration(
+                                        labelText: "Your review",
+                                        border: OutlineInputBorder(),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      ElevatedButton(
+                                        onPressed: () async {
+                                          if (rating == 0 || reviewController.text.isEmpty) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(content: Text("Please provide a rating and review.")),
+                                            );
+                                            return;
+                                          }
+                                          try {
+                                            // Call the API to submit the review
+                                            final results = await repo.createTransportationBookingReview(
+                                              bookingId: booking.id,
+                                              rating: rating.toInt(),
+                                              comment: reviewController.text,
+                                            );
+                                            Navigator.pop(context); // Close the bottom sheet
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(content: Text("Review submitted successfully.")),
+                                            );
+                                          } catch (e) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(content: Text("Failed to submit review: $e")),
+                                            );
+                                          }
+                                        Navigator.pop(context);
+                                        },
+                                        child: const Text("Submit"),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      ],
+                                    );
+                                    },
+                                  ),
+                                  );
+                                },
+                                );
+                            
+                          }, child: Text("Review this ride")),
+                        )],
                       ),
                     ),
                   );

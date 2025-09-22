@@ -59,6 +59,7 @@ void main() async {
   final baseUrlDeploied = "https://api.tourease.me";
 
   final userJWT = await getFirebaseIdToken();
+  print(userJWT);
 
   final APIService apiService = APIServiceNodeJS(baseUrlDeploied, userJWT ?? "");
 

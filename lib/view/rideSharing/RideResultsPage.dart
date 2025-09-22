@@ -62,7 +62,7 @@ class _RideListingRatingBadgeState extends State<_RideListingRatingBadge>
     try {
       final api = context.read<APIService>();
       final repo = ReviewsRepositoryApi(api);
-      final stats = await repo.getListingStats(listingId: widget.listingId);
+      final stats = await repo.getDriverStats(driverId: "xeSEu67NIjZjSj92CIMjVixNQPr2");
       if (!mounted) return;
       setState(() {
         _average = stats.averageRating;
