@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tour_ease/controller/question/questionBloc.dart';
 import 'package:tour_ease/model/userManagment/user.dart';
+import 'package:tour_ease/model/otherUser/otherUserModel.dart';
 import 'package:tour_ease/model/question/questionModel.dart';
 
 class QuestionMakingPage extends StatefulWidget {
@@ -167,7 +168,19 @@ class _QuestionMakingPageState extends State<QuestionMakingPage> {
                   builder: (context, state) {
                     return ElevatedButton(
                       onPressed: () {
-                        context.read<QuestionBloc>().add(PostQuestion(question: Question(mediaUrls: [],user: UserModel(), title: _titleController.text, description: _descriptionController.text, userId: UserModel().id, tags: _selectedTags)));
+                        final currentUser = UserModel();
+                        context.read<QuestionBloc>().add(PostQuestion(question: Question(
+                          mediaUrls: [],
+                          user: OtherUserModel(
+                            userid: currentUser.id,
+                            userName: currentUser.username,
+                            mediaUrls: currentUser.mediaUrls,
+                          ),
+                          title: _titleController.text, 
+                          description: _descriptionController.text, 
+                          userId: currentUser.id, 
+                          tags: _selectedTags
+                        )));
                         Navigator.pop(context);
                       },
                       style: ElevatedButton.styleFrom(

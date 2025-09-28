@@ -10,6 +10,8 @@ import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:tour_ease/components/cards/accommodationCardForHomePage.dart';
 import 'package:tour_ease/components/themeSwitch.dart';
 import 'package:tour_ease/controller/userManagment/initialize.dart';
+import 'package:tour_ease/controller/userManagment/authenticationManager.dart';
+import 'package:tour_ease/controller/userManagment/userHelper.dart';
 import 'package:tour_ease/model/userManagment/user.dart';
 import 'package:tour_ease/view/NotifiactionScreen.dart';
 import 'package:tour_ease/view/chat/chatsPage.dart';
@@ -40,7 +42,7 @@ class _MainPageState extends State<MainPage> {
     TripPlannerPage(),
     MessagesPage(),
     QuestionsScreen(
-      userID: UserModel().id,
+      userID: UserHelper.getCurrentUserId() ?? '',
     ),
     ProfilePage(),
   ];
@@ -48,7 +50,9 @@ class _MainPageState extends State<MainPage> {
   @override
   void initState() {
     super.initState();
-    _initUserFuture = UserInitializer().initializeUser();
+    
+    // Verify user authentication state on init
+    _initUserFuture = _initializeUserSafely();
 
     _connectionSubscription = InternetConnectionChecker().onStatusChange.listen(
           (InternetConnectionStatus status) {
@@ -62,9 +66,37 @@ class _MainPageState extends State<MainPage> {
     );
   }
 
+  Future<void> _initializeUserSafely() async {
+    try {
+      // Check if user authentication is consistent
+      if (!UserHelper.isUserIdConsistent()) {
+        print('User ID inconsistency detected, syncing...');
+        UserHelper.syncUserModel();
+      }
+      
+      // Only initialize if user is properly authenticated
+      if (UserHelper.isUserAuthenticated()) {
+        await UserInitializer().initializeUser();
+        
+        // Double-check consistency after initialization
+        if (!UserHelper.isUserIdConsistent()) {
+          print('User ID still inconsistent after initialization, forcing sync...');
+          UserHelper.syncUserModel();
+        }
+      } else {
+        throw Exception('User not properly authenticated');
+      }
+    } catch (e) {
+      print('Error during user initialization: $e');
+      // Try to sync user model as a fallback
+      UserHelper.syncUserModel();
+      rethrow;
+    }
+  }
+
   void _retryInitialization() {
     setState(() {
-      _initUserFuture = UserInitializer().initializeUser();
+      _initUserFuture = _initializeUserSafely();
     });
   }
 

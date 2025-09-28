@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:tour_ease/controller/question/questionBloc.dart';
 import 'package:tour_ease/model/userManagment/user.dart';
+import 'package:tour_ease/model/otherUser/otherUserModel.dart';
 import 'package:tour_ease/model/question/questionModel.dart';
 
 class QuestionEditingPage extends StatefulWidget {
@@ -211,7 +212,7 @@ class _QuestionEditingPageState extends State<QuestionEditingPage> {
         Expanded(
           child: ElevatedButton(
                             onPressed: () {
-
+                              final currentUser = UserModel();
                               context.read<QuestionBloc>().add(EditQuestion(
                                   question: Question(mediaUrls: [],
                                     createdAt: widget.question.createdAt,
@@ -221,12 +222,16 @@ class _QuestionEditingPageState extends State<QuestionEditingPage> {
                                     votes: widget.question.votes,
                                     commentCount: widget.question.commentCount,
                                     updatedAt: widget.question.updatedAt,
-                                    user: UserModel(),
+                                    user: OtherUserModel(
+                                      userid: currentUser.id,
+                                      userName: currentUser.username,
+                                      mediaUrls: currentUser.mediaUrls,
+                                    ),
 
                                     id: widget.question.id,
                                       title: _titleController.text,
                                       description: _descriptionController.text,
-                                      userId: UserModel().id,
+                                      userId: currentUser.id,
                                       tags: _selectedTags)));
 
                               context.read<QuestionBloc>().add(FetchQuestions());
@@ -252,7 +257,7 @@ class _QuestionEditingPageState extends State<QuestionEditingPage> {
         Expanded(
           child: ElevatedButton(
                             onPressed: () {
-
+                              final currentUser = UserModel();
                               context.read<QuestionBloc>().add(DeleteQuestion(
                                   question: Question(mediaUrls: [],
                                     createdAt: widget.question.createdAt,
@@ -262,12 +267,16 @@ class _QuestionEditingPageState extends State<QuestionEditingPage> {
                                     votes: widget.question.votes,
                                     commentCount: widget.question.commentCount,
                                     updatedAt: widget.question.updatedAt,
-                                    user: UserModel(),
+                                    user: OtherUserModel(
+                                      userid: currentUser.id,
+                                      userName: currentUser.username,
+                                      mediaUrls: currentUser.mediaUrls,
+                                    ),
 
                                     id: widget.question.id,
                                       title: _titleController.text,
                                       description: _descriptionController.text,
-                                      userId: UserModel().id,
+                                      userId: currentUser.id,
                                       tags: _selectedTags)));
 
                               context.read<QuestionBloc>().add(FetchQuestions());

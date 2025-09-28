@@ -1,4 +1,4 @@
-import 'package:tour_ease/model/userManagment/user.dart';
+import 'package:tour_ease/model/otherUser/otherUserModel.dart';
 
 class Question {
   int? id;
@@ -6,7 +6,7 @@ class Question {
   final String description;
   final String userId;
   String? userName;
-  UserModel user;
+  OtherUserModel user;  // Change from UserModel to OtherUserModel
   int? upvotes;
   int? downvotes;
   DateTime? createdAt;
@@ -22,7 +22,7 @@ class Question {
     required this.description,
     required this.userId,
     this.userName,
-    required this.user,
+    required this.user,  // Now OtherUserModel
     this.upvotes = 0,
     this.downvotes = 0,
     this.createdAt,
@@ -49,9 +49,9 @@ class Question {
           json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
           tags: List<String>.from(json['tags'] ?? []),
           commentCount: json['_count']?['comments'] ?? 0,
-          mediaUrls: List<String>.from(json['user']['mediaUrls'] as List) ?? [],
+          mediaUrls: List<String>.from(json['user']['mediaUrls'] as List? ?? []),
           votes: [],
-          user: UserModel.fromJson(json['user'])
+          user: OtherUserModel.fromJson(json['user'])  // Use OtherUserModel instead!
       );
     }catch(e) {
       print(json);

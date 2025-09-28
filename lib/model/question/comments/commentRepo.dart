@@ -53,16 +53,30 @@ class CommentRepoNodeJSApi extends CommentsRepo {
   @override
   Future<CommentModel> writeComment(CommentModel comment) async {
     try {
-      return await apiService.post<CommentModel>(
+      final response = await apiService.post<CommentModel>(
         path: '/api/commments',
         body: {
           "userId": comment.user.userid,
           "questionId": comment.questionId,
           "content": comment.content
         },
-        fromJson: (json) => CommentModel.fromJson(json['data']),
+        fromJson: (json) {
+          print('API Response for writeComment: $json');
+          // Handle different possible response structures
+          if (json is Map<String, dynamic>) {
+            if (json.containsKey('data') && json['data'] != null) {
+              return CommentModel.fromJson(json['data']);
+            } else {
+              return CommentModel.fromJson(json);
+            }
+          } else {
+            throw Exception('Invalid response format: expected Map but got ${json.runtimeType}');
+          }
+        },
       );
+      return response;
     } catch (e) {
+      print('Error in writeComment: $e');
       throw Exception('Error writing comment: $e');
     }
   }

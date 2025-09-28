@@ -9,6 +9,7 @@ abstract class QuestionsRepo {
   Future<Question> editQuestion(Question question);
   Future<void> deleteQuestion(Question question);
   Future<List<Question>> searchQuestions(String query);
+  Future<void> voteQuestion(int questionId, String userId, bool isUpvote);
 }
 
 class QuestionRepoFromAPI extends QuestionsRepo {
@@ -103,6 +104,23 @@ class QuestionRepoFromAPI extends QuestionsRepo {
         catch(e){
           throw Exception('Error searching questions: $e');
 
+    }
+  }
+
+  @override
+  Future<void> voteQuestion(int questionId, String userId, bool isUpvote) async {
+    try {
+      await apiService.post<String>(
+        path: '/api/questions/vote',
+        body: {
+          'id': questionId,
+          'userId': userId,
+          'isUpvote': isUpvote,
+        },
+        fromJson: (json) => "Done",
+      );
+    } catch (e) {
+      throw Exception('Error voting on question: $e');
     }
   }
 

@@ -17,22 +17,47 @@ class CommentModel {
   });
 
   factory CommentModel.fromJson(Map<String, dynamic> json) {
-  print(json);
+    print('CommentModel.fromJson received: $json');
 
     try {
+      // Handle null safety and different possible response structures
+      final userJson = json['user'] ?? {};
+      final mediaUrls = userJson['mediaUrls'];
+      
       return CommentModel(
         user: OtherUserModel(
-          userid: json['user']['id'] as String,
-          mediaUrls: List<String>.from(json['user']['mediaUrls'] as List),
-          userName: json["user"]['username'] as String,
+          userid: (userJson['id'] ?? userJson['userid'] ?? '').toString(),
+          mediaUrls: mediaUrls != null 
+            ? List<String>.from(mediaUrls is List ? mediaUrls : [])
+            : <String>[],
+          userName: (userJson['username'] ?? userJson['userName'] ?? 'Anonymous').toString(),
         ),
-        id: json['id'] as int,
-        questionId: json['questionId'] as int,
-        content: json['content'] as String,
-        createdAt: DateTime.parse(json['createdAt'] as String),
+        id: (json['id'] ?? DateTime.now().millisecondsSinceEpoch) is int 
+          ? json['id'] as int
+          : int.tryParse(json['id'].toString()) ?? DateTime.now().millisecondsSinceEpoch,
+        questionId: (json['questionId'] ?? 0) is int
+          ? json['questionId'] as int  
+          : int.tryParse(json['questionId'].toString()) ?? 0,
+        content: (json['content'] ?? '').toString(),
+        createdAt: json['createdAt'] != null
+          ? DateTime.tryParse(json['createdAt'].toString()) ?? DateTime.now()
+          : DateTime.now(),
       );
     } catch (e) {
-      rethrow;
+      print('Error parsing CommentModel: $e');
+      print('JSON data: $json');
+      // Return a fallback comment instead of throwing
+      return CommentModel(
+        id: DateTime.now().millisecondsSinceEpoch,
+        questionId: 0,
+        content: 'Error loading comment',
+        createdAt: DateTime.now(),
+        user: OtherUserModel(
+          userid: 'unknown',
+          mediaUrls: [],
+          userName: 'Unknown User',
+        ),
+      );
     }
   }
 

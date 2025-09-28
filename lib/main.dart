@@ -36,6 +36,7 @@ import 'package:tour_ease/theme.dart';
 import 'package:tour_ease/view/auth.dart';
 import 'package:tour_ease/view/mainPage.dart';
 import 'package:tour_ease/Services/notification_service.dart';
+import 'package:tour_ease/controller/userManagment/authenticationManager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 
@@ -45,6 +46,9 @@ void main() async {
 
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   await NotificationService().initialize();
+
+  // Initialize authentication manager
+  await AuthenticationManager().initialize();
 
   // Always print FCM token at app start
   try {

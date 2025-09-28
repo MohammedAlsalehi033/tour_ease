@@ -7,7 +7,6 @@ import 'package:tour_ease/components/animations/fade_page_route.dart';
 import 'package:tour_ease/components/debouncer.dart';
 import 'package:tour_ease/components/profileAvatar.dart';
 import 'package:tour_ease/controller/question/questionBloc.dart';
-import 'package:tour_ease/controller/question/votes/votes_bloc.dart';
 import 'package:tour_ease/model/userManagment/user.dart';
 import 'package:tour_ease/model/question/questionModel.dart';
 import 'package:tour_ease/view/questions/questionMaking.dart';
@@ -88,51 +87,8 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
   }
 
   void _handleVote(Question question, String newVoteType) {
-    final currentUserId = UserModel().id;
-
-    // Find the user's existing vote, if any.
-    final existingVoteIndex = question.votes?.indexWhere((vote) => vote['userId'] == currentUserId) ?? -1;
-    String? previousVoteType;
-
-    if (existingVoteIndex != -1) {
-      previousVoteType = question.votes?[existingVoteIndex]['type'];
-    }
-
-    setState(() {
-      // Case 1: User is canceling their vote (e.g., tapping upvote when it's already upvoted)
-      if (previousVoteType == newVoteType) {
-        question.votes?.removeAt(existingVoteIndex);
-        if (newVoteType == 'UPVOTE') {
-          question.upvotes = question.upvotes! - 1;
-        } else {
-          question.downvotes = question.downvotes! - 1;
-        }
-      }
-      // Case 2: User is changing their vote (e.g., from downvote to upvote)
-      else if (previousVoteType != null) {
-        question.votes?[existingVoteIndex]['type'] = newVoteType; // Update the vote type
-        if (newVoteType == 'UPVOTE') {
-          question.upvotes = question.upvotes! + 1;
-          question.downvotes = question.downvotes! - 1;
-        } else { // newVoteType is 'DOWNVOTE'
-          question.downvotes = question.downvotes! + 1;
-          question.upvotes = question.upvotes! - 1;
-        }
-      }
-      // Case 3: User is casting a new vote
-      else {
-        question.votes?.add({'userId': currentUserId, 'type': newVoteType});
-        if (newVoteType == 'UPVOTE') {
-          question.upvotes = question.upvotes! + 1;
-        } else {
-          question.downvotes = question.downvotes! + 1;
-        }
-      }
-    });
-
-    // You can now adjust your BLoC event if needed,
-    // though the existing one might work fine as the backend should handle the logic.
-    // The key is that the local (optimistic) UI update is now correct.
+    // Dispatch vote to the QuestionBloc which handles both UI updates and API calls
+    context.read<QuestionBloc>().add(VoteQuestion(question: question, voteType: newVoteType));
   }
 
 
@@ -294,7 +250,6 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
 // In: questions/QuestionsScreen.dart
 
   Widget _buildQuestionItem(BuildContext context, Question question) {
-    final bloc = BlocProvider.of<VotesBloc>(context);
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final userVote = question.votes?.firstWhere((vote) => vote['userId'] == UserModel().id, orElse: () => {});
@@ -387,7 +342,6 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                           isSelected: userVoteType == 'UPVOTE',
                           onTap: () {
                             _handleVote(question, 'UPVOTE');
-                            bloc.add(UpdateVote(question, true));
                           },
                         ),
                         SizedBox(width: 8.w),
@@ -398,7 +352,6 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                           isSelected: userVoteType == 'DOWNVOTE',
                           onTap: () {
                             _handleVote(question, 'DOWNVOTE');
-                            bloc.add(UpdateVote(question, false));
                           },
                         ),
                       ],

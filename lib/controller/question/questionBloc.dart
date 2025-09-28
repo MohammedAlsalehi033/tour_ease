@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:tour_ease/model/question/questionModel.dart';
 import 'package:tour_ease/model/question/questionRepo.dart';
+import 'package:tour_ease/model/userManagment/user.dart';
 
 abstract class QuestionState  {
   const QuestionState();
@@ -91,6 +92,13 @@ class SearchQuestions extends QuestionEvent {
   SearchQuestions({required this.query});
 }
 
+class VoteQuestion extends QuestionEvent {
+  final Question question;
+  final String voteType; // 'UPVOTE' or 'DOWNVOTE'
+  
+  VoteQuestion({required this.question, required this.voteType});
+}
+
 class QuestionBloc extends Bloc<QuestionEvent, QuestionState> {
   final QuestionsRepo questionRepository;
   final int itemsPerPage = 10;
@@ -101,7 +109,7 @@ class QuestionBloc extends Bloc<QuestionEvent, QuestionState> {
     on<EditQuestion>(_onEditQuestion);
     on<DeleteQuestion>(_onDeleteQuestion);
     on<SearchQuestions>(_onSearchQuestions);
-
+    on<VoteQuestion>(_onVoteQuestion);
   }
 
   Future<void> _onFetchQuestions(
@@ -170,7 +178,7 @@ class QuestionBloc extends Bloc<QuestionEvent, QuestionState> {
 
     try{
       emit(QuestionLoadInProgress());
-      final response = await questionRepository.editQuestion(event.question);
+      await questionRepository.editQuestion(event.question);
 
       final allQuestions = await questionRepository.getQuestions();
 
@@ -183,7 +191,7 @@ class QuestionBloc extends Bloc<QuestionEvent, QuestionState> {
   Future<void> _onDeleteQuestion(DeleteQuestion event, Emitter<QuestionState> emit) async {
     try{
       emit(QuestionLoadInProgress());
-      final response = await questionRepository.deleteQuestion(event.question);
+      await questionRepository.deleteQuestion(event.question);
       final allQuestions = await questionRepository.getQuestions();
       emit(QuestionLoadSuccess(questions: allQuestions));
     }catch(e){
@@ -199,7 +207,98 @@ class QuestionBloc extends Bloc<QuestionEvent, QuestionState> {
     }catch(e){
       emit(QuestionLoadFailure(e.toString()));
     }
+  }
 
+  Future<void> _onVoteQuestion(VoteQuestion event, Emitter<QuestionState> emit) async {
+    final currentState = state;
+    if (currentState is! QuestionLoadSuccess) return;
+    
+    try {
+      // Import UserModel to get the current user ID
+      final currentUserId = UserModel().id; // Get the actual current user's ID
+      
+      // Find the question in the current list
+      final updatedQuestions = currentState.questions.map((q) {
+        if (q.id == event.question.id) {
+          return _updateQuestionVote(q, currentUserId, event.voteType);
+        }
+        return q;
+      }).toList();
+      
+      // Emit the optimistic update first
+      emit(currentState.copyWith(questions: updatedQuestions));
+      
+      // Make the API call
+      await questionRepository.voteQuestion(
+        event.question.id!,
+        currentUserId,
+        event.voteType == 'UPVOTE'
+      );
+      
+    } catch (e) {
+      // If the API call fails, revert the optimistic update
+      emit(currentState);
+      emit(QuestionLoadFailure('Failed to vote: ${e.toString()}'));
+    }
+  }
+  
+  Question _updateQuestionVote(Question question, String currentUserId, String newVoteType) {
+    // Create a copy of the question
+    final updatedQuestion = Question(
+      id: question.id,
+      title: question.title,
+      description: question.description,
+      userId: question.userId,
+      userName: question.userName,
+      user: question.user,
+      upvotes: question.upvotes,
+      downvotes: question.downvotes,
+      createdAt: question.createdAt,
+      updatedAt: question.updatedAt,
+      tags: question.tags,
+      commentCount: question.commentCount,
+      mediaUrls: question.mediaUrls,
+      votes: List.from(question.votes ?? []),
+    );
+    
+    // Find the user's existing vote, if any
+    final existingVoteIndex = updatedQuestion.votes?.indexWhere((vote) => vote['userId'] == currentUserId) ?? -1;
+    String? previousVoteType;
+    
+    if (existingVoteIndex != -1) {
+      previousVoteType = updatedQuestion.votes?[existingVoteIndex]['type'];
+    }
+    
+    // Handle the vote logic
+    if (previousVoteType == newVoteType) {
+      // User is canceling their vote
+      updatedQuestion.votes?.removeAt(existingVoteIndex);
+      if (newVoteType == 'UPVOTE') {
+        updatedQuestion.upvotes = (updatedQuestion.upvotes ?? 0) - 1;
+      } else {
+        updatedQuestion.downvotes = (updatedQuestion.downvotes ?? 0) - 1;
+      }
+    } else if (previousVoteType != null) {
+      // User is changing their vote
+      updatedQuestion.votes?[existingVoteIndex]['type'] = newVoteType;
+      if (newVoteType == 'UPVOTE') {
+        updatedQuestion.upvotes = (updatedQuestion.upvotes ?? 0) + 1;
+        updatedQuestion.downvotes = (updatedQuestion.downvotes ?? 0) - 1;
+      } else {
+        updatedQuestion.downvotes = (updatedQuestion.downvotes ?? 0) + 1;
+        updatedQuestion.upvotes = (updatedQuestion.upvotes ?? 0) - 1;
+      }
+    } else {
+      // User is casting a new vote
+      updatedQuestion.votes?.add({'userId': currentUserId, 'type': newVoteType});
+      if (newVoteType == 'UPVOTE') {
+        updatedQuestion.upvotes = (updatedQuestion.upvotes ?? 0) + 1;
+      } else {
+        updatedQuestion.downvotes = (updatedQuestion.downvotes ?? 0) + 1;
+      }
+    }
+    
+    return updatedQuestion;
   }
 
 

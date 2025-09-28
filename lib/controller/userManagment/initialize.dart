@@ -9,16 +9,18 @@ class UserInitializer {
     print("currentUser1: $currentUser");
 
     if (currentUser == null) {
-
       print("No Firebase user found.");
       return;
     }
+
+    final String firebaseUid = currentUser.uid;
+    print("Initializing user data for Firebase UID: $firebaseUid");
 
     try {
       final response = await dio.get(
         'https://api.tourease.me/api/getUserById',
         queryParameters: {
-          "id": currentUser.uid,
+          "id": firebaseUid,
         },
         options: Options(
           headers: {
@@ -32,7 +34,17 @@ class UserInitializer {
       if (response.statusCode == 200) {
         final responseBody = response.data;
         if (responseBody['success'] == true && responseBody['data'] != null) {
-          UserModel.fromJson(responseBody['data']);
+          final userData = responseBody['data'];
+          
+          // Ensure the API response user ID matches Firebase UID
+          if (userData['id'] != firebaseUid) {
+            print("WARNING: API user ID (${userData['id']}) doesn't match Firebase UID ($firebaseUid)");
+            // Force the correct ID
+            userData['id'] = firebaseUid;
+          }
+          
+          UserModel.fromJson(userData);
+          print("User data loaded successfully for: ${UserModel().id}");
         } else {
           throw Exception(
               'API Error: ${responseBody['message'] ?? "Unknown error"}');
@@ -42,7 +54,14 @@ class UserInitializer {
       }
     } catch (error) {
       print("Error initializing user: $error");
-      throw Exception('Failed to initialize user data.');
+      
+      // Fallback: Create minimal user data from Firebase
+      UserModel().updateUser(
+        id: firebaseUid,
+        email: currentUser.email ?? '',
+        username: currentUser.email ?? '',
+      );
+      print("Fallback user data created for: $firebaseUid");
     }
   }
 }

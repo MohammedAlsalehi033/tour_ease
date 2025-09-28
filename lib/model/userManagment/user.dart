@@ -54,9 +54,16 @@ class UserModel {
 
   static UserModel fromJson(Map<String, dynamic> json) {
     try {
+      // Store the current ID to compare later
+      final String previousId = _instance.id;
+      final String newId = json['id'] ?? '';
+      
+      // Log if the user ID is changing
+      if (previousId.isNotEmpty && newId != previousId) {
+        print('WARNING: UserModel ID changing from $previousId to $newId');
+      }
 
-
-      _instance.id = json['id'] ?? '';
+      _instance.id = newId;
       _instance.username = json['username'] ?? '';
       _instance.email = json['email'] ?? '';
       _instance.passwordHash = json['passwordHash'] ?? '';

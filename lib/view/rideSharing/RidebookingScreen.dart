@@ -66,16 +66,16 @@ class _RidebookingscreenTravelerState extends State<RidebookingscreenTraveler> {
 
           else if (state is BookingForTravelerLoadSuccess) {
 
-            final bookings = state.bookings.where((e) => e.status != "complete" && e.status != "cancelled" && e.status != "canceled");
+            final bookings = state.bookings.where((e) => e.status != "complete" && e.status != "cancelled" && e.status != "canceled").toList();
             final bool hasBookings = bookings.isNotEmpty;
 
             if (hasBookings) {
               return Padding(
                 padding: const EdgeInsets.all(12.0),
                 child: ListView.builder(
-                  itemCount: state.bookings.length,
+                  itemCount: bookings.length,
                   itemBuilder: (context, index) {
-                    final TravelerBookingModel booking = state.bookings[index];
+                    final TravelerBookingModel booking = bookings[index];
 
                     // Format date for better readability
                     final formattedDate = DateFormat('MMM d, yyyy - HH:mm').format(booking.createdAt.toLocal());

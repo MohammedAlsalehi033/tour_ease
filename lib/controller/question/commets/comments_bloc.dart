@@ -55,9 +55,20 @@ class CommentsBloc extends Bloc<CommentsEvent, CommentsState> {
       try {
         // Save current state to handle state restoration
         final currentState = state;
+        
+        // Emit posting state for loading indicator
+        if (currentState is CommentsLoaded) {
+          emit(CommentsPosting(
+            comments: currentState.comments,
+            currentPage: currentState.currentPage,
+            hasReachedMax: currentState.hasReachedMax,
+          ));
+        }
 
         // Post the comment asynchronously
-     final response =   await commentsRepo.writeComment(event.commentModel);
+        final response = await commentsRepo.writeComment(event.commentModel);
+        
+        print('Comment posted successfully: ${response.toString()}');
 
         // Add the new comment to the current list if we're in loaded state
         if (currentState is CommentsLoaded) {
@@ -69,15 +80,44 @@ class CommentsBloc extends Bloc<CommentsEvent, CommentsState> {
             currentPage: currentState.currentPage,
             hasReachedMax: currentState.hasReachedMax,
           ));
+        } else {
+          // If not in loaded state, emit with just the new comment
+          emit(CommentsLoaded(
+            comments: [response],
+            currentPage: 1,
+            hasReachedMax: false,
+          ));
         }
 
         // No explicit success state, UI can detect success from state changes
       } catch (e) {
-        // Handle posting error with the existing error state
-        emit(CommentsError(error: "Failed to post comment: ${e.toString()}"));
-
-        // Optionally restore previous state after a brief error display
-        // This can be controlled by a timer in the UI if needed
+        print('Error posting comment: $e');
+        
+        // Restore previous state before emitting error
+        final currentState = state;
+        if (currentState is CommentsPosting) {
+          emit(CommentsLoaded(
+            comments: currentState.comments,
+            currentPage: currentState.currentPage,
+            hasReachedMax: currentState.hasReachedMax,
+          ));
+        }
+        
+        // Handle posting error with a specific error state
+        emit(CommentsPostError(error: "Failed to post comment: ${e.toString()}"));
+        
+        // Auto-recover to loaded state after brief error display
+        if (currentState is CommentsLoaded) {
+          Future.delayed(const Duration(seconds: 2), () {
+            if (!isClosed) {
+              emit(CommentsLoaded(
+                comments: currentState.comments,
+                currentPage: currentState.currentPage,
+                hasReachedMax: currentState.hasReachedMax,
+              ));
+            }
+          });
+        }
       }
     });
   }

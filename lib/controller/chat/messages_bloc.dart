@@ -4,6 +4,7 @@ import 'package:meta/meta.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:tour_ease/model/chat/message.dart';
 import 'package:tour_ease/model/chat/chatRepo.dart';
+import 'package:tour_ease/controller/userManagment/userHelper.dart';
 
 part 'messages_event.dart';
 part 'messages_state.dart';
@@ -40,6 +41,7 @@ class MessagesBloc extends Bloc<MessagesEvent, MessagesState> {
     _socket!.on('new_message', (data) {
       try {
         final message = Message.fromJson(data);
+        print('New message received: ${message.content}');
         // Add the message to our internal stream
         if (!_newMessageController.isClosed) {
           _newMessageController.add(message);
