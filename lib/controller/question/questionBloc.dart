@@ -214,10 +214,14 @@ class QuestionBloc extends Bloc<QuestionEvent, QuestionState> {
     if (currentState is! QuestionLoadSuccess) return;
     
     try {
-      // Import UserModel to get the current user ID
-      final currentUserId = UserModel().id; // Get the actual current user's ID
+      // Get the current user ID
+      final currentUserId = UserModel().id;
+      if (currentUserId.isEmpty) {
+        emit(QuestionLoadFailure('User not logged in'));
+        return;
+      }
       
-      // Find the question in the current list
+      // Create optimistic update
       final updatedQuestions = currentState.questions.map((q) {
         if (q.id == event.question.id) {
           return _updateQuestionVote(q, currentUserId, event.voteType);
@@ -225,7 +229,7 @@ class QuestionBloc extends Bloc<QuestionEvent, QuestionState> {
         return q;
       }).toList();
       
-      // Emit the optimistic update first
+      // Emit the optimistic update first for immediate UI feedback
       emit(currentState.copyWith(questions: updatedQuestions));
       
       // Make the API call
@@ -235,6 +239,9 @@ class QuestionBloc extends Bloc<QuestionEvent, QuestionState> {
         event.voteType == 'UPVOTE'
       );
       
+      // After successful API call, we could refresh the specific question
+      // or trust the optimistic update since the backend logic should match
+      
     } catch (e) {
       // If the API call fails, revert the optimistic update
       emit(currentState);
@@ -243,62 +250,69 @@ class QuestionBloc extends Bloc<QuestionEvent, QuestionState> {
   }
   
   Question _updateQuestionVote(Question question, String currentUserId, String newVoteType) {
-    // Create a copy of the question
-    final updatedQuestion = Question(
+    // Create a copy of the question with mutable vote list
+    final List<Map<String, dynamic>> updatedVotes = question.votes != null 
+        ? List<Map<String, dynamic>>.from(question.votes!) 
+        : <Map<String, dynamic>>[];
+    
+    // Find the user's existing vote, if any
+    final existingVoteIndex = updatedVotes.indexWhere((vote) => vote['userId'] == currentUserId);
+    String? previousVoteType;
+    
+    if (existingVoteIndex != -1) {
+      previousVoteType = updatedVotes[existingVoteIndex]['type'];
+    }
+    
+    // Initialize vote counts
+    int newUpvotes = question.upvotes ?? 0;
+    int newDownvotes = question.downvotes ?? 0;
+    
+    // Handle the vote logic
+    if (previousVoteType == newVoteType) {
+      // User is canceling their vote
+      updatedVotes.removeAt(existingVoteIndex);
+      if (newVoteType == 'UPVOTE') {
+        newUpvotes = (newUpvotes - 1).clamp(0, double.infinity).toInt();
+      } else {
+        newDownvotes = (newDownvotes - 1).clamp(0, double.infinity).toInt();
+      }
+    } else if (previousVoteType != null) {
+      // User is changing their vote
+      updatedVotes[existingVoteIndex]['type'] = newVoteType;
+      if (newVoteType == 'UPVOTE') {
+        newUpvotes = newUpvotes + 1;
+        newDownvotes = (newDownvotes - 1).clamp(0, double.infinity).toInt();
+      } else {
+        newDownvotes = newDownvotes + 1;
+        newUpvotes = (newUpvotes - 1).clamp(0, double.infinity).toInt();
+      }
+    } else {
+      // User is casting a new vote
+      updatedVotes.add({'userId': currentUserId, 'type': newVoteType});
+      if (newVoteType == 'UPVOTE') {
+        newUpvotes = newUpvotes + 1;
+      } else {
+        newDownvotes = newDownvotes + 1;
+      }
+    }
+    
+    // Return updated question
+    return Question(
       id: question.id,
       title: question.title,
       description: question.description,
       userId: question.userId,
       userName: question.userName,
       user: question.user,
-      upvotes: question.upvotes,
-      downvotes: question.downvotes,
+      upvotes: newUpvotes,
+      downvotes: newDownvotes,
       createdAt: question.createdAt,
       updatedAt: question.updatedAt,
       tags: question.tags,
       commentCount: question.commentCount,
       mediaUrls: question.mediaUrls,
-      votes: List.from(question.votes ?? []),
+      votes: updatedVotes,
     );
-    
-    // Find the user's existing vote, if any
-    final existingVoteIndex = updatedQuestion.votes?.indexWhere((vote) => vote['userId'] == currentUserId) ?? -1;
-    String? previousVoteType;
-    
-    if (existingVoteIndex != -1) {
-      previousVoteType = updatedQuestion.votes?[existingVoteIndex]['type'];
-    }
-    
-    // Handle the vote logic
-    if (previousVoteType == newVoteType) {
-      // User is canceling their vote
-      updatedQuestion.votes?.removeAt(existingVoteIndex);
-      if (newVoteType == 'UPVOTE') {
-        updatedQuestion.upvotes = (updatedQuestion.upvotes ?? 0) - 1;
-      } else {
-        updatedQuestion.downvotes = (updatedQuestion.downvotes ?? 0) - 1;
-      }
-    } else if (previousVoteType != null) {
-      // User is changing their vote
-      updatedQuestion.votes?[existingVoteIndex]['type'] = newVoteType;
-      if (newVoteType == 'UPVOTE') {
-        updatedQuestion.upvotes = (updatedQuestion.upvotes ?? 0) + 1;
-        updatedQuestion.downvotes = (updatedQuestion.downvotes ?? 0) - 1;
-      } else {
-        updatedQuestion.downvotes = (updatedQuestion.downvotes ?? 0) + 1;
-        updatedQuestion.upvotes = (updatedQuestion.upvotes ?? 0) - 1;
-      }
-    } else {
-      // User is casting a new vote
-      updatedQuestion.votes?.add({'userId': currentUserId, 'type': newVoteType});
-      if (newVoteType == 'UPVOTE') {
-        updatedQuestion.upvotes = (updatedQuestion.upvotes ?? 0) + 1;
-      } else {
-        updatedQuestion.downvotes = (updatedQuestion.downvotes ?? 0) + 1;
-      }
-    }
-    
-    return updatedQuestion;
   }
 
 

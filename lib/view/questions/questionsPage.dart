@@ -87,6 +87,11 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
   }
 
   void _handleVote(Question question, String newVoteType) {
+    // Debug print to help troubleshoot
+    print("Voting ${newVoteType} on question ${question.id}");
+    print("Current user: ${UserModel().id}");
+    print("Question votes: ${question.votes}");
+    
     // Dispatch vote to the QuestionBloc which handles both UI updates and API calls
     context.read<QuestionBloc>().add(VoteQuestion(question: question, voteType: newVoteType));
   }
@@ -252,8 +257,10 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
   Widget _buildQuestionItem(BuildContext context, Question question) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final userVote = question.votes?.firstWhere((vote) => vote['userId'] == UserModel().id, orElse: () => {});
-    final userVoteType = userVote?['type'];
+    // FIX: Get current user's vote correctly by matching current user ID with votes
+    final currentUserId = UserModel().id;
+    final userVote = question.votes?.firstWhere((vote) => vote['userId'] == currentUserId, orElse: () => <String, dynamic>{});
+    final userVoteType = userVote?.isNotEmpty == true ? userVote!['type'] : null;
     final avatarUrl = question.mediaUrls.isNotEmpty ? question.mediaUrls[0] : null;
 
     return Card(
@@ -379,16 +386,27 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
   Widget _buildVoteButton({required BuildContext context, required IconData icon, required String label, required bool isSelected, required VoidCallback? onTap}) {
     final colorScheme = Theme.of(context).colorScheme;
     final Color selectedColor = colorScheme.primary;
-    final Color unselectedColor = colorScheme.onSurfaceVariant;
+    final Color unselectedColor = colorScheme.onSurfaceVariant.withOpacity(0.6);
 
     return TextButton.icon(
       onPressed: onTap,
-      icon: Icon(icon, color: isSelected ? selectedColor : unselectedColor, size: 18.sp),
-      label: Text(label, style: TextStyle(color: isSelected ? selectedColor : unselectedColor, fontWeight: FontWeight.bold)),
+      icon: Icon(
+        icon, 
+        color: isSelected ? selectedColor : unselectedColor, 
+        size: 18.sp
+      ),
+      label: Text(
+        label, 
+        style: TextStyle(
+          color: isSelected ? selectedColor : unselectedColor, 
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500
+        )
+      ),
       style: TextButton.styleFrom(
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
-        backgroundColor: isSelected ? selectedColor.withOpacity(0.1) : Colors.transparent,
+        backgroundColor: isSelected ? selectedColor.withOpacity(0.15) : Colors.transparent,
+        side: isSelected ? BorderSide(color: selectedColor.withOpacity(0.3), width: 1) : null,
       ),
     );
   }

@@ -50,7 +50,7 @@ class Question {
           tags: List<String>.from(json['tags'] ?? []),
           commentCount: json['_count']?['comments'] ?? 0,
           mediaUrls: List<String>.from(json['user']['mediaUrls'] as List? ?? []),
-          votes: [],
+          votes: json['vote'] != null ? List<Map<String, dynamic>>.from(json['vote']) : [],
           user: OtherUserModel.fromJson(json['user'])  // Use OtherUserModel instead!
       );
     }catch(e) {
