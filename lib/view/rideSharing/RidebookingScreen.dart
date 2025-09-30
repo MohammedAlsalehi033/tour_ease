@@ -68,7 +68,7 @@ class _RidebookingscreenTravelerState extends State<RidebookingscreenTraveler> {
 
             final bookings = state.bookings.where((e) => e.status != "complete" && e.status != "cancelled" && e.status != "canceled").toList();
             final bool hasBookings = bookings.isNotEmpty;
-
+            print("Filtered bookings: ${bookings.toString()}");
             if (hasBookings) {
               return Padding(
                 padding: const EdgeInsets.all(12.0),
@@ -100,10 +100,24 @@ class _RidebookingscreenTravelerState extends State<RidebookingscreenTraveler> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(
-                                  'Booking #${booking.id}',
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Booking #${booking.id}',
+                                        style: theme.textTheme.titleMedium?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      Text(
+                                        booking.listing != null ? 'From Ride Listing' : 
+                                        booking.request != null ? 'From Ride Request' : 'Via Offer',
+                                        style: theme.textTheme.bodySmall?.copyWith(
+                                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                                 _buildStatusChip(status, theme),
@@ -111,7 +125,7 @@ class _RidebookingscreenTravelerState extends State<RidebookingscreenTraveler> {
                             ),
                             const Divider(height: 24),
 
-                            // Journey details
+                            // Journey details - Handle both listings and requests
                             if (booking.listing != null) ...[
                               _buildInfoRow(
                                 Icons.location_on_outlined,
@@ -133,6 +147,50 @@ class _RidebookingscreenTravelerState extends State<RidebookingscreenTraveler> {
                                 DateFormat('MMM d, yyyy - HH:mm').format(booking.listing!.departureTime.toLocal()),
                                 theme,
                               ),
+                            ] else if (booking.request != null) ...[
+                              _buildInfoRow(
+                                Icons.location_on_outlined,
+                                'From',
+                                booking.request!.startLocationText,
+                                theme,
+                              ),
+                              const SizedBox(height: 12),
+                              _buildInfoRow(
+                                Icons.flag_outlined,
+                                'To',
+                                booking.request!.endLocationText,
+                                theme,
+                              ),
+                              const SizedBox(height: 12),
+                              _buildInfoRow(
+                                Icons.access_time,
+                                'Departure',
+                                DateFormat('MMM d, yyyy - HH:mm').format(booking.request!.departureTime.toLocal()),
+                                theme,
+                              ),
+                              const SizedBox(height: 12),
+                              _buildInfoRow(
+                                Icons.attach_money,
+                                'Budget',
+                                'PKR ${booking.request!.budget.toStringAsFixed(2)}',
+                                theme,
+                              ),
+                              const SizedBox(height: 12),
+                              _buildInfoRow(
+                                Icons.airline_seat_recline_normal,
+                                'Seats Needed',
+                                booking.request!.seatsNeeded.toString(),
+                                theme,
+                              ),
+                              if (booking.request!.distanceKm != null) ...[
+                                const SizedBox(height: 12),
+                                _buildInfoRow(
+                                  Icons.straighten,
+                                  'Distance',
+                                  '${booking.request!.distanceKm!.toStringAsFixed(1)} km',
+                                  theme,
+                                ),
+                              ],
                             ],
 
                             // Booking details
@@ -146,7 +204,7 @@ class _RidebookingscreenTravelerState extends State<RidebookingscreenTraveler> {
                             const SizedBox(height: 12),
                             _buildInfoRow(
                               Icons.airline_seat_recline_normal,
-                              'Seats',
+                              booking.request != null ? 'Seats Booked' : 'Seats',
                               booking.seatsBooked.toString(),
                               theme,
                             ),

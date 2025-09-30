@@ -50,7 +50,6 @@ class APIServiceNodeJS extends APIService {
   APIServiceNodeJS(super.baseUrl, super.authToken) {
     _dio.options.baseUrl = baseUrl;
 
-    // --- SET YOUR APP-WIDE DEFAULT HEADERS HERE ---
     _dio.options.headers['Content-Type'] = 'application/json; charset=UTF-8';
 
     if (authToken.isNotEmpty) {
@@ -84,16 +83,30 @@ class APIServiceNodeJS extends APIService {
       if (response.statusCode == 200) {
         return fromJson(response.data["data"]);
       } else {
+        // Extract error message from API response
+        String errorMessage = 'Failed to load data: ${response.statusCode}';
+        if (response.data != null && response.data is Map) {
+          final data = response.data as Map<String, dynamic>;
+          if (data.containsKey('message')) {
+            errorMessage = data['message'];
+          }
+        }
 
-
-        throw DioException(
-          requestOptions: response.requestOptions,
-          response: response,
-          message: 'Failed to load data: ${response.statusCode}',
-        );
+        throw Exception(errorMessage);
       }
     } on DioException catch (e) {
-      throw Exception('Failed to execute GEasdfsdT request: ${e.message}');
+      // Extract error message from API response if available
+      String errorMessage = 'Failed to execute GET request';
+      if (e.response?.data != null && e.response!.data is Map) {
+        final data = e.response!.data as Map<String, dynamic>;
+        if (data.containsKey('message')) {
+          errorMessage = data['message'];
+        }
+      } else if (e.message != null) {
+        errorMessage = e.message!;
+      }
+      
+      throw Exception(errorMessage);
     }
   }
 
@@ -114,15 +127,30 @@ class APIServiceNodeJS extends APIService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         return fromJson(response.data);
       } else {
-        print(response);
-        throw DioException(
-          requestOptions: response.requestOptions,
-          response: response,
-          message: 'Failed to post data: ${response.statusCode}',
-        );
+        // Extract error message from API response
+        String errorMessage = 'Failed to post data: ${response.statusCode}';
+        if (response.data != null && response.data is Map) {
+          final data = response.data as Map<String, dynamic>;
+          if (data.containsKey('message')) {
+            errorMessage = data['message'];
+          }
+        }
+
+        throw Exception(errorMessage);
       }
     } on DioException catch (e) {
-      throw Exception('Failed to execute POST request: $e');
+      // Extract error message from API response if available
+      String errorMessage = 'Failed to execute POST request';
+      if (e.response?.data != null && e.response!.data is Map) {
+        final data = e.response!.data as Map<String, dynamic>;
+        if (data.containsKey('message')) {
+          errorMessage = data['message'];
+        }
+      } else if (e.message != null) {
+        errorMessage = e.message!;
+      }
+      
+      throw Exception(errorMessage);
     }
   }
 
@@ -143,14 +171,30 @@ class APIServiceNodeJS extends APIService {
       if (response.statusCode == 200) {
         return fromJson(response.data);
       } else {
-        throw DioException(
-          requestOptions: response.requestOptions,
-          response: response,
-          message: 'Failed to put data: ${response.statusCode}',
-        );
+        // Extract error message from API response
+        String errorMessage = 'Failed to put data: ${response.statusCode}';
+        if (response.data != null && response.data is Map) {
+          final data = response.data as Map<String, dynamic>;
+          if (data.containsKey('message')) {
+            errorMessage = data['message'];
+          }
+        }
+
+        throw Exception(errorMessage);
       }
     } on DioException catch (e) {
-      throw Exception('Failed to execute PUT request: $e');
+      // Extract error message from API response if available
+      String errorMessage = 'Failed to execute PUT request';
+      if (e.response?.data != null && e.response!.data is Map) {
+        final data = e.response!.data as Map<String, dynamic>;
+        if (data.containsKey('message')) {
+          errorMessage = data['message'];
+        }
+      } else if (e.message != null) {
+        errorMessage = e.message!;
+      }
+      
+      throw Exception(errorMessage);
     }
   }
 
@@ -174,14 +218,30 @@ class APIServiceNodeJS extends APIService {
         }
         return fromJson(null);
       } else {
-        throw DioException(
-          requestOptions: response.requestOptions,
-          response: response,
-          message: 'Failed to delete resource: ${response.statusCode}',
-        );
+        // Extract error message from API response
+        String errorMessage = 'Failed to delete resource: ${response.statusCode}';
+        if (response.data != null && response.data is Map) {
+          final data = response.data as Map<String, dynamic>;
+          if (data.containsKey('message')) {
+            errorMessage = data['message'];
+          }
+        }
+
+        throw Exception(errorMessage);
       }
     } on DioException catch (e) {
-      throw Exception('Failed to execute DELETE request: $e');
+      // Extract error message from API response if available
+      String errorMessage = 'Failed to execute DELETE request';
+      if (e.response?.data != null && e.response!.data is Map) {
+        final data = e.response!.data as Map<String, dynamic>;
+        if (data.containsKey('message')) {
+          errorMessage = data['message'];
+        }
+      } else if (e.message != null) {
+        errorMessage = e.message!;
+      }
+      
+      throw Exception(errorMessage);
     }
   }
 
@@ -204,14 +264,30 @@ class APIServiceNodeJS extends APIService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         return fromJson(response.data);
       } else {
-        throw DioException(
-          requestOptions: response.requestOptions,
-          response: response,
-          message: 'Failed to upload file: ${response.statusCode}',
-        );
+        // Extract error message from API response
+        String errorMessage = 'Failed to upload file: ${response.statusCode}';
+        if (response.data != null && response.data is Map) {
+          final data = response.data as Map<String, dynamic>;
+          if (data.containsKey('message')) {
+            errorMessage = data['message'];
+          }
+        }
+
+        throw Exception(errorMessage);
       }
     } on DioException catch (e) {
-      throw Exception('Failed to execute multipart POST request: $e');
+      // Extract error message from API response if available
+      String errorMessage = 'Failed to execute multipart POST request';
+      if (e.response?.data != null && e.response!.data is Map) {
+        final data = e.response!.data as Map<String, dynamic>;
+        if (data.containsKey('message')) {
+          errorMessage = data['message'];
+        }
+      } else if (e.message != null) {
+        errorMessage = e.message!;
+      }
+      
+      throw Exception(errorMessage);
     }
   }
 }

@@ -15,6 +15,18 @@ abstract class ReviewsRepository {
   Future<ReviewStats> getListingStats({
     required int listingId,
   });
+
+  Future<List<ReviewModel>> getTransportationBookingReviews({
+    required int bookingId,
+  });
+
+  Future<List<ReviewModel>> getReviewsByReviewer({
+    required String reviewerId,
+  });
+
+  Future<List<ExtendedReviewModel>> getExtendedReviewsByReviewer({
+    required String reviewerId,
+  });
 }
 
 class ReviewsRepositoryApi implements ReviewsRepository {
@@ -58,6 +70,52 @@ class ReviewsRepositoryApi implements ReviewsRepository {
       fromJson: (json) => ReviewStats.fromApiResponse({'data': json}),
     );
   }
+
+  @override
+  Future<List<ReviewModel>> getTransportationBookingReviews({
+    required int bookingId,
+  }) async {
+    return await apiService.get<List<ReviewModel>>(
+      path: '/api/reviews/TRANSPORTATION_BOOKING/$bookingId',
+      fromJson: (json) {
+        final data = json['data'] ?? json;
+        if (data is List) {
+          return data.map((reviewJson) => ReviewModel.fromJson(reviewJson)).toList();
+        }
+        return [];
+      },
+    );
+  }
+
+  @override
+  Future<List<ReviewModel>> getReviewsByReviewer({
+    required String reviewerId,
+  }) async {
+    return await apiService.get<List<ReviewModel>>(
+      path: '/api/reviews/reviewer/$reviewerId',
+      fromJson: (json) {
+        // json here is already the data array from response.data["data"]
+        if (json is List) {
+          return json.map((reviewJson) => ReviewModel.fromJson(reviewJson)).toList();
+        }
+        return [];
+      },
+    );
+  }
+
+  @override
+  Future<List<ExtendedReviewModel>> getExtendedReviewsByReviewer({
+    required String reviewerId,
+  }) async {
+    return await apiService.get<List<ExtendedReviewModel>>(
+      path: '/api/reviews/reviewer/$reviewerId',
+      fromJson: (json) {
+        // json here is already the data array from response.data["data"]
+        if (json is List) {
+          return json.map((reviewJson) => ExtendedReviewModel.fromJson(reviewJson)).toList();
+        }
+        return [];
+      },
+    );
+  }
 }
-
-
