@@ -227,7 +227,7 @@ class _TransportationProviderProfileState extends State<TransportationProviderPr
               InfoItem(
                 icon: Icons.star_outline,
                 label: 'Rating',
-                value: '4.8 (124 trips)', // Dummy rating data
+                value: 'New Provider', // Placeholder for new providers
               ),
             ],
           ),
@@ -239,17 +239,17 @@ class _TransportationProviderProfileState extends State<TransportationProviderPr
               InfoItem(
                 icon: Icons.route,
                 label: 'Total Trips',
-                value: '48', // Dummy data
+                value: '0', // Will be updated from backend data
               ),
               InfoItem(
                 icon: Icons.people_outline,
                 label: 'Passengers Served',
-                value: '203', // Dummy data
+                value: '0', // Will be updated from backend data
               ),
               InfoItem(
                 icon: Icons.thumb_up_outlined,
                 label: 'Satisfaction Rate',
-                value: '97%', // Dummy data
+                value: 'N/A', // Will be calculated from ratings
               ),
             ],
           ),

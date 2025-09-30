@@ -245,29 +245,186 @@ class _TravelerRideRequestDetailsPageState extends State<TravelerRideRequestDeta
   Widget _buildActionButtons(BuildContext context, TravelerRideRequestModel model) {
     final theme = Theme.of(context);
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-
-        Expanded(
-          child: FilledButton.icon(
-            icon: const Icon(Icons.check),
-            label: const Text('Accept offer'),
-            onPressed: () {
-              context.read<OfferBloc>().add(CreateOfferEvent(senderId: UserModel().id, recipientId: model.travelerId, pricePerSeat: model.budget, seatsRequested: model.seatsNeeded, message: "this is just a test for now", transportationRequestId: model.id));
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('offer is submitted we will inform you if the user accepted')),
-              );
-            },
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: theme.colorScheme.onPrimary,
+    return BlocConsumer<OfferBloc, OfferState>(
+      listener: (context, state) {
+        if (state is OfferError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  Icon(Icons.error_outline, color: Colors.white),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Failed to submit offer: ${state.message}',
+                      style: TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 4),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
-          ),
+          );
+        } else if (state is SingleOfferLoaded) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  Icon(Icons.check_circle_outline, color: Colors.white),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Offer submitted successfully! You will be notified when the traveler responds.',
+                      style: TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 4),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          );
+          // Navigate back after successful submission
+          Future.delayed(Duration(seconds: 1), () {
+            Navigator.pop(context);
+          });
+        }
+      },
+      builder: (context, state) {
+        final isLoading = state is OfferLoading;
+        
+        return Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton.icon(
+                    icon: isLoading 
+                        ? SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : Icon(Icons.check),
+                    label: Text(isLoading ? 'Submitting...' : 'Accept & Make Offer'),
+                    onPressed: isLoading 
+                        ? null 
+                        : () => _submitOffer(context, model),
+                    style: FilledButton.styleFrom(
+                      padding: EdgeInsets.symmetric(vertical: 16.h),
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
+                      disabledBackgroundColor: theme.colorScheme.primary.withOpacity(0.6),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 12.h),
+            OutlinedButton.icon(
+              icon: Icon(Icons.close),
+              label: Text('Decline Request'),
+              onPressed: isLoading 
+                  ? null 
+                  : () => _showDeclineDialog(context),
+              style: OutlinedButton.styleFrom(
+                padding: EdgeInsets.symmetric(vertical: 16.h),
+                foregroundColor: theme.colorScheme.error,
+                side: BorderSide(color: theme.colorScheme.error),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _submitOffer(BuildContext context, TravelerRideRequestModel model) {
+    // Validate that we can make an offer
+    if (model.budget <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Invalid budget amount'),
+          backgroundColor: Colors.red,
         ),
-      ],
+      );
+      return;
+    }
+
+    if (model.seatsNeeded <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Invalid seat requirement'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Submit the offer
+    context.read<OfferBloc>().add(
+      CreateOfferEvent(
+        senderId: UserModel().id,
+        recipientId: model.travelerId,
+        pricePerSeat: model.budget,
+        seatsRequested: model.seatsNeeded,
+        message: "I can provide this service. Let's connect to discuss details.",
+        transportationRequestId: model.id,
+      ),
+    );
+  }
+
+  void _showDeclineDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text('Decline Request'),
+          content: Text(
+            'Are you sure you want to decline this ride request? You can always view other requests from the main tab.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext); // Close dialog
+                Navigator.pop(context); // Go back to previous screen
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Request declined'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error,
+              ),
+              child: Text('Decline'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

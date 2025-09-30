@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:day_night_time_picker/day_night_time_picker.dart';
@@ -38,15 +39,41 @@ class NewTransportationProviderPage extends StatefulWidget {
 
 class _NewTransportationProviderPageState
     extends State<NewTransportationProviderPage> with TickerProviderStateMixin {
+  late Timer _refreshTimer;
+  
   @override
   void initState() {
     super.initState();
+    _initializeData();
+    
+    // Set up auto-refresh every 30 seconds
+    _refreshTimer = Timer.periodic(Duration(seconds: 30), (timer) {
+      _refreshData();
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer.cancel();
+    super.dispose();
+  }
+
+  void _initializeData() {
     context
         .read<TransporationProviderBloc>()
         .add(FetchCurrentTransportationProviderData());
 
-
     context.read<BookingForProviderBloc>().add(FetchProviderBookingsRequested(UserModel().id));
+  }
+
+  void _refreshData() {
+    if (mounted) {
+      context
+          .read<TransporationProviderBloc>()
+          .add(FetchCurrentTransportationProviderData());
+
+      context.read<BookingForProviderBloc>().add(FetchProviderBookingsRequested(UserModel().id));
+    }
   }
 
 
@@ -59,12 +86,19 @@ class _NewTransportationProviderPageState
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Transportation Provider Details'),
+        title: const Text('Transportation Provider'),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
             bottom: Radius.circular(16.r),
           ),
         ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: _refreshData,
+            tooltip: 'Refresh Data',
+          ),
+        ],
       ),
       body: BlocBuilder<TransporationProviderBloc, TransporationProviderState>(
         builder: (context, state) {
@@ -133,51 +167,30 @@ class _NewTransportationProviderPageState
                         );
                       },
                       tabs: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.directions_car,
-                                size: 20.sp, color: colorScheme.primary),
-                          ],
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.add,
-                                size: 20.sp,
-                                weight: 2,
-                                color: colorScheme.primary),
-                          ],
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.person,
-                                size: 20.sp, color: colorScheme.primary),
-                          ],
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.history,
-                                size: 20.sp, color: colorScheme.primary),
-                          ],
-                        ),
+                        _buildTabHeader(Icons.directions_car, 'Requests', colorScheme),
+                        _buildTabHeader(Icons.add, 'Create', colorScheme),
+                        _buildTabHeader(Icons.person, 'Profile', colorScheme),
+                        _buildTabHeader(Icons.history, 'History', colorScheme),
                       ],
                       children: [
                         _buildRideRequestsTab(textTheme, colorScheme),
-                        TravelBookingForm(travelerId: "12345"),
+                        TravelBookingForm(travelerId: UserModel().id),
                         TransportationProviderProfile(
                             transportationProviderModel: provider),
-                        TransportationProviderProfile(
-                            transportationProviderModel: provider),
+                        _buildHistoryTab(textTheme, colorScheme),
                       ],
                     );
                     }
 
 
                     else {
-                      return  Padding(
+                      return RefreshIndicator(
+                        onRefresh: () async {
+                          _refreshData();
+                          // Wait a bit for the refresh to complete
+                          await Future.delayed(Duration(milliseconds: 500));
+                        },
+                        child: Padding(
                         padding: const EdgeInsets.all(12.0),
                         child: ListView.builder(
                           itemCount: bookings.length,
@@ -327,25 +340,262 @@ context.read<BookingBloc>().add(MarkBookingAsComplete(bookingId: booking.id.toSt
                             );
                           },
                         ),
-                      );
-
+                      ));
                     }
                   }
                   else {
                     return Text(state.toString());
                   }
-            return Text(stateForBooking.toString());
-
+            
                 },
               );
             } else {
-              return Text("wating for admin apporvel");
+              return _buildWaitingForApprovalState(textTheme, colorScheme);
             }
           }
 
           return const Center(
               child: Text('Loading Transportation Provider Data...'));
         },
+      ),
+    );
+  }
+
+  Widget _buildTabHeader(IconData icon, String label, ColorScheme colorScheme) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(icon, size: 20.sp, color: colorScheme.primary),
+        SizedBox(height: 4.h),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10.sp,
+            color: colorScheme.primary,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWaitingForApprovalState(TextTheme textTheme, ColorScheme colorScheme) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(32.w),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.pending_actions,
+              size: 64.sp,
+              color: colorScheme.primary.withOpacity(0.6),
+            ),
+            SizedBox(height: 24.h),
+            Text(
+              'Awaiting Admin Approval',
+              style: textTheme.headlineSmall?.copyWith(
+                color: colorScheme.onSurface,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 12.h),
+            Text(
+              'Your transportation provider account is under review. You will be notified once it\'s approved.',
+              style: textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurface.withOpacity(0.7),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 24.h),
+            ElevatedButton.icon(
+              onPressed: () {
+                context
+                    .read<TransporationProviderBloc>()
+                    .add(FetchCurrentTransportationProviderData());
+              },
+              icon: Icon(Icons.refresh),
+              label: Text('Check Status'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colorScheme.primary,
+                foregroundColor: colorScheme.onPrimary,
+                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHistoryTab(TextTheme textTheme, ColorScheme colorScheme) {
+    return BlocBuilder<BookingForProviderBloc, BookingForProviderState>(
+      builder: (context, state) {
+        if (state is BookingForProviderLoading) {
+          return Center(
+            child: CircularProgressIndicator(color: colorScheme.primary),
+          );
+        }
+        
+        if (state is BookingForProviderLoadFailure) {
+          return _buildErrorState1(
+            context, 
+            TransportationProviderdataError(error: state.error), 
+            textTheme, 
+            colorScheme,
+          );
+        }
+        
+        if (state is BookingForProviderLoadSuccess) {
+          final completedBookings = state.bookings
+              .where((booking) => booking.status.toLowerCase() == "completed")
+              .toList();
+              
+          if (completedBookings.isEmpty) {
+            return _buildEmptyHistoryState(textTheme, colorScheme);
+          }
+          
+          return _buildHistoryList(completedBookings, textTheme, colorScheme);
+        }
+        
+        return Center(
+          child: Text(
+            'Loading history...',
+            style: textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurface.withOpacity(0.6),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildEmptyHistoryState(TextTheme textTheme, ColorScheme colorScheme) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(32.w),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.history,
+              size: 64.sp,
+              color: colorScheme.onSurface.withOpacity(0.3),
+            ),
+            SizedBox(height: 24.h),
+            Text(
+              'No History Yet',
+              style: textTheme.headlineSmall?.copyWith(
+                color: colorScheme.onSurface,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 12.h),
+            Text(
+              'Your completed rides will appear here',
+              style: textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurface.withOpacity(0.6),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHistoryList(List<dynamic> bookings, TextTheme textTheme, ColorScheme colorScheme) {
+    return RefreshIndicator(
+      onRefresh: () async {
+        context.read<BookingForProviderBloc>().add(FetchProviderBookingsRequested(UserModel().id));
+      },
+      child: ListView.builder(
+        padding: EdgeInsets.all(16.w),
+        itemCount: bookings.length,
+        itemBuilder: (context, index) {
+          final booking = bookings[index];
+          return _buildHistoryCard(booking, textTheme, colorScheme);
+        },
+      ),
+    );
+  }
+
+  Widget _buildHistoryCard(dynamic booking, TextTheme textTheme, ColorScheme colorScheme) {
+    final formattedDate = DateFormat('MMM d, yyyy - HH:mm').format(booking.createdAt.toLocal());
+    
+    return Card(
+      margin: EdgeInsets.only(bottom: 12.h),
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(16.w),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Booking #${booking.id}',
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(20.r),
+                  ),
+                  child: Text(
+                    'COMPLETED',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: Colors.green,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 12.h),
+            
+            if (booking.listing != null) ...[
+              _buildInfoRow(
+                Icons.location_on_outlined,
+                'Route',
+                '${booking.listing!.startLocationText} → ${booking.listing!.endLocationText}',
+                Theme.of(context),
+              ),
+              SizedBox(height: 8.h),
+            ],
+            
+            _buildInfoRow(
+              Icons.person_outline,
+              'Traveler',
+              booking.traveler?.username ?? 'Unknown',
+              Theme.of(context),
+            ),
+            SizedBox(height: 8.h),
+            
+            _buildInfoRow(
+              Icons.event_note,
+              'Completed on',
+              formattedDate,
+              Theme.of(context),
+            ),
+            SizedBox(height: 8.h),
+            
+            _buildInfoRow(
+              Icons.attach_money,
+              'Earned',
+              'PKR ${booking.totalPrice.toStringAsFixed(2)}',
+              Theme.of(context),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -462,59 +712,26 @@ context.read<BookingBloc>().add(MarkBookingAsComplete(bookingId: booking.id.toSt
   }
 
 
-  Widget _buildProviderDetailsTab(TransportationProviderModel provider,
-      TextTheme textTheme, DateFormat dateFormat, ColorScheme colorScheme) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(16.w),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildProviderDetailsContent(provider, textTheme, dateFormat),
-          SizedBox(height: 24.h),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProviderDetailsContent(TransportationProviderModel provider,
-      TextTheme textTheme, DateFormat dateFormat) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Provider ID: ${provider.providerId}',
-            style: textTheme.titleLarge),
-        SizedBox(height: 16.h),
-        Text('Vehicle Type: ${provider.vehicleType}',
-            style: textTheme.titleMedium),
-        SizedBox(height: 8.h),
-        Text('Seats Available: ${provider.seatsAvailable}',
-            style: textTheme.titleMedium),
-        SizedBox(height: 8.h),
-        Text('Account Status: ${provider.accountStatus}',
-            style: textTheme.titleMedium),
-        SizedBox(height: 8.h),
-        Text('Created At: ${dateFormat.format(provider.createdAt)}',
-            style: textTheme.bodyMedium),
-      ],
-    );
-  }
-
   Widget _buildRideRequestsTab(TextTheme textTheme, ColorScheme colorScheme) {
+    // Create a more dynamic filter based on current date and nearby locations
+    final now = DateTime.now();
     final RideFilterModel filter = RideFilterModel(
-      selectedDate: DateTime(2025, 4, 29),
-      endTime: Time(hour: 17, minute: 30, second: 0),
-      startTime: Time(hour: 9, minute: 0, second: 0),
-      numberOfTravelers: 10,
-      luggageCapacity: 10,
-      pickupLocation: 'Islamabad International Airport (ISB)',
-      destination: 'Centaurus Mall, Islamabad',
-      priceRange: const RangeValues(50.0, 150.0),
-      pickupLocationCoordinates:
-          const LatLng(33.65055521987961, 73.15607607364655),
-      destinationCoordinates:
-          const LatLng(33.75313193883657, 72.83092696219683),
+      selectedDate: now,
+      endTime: Time(hour: 23, minute: 59, second: 59),
+      startTime: Time(hour: 0, minute: 0, second: 0),
+      numberOfTravelers: 8, // Maximum reasonable capacity
+      luggageCapacity: 15,
+      pickupLocation: 'Current Area', // This would be updated with actual location
+      destination: 'Any Destination',
+      priceRange: const RangeValues(20.0, 500.0), // Broader range
+      pickupLocationCoordinates: const LatLng(33.6844, 73.0479), // Islamabad center
+      destinationCoordinates: const LatLng(33.7293, 73.0931), // Broader area
     );
-    context.read<RideRequestBloc>().add(FetchRideRequests(filter: filter));
+    
+    // Automatically fetch requests when tab is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<RideRequestBloc>().add(FetchRideRequests(filter: filter));
+    });
 
     return BlocBuilder<RideRequestBloc, RideRequestState>(
       builder: (context, state) {
