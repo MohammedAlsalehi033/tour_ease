@@ -3,7 +3,7 @@ import 'package:tour_ease/Services/ApiService.dart';
 import 'package:tour_ease/model/question/questionModel.dart';
 
 abstract class VoteRepo {
-  Future<String> updateVote(bool isUpvote, Question question);
+  Future<String> updateVote(bool isUpVote, Question question);
 }
 
 class VotesRepoNodeAPI extends VoteRepo {
@@ -12,14 +12,14 @@ class VotesRepoNodeAPI extends VoteRepo {
   VotesRepoNodeAPI(this.apiService);
 
   @override
-  Future<String> updateVote(bool isUpvote, Question question) async {
+  Future<String> updateVote(bool isUpVote, Question question) async {
     try {
       return await apiService.post<String>(
         path: '/api/questions/vote',
         body: {
           'id': question.id,
+          'isUpVote': isUpVote,
           'userId': question.userId,
-          'isUpvote': isUpvote,
         },
         fromJson: (json) => "Done",
       );

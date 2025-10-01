@@ -9,7 +9,7 @@ abstract class QuestionsRepo {
   Future<Question> editQuestion(Question question);
   Future<void> deleteQuestion(Question question);
   Future<List<Question>> searchQuestions(String query);
-  Future<void> voteQuestion(int questionId, String userId, bool isUpvote);
+  Future<void> voteQuestion(int questionId, String userId, bool isUpVote);
 }
 
 class QuestionRepoFromAPI extends QuestionsRepo {
@@ -108,14 +108,14 @@ class QuestionRepoFromAPI extends QuestionsRepo {
   }
 
   @override
-  Future<void> voteQuestion(int questionId, String userId, bool isUpvote) async {
+  Future<void> voteQuestion(int questionId, String userId, bool isUpVote) async {
     try {
       await apiService.post<String>(
         path: '/api/questions/vote',
         body: {
           'id': questionId,
           'userId': userId,
-          'isUpvote': isUpvote,
+          'isUpVote': isUpVote,
         },
         fromJson: (json) => "Done",
       );
