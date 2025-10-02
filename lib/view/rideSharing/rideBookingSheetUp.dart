@@ -11,7 +11,6 @@ import 'dart:ui';
 
 import 'package:tour_ease/view/chat/chatDetailsPage.dart';
 import 'package:tour_ease/components/clickable_location_widget.dart';
-import 'package:tour_ease/components/simple_cancel_button.dart';
 
 class RideDetailsSheet extends StatefulWidget {
   final RideListingModel ride;
@@ -35,7 +34,6 @@ class _RideDetailsSheetState extends State<RideDetailsSheet>
   late Animation<Offset> _slideAnimation;
   late Animation<double> _counterOfferAnimation;
   late Animation<double> _favoriteAnimation;
-  late Animation<double> _expandAnimation;
   late Animation<double> _fadeAnimation;
 
   int _seatsRequested = 1;
@@ -98,14 +96,6 @@ class _RideDetailsSheetState extends State<RideDetailsSheet>
     ).animate(CurvedAnimation(
       parent: _favoriteController,
       curve: Curves.elasticOut,
-    ));
-
-    _expandAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _expandController,
-      curve: Curves.easeInOut,
     ));
 
     _fadeAnimation = Tween<double>(
@@ -1112,14 +1102,6 @@ class _RideDetailsSheetState extends State<RideDetailsSheet>
               ),
             ),
           ],
-        ),
-        SizedBox(height: 12.h),
-        // Cancel Button
-        SimpleCancelButton(
-          bookingId: widget.ride.id.toString(),
-          onCancelled: () {
-            Navigator.of(context).pop(); // Close the sheet
-          },
         ),
       ],
     );

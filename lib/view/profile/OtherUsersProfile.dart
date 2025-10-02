@@ -238,7 +238,7 @@ class _OtherUserProfileState extends State<OtherUserProfile> {
                                   // This line `UserModel().id` is problematic.
                                   // You must get the *actual* current user's ID.
                                   // For now, I'm passing a placeholder. Fix this!
-                                  const String currentUserId = "current-user-id-placeholder";
+                                   String currentUserId = UserModel().id; // Replace with actual current user ID retrieval
 
                                   Navigator.push(
                                     context,
