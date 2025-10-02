@@ -16,6 +16,11 @@ class BookingMarkedComplete extends BookingState {
   BookingMarkedComplete(this.bookingId);
 }
 
+class BookingCancelled extends BookingState {
+  final int bookingId;
+  BookingCancelled(this.bookingId);
+}
+
 // class TravelerBookingLoadSuccess extends BookingState {
 //   final List<TravelerBookingModel> travelerBookings;
 //

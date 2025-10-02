@@ -9,6 +9,8 @@ abstract class BookingRepository {
   Future<List<ProviderBookingModel>> fetchProviderBookings(String providerId);
 
   Future<void> markBookingAsComplete(String bookingId);
+  
+  Future<void> cancelBooking(String bookingId);
 }
 
 class BookingRepositoryImpl implements BookingRepository {
@@ -50,6 +52,19 @@ class BookingRepositoryImpl implements BookingRepository {
       );
     } catch (e) {
       throw Exception('Failed to mark booking as complete: $e');
+    }
+  }
+
+  @override
+  Future<void> cancelBooking(String bookingId) async {
+    try {
+      await apiService.post<void>(
+        path: '/api/booking/status?bookingId=$bookingId&status=cancelled',
+        body: {},
+        fromJson: (json) {},
+      );
+    } catch (e) {
+      throw Exception('Failed to cancel booking: $e');
     }
   }
 }

@@ -10,6 +10,8 @@ import 'package:tour_ease/model/userManagment/user.dart';
 import 'dart:ui';
 
 import 'package:tour_ease/view/chat/chatDetailsPage.dart';
+import 'package:tour_ease/components/clickable_location_widget.dart';
+import 'package:tour_ease/components/simple_cancel_button.dart';
 
 class RideDetailsSheet extends StatefulWidget {
   final RideListingModel ride;
@@ -468,58 +470,21 @@ class _RideDetailsSheetState extends State<RideDetailsSheet>
 
               SizedBox(width: 20.w),
 
-              // Location texts
+              // Route display
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildLocationItem(
-                      'Pickup',
-                      widget.ride.startLocationText,
-                      theme,
-                      isPrimary: true,
-                    ),
-                    SizedBox(height: 40.h),
-                    _buildLocationItem(
-                      'Destination',
-                      widget.ride.endLocationText,
-                      theme,
-                      isPrimary: false,
-                    ),
-                  ],
+                child: RouteDisplay(
+                  startLocation: widget.ride.startLocationText,
+                  endLocation: widget.ride.endLocationText,
+                  enableDirections: true,
+                  padding: EdgeInsets.zero,
+                  routeTitle: "Trip Route",
+                  showDirectionsButton: true,
                 ),
               ),
             ],
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildLocationItem(String label, String location, ThemeData theme, {required bool isPrimary}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        SizedBox(height: 4.h),
-        Text(
-          location,
-          style: theme.textTheme.bodyLarge?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: isPrimary
-                ? theme.colorScheme.primary
-                : theme.colorScheme.secondary,
-          ),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ],
     );
   }
 
@@ -992,6 +957,9 @@ class _RideDetailsSheetState extends State<RideDetailsSheet>
   }
 
   Widget _buildActionButtons(ThemeData theme) {
+    // Check if this is an active/confirmed booking that can be cancelled
+    final bool canCancel = _isActiveBooking();
+    
     return Container(
       padding: EdgeInsets.fromLTRB(24.w, 16.h, 24.w, 32.h),
       decoration: BoxDecoration(
@@ -1010,16 +978,85 @@ class _RideDetailsSheetState extends State<RideDetailsSheet>
           ),
         ),
       ),
-      child: Row(
-        children: [
-          // Secondary Button: Message or Cancel
-          Expanded(
-            child: OutlinedButton(
-              onPressed: () {
-                if (isCountering) {
-                  _toggleCountering(); // Cancel
-                } else {
-                  // Navigate to chat
+      child: canCancel ? _buildActiveRideActions(theme) : _buildBookingActions(theme),
+    );
+  }
+
+  Widget _buildBookingActions(ThemeData theme) {
+    return Row(
+      children: [
+        // Secondary Button: Message or Cancel Counter
+        Expanded(
+          child: OutlinedButton(
+            onPressed: () {
+              if (isCountering) {
+                _toggleCountering(); // Cancel counter offer
+              } else {
+                // Navigate to chat
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ChatPage(
+                      currentUserId: UserModel().id,
+                      otherUserId: widget.ride.providerId,
+                      apiBaseUrl: "apiBaseUrl", // Placeholder
+                      otherUserName: widget.ride.provider?.user.username ?? "N/A",
+                      otherUserAvatar: "otherUserAvatar", // Placeholder
+                    ),
+                  ),
+                );
+              }
+            },
+            style: OutlinedButton.styleFrom(
+              padding: EdgeInsets.symmetric(vertical: 16.h),
+              foregroundColor: isCountering ? theme.colorScheme.error : theme.colorScheme.primary,
+              side: BorderSide(
+                color: isCountering ? theme.colorScheme.error.withOpacity(0.5) : theme.colorScheme.primary.withOpacity(0.5),
+                width: 1.5,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16.r),
+              ),
+            ),
+            child: Text(isCountering ? 'Cancel' : 'Message'),
+          ),
+        ),
+        SizedBox(width: 16.w),
+        // Primary Button: Make Offer or Send Offer
+        Expanded(
+          flex: 2,
+          child: ElevatedButton(
+            onPressed: isCountering ? _sendOffer : _toggleCountering,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
+              padding: EdgeInsets.symmetric(vertical: 16.h),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16.r),
+              ),
+              elevation: 4,
+              shadowColor: theme.colorScheme.primary.withOpacity(0.3),
+            ),
+            child: Text(
+              isCountering ? 'Send Offer' : 'Make an Offer',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActiveRideActions(ThemeData theme) {
+    return Column(
+      children: [
+        // Regular actions (Message, Complete, etc.)
+        Row(
+          children: [
+            // Message Button
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -1032,46 +1069,66 @@ class _RideDetailsSheetState extends State<RideDetailsSheet>
                       ),
                     ),
                   );
-                }
-              },
-              style: OutlinedButton.styleFrom(
-                padding: EdgeInsets.symmetric(vertical: 16.h),
-                foregroundColor: isCountering ? theme.colorScheme.error : theme.colorScheme.primary,
-                side: BorderSide(
-                  color: isCountering ? theme.colorScheme.error.withOpacity(0.5) : theme.colorScheme.primary.withOpacity(0.5),
-                  width: 1.5,
+                },
+                icon: Icon(Icons.message, size: 18.sp),
+                label: Text('Message'),
+                style: OutlinedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(vertical: 16.h),
+                  foregroundColor: theme.colorScheme.primary,
+                  side: BorderSide(
+                    color: theme.colorScheme.primary.withOpacity(0.5),
+                    width: 1.5,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16.r),
+                  ),
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16.r),
-                ),
-              ),
-              child: Text(isCountering ? 'Cancel' : 'Message'),
-            ),
-          ),
-          SizedBox(width: 16.w),
-          // Primary Button: Make Offer or Send Offer
-          Expanded(
-            flex: 2,
-            child: ElevatedButton(
-              onPressed: isCountering ? _sendOffer : _toggleCountering,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: theme.colorScheme.onPrimary,
-                padding: EdgeInsets.symmetric(vertical: 16.h),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16.r),
-                ),
-                elevation: 4,
-                shadowColor: theme.colorScheme.primary.withOpacity(0.3),
-              ),
-              child: Text(
-                isCountering ? 'Send Offer' : 'Make an Offer',
-                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
-          ),
-        ],
-      ),
+            SizedBox(width: 12.w),
+            // Complete/Track Button (example)
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  // Handle ride completion or tracking
+                  // You can implement ride completion logic here
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Ride completion feature coming soon!'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+                icon: Icon(Icons.check_circle, size: 18.sp),
+                label: Text('Complete'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 16.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16.r),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 12.h),
+        // Cancel Button
+        SimpleCancelButton(
+          bookingId: widget.ride.id.toString(),
+          onCancelled: () {
+            Navigator.of(context).pop(); // Close the sheet
+          },
+        ),
+      ],
     );
+  }
+
+  bool _isActiveBooking() {
+    // Check if this is an active ride that can be cancelled
+    // You'll need to adjust these status values based on your actual status values
+    final activeStatuses = ['confirmed', 'active', 'in_progress', 'booked'];
+    return activeStatuses.contains(widget.ride.status.toLowerCase());
   }
 }

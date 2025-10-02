@@ -28,7 +28,19 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         emit(BookingLoadFailure(e.toString()));
       }
     },);
+
+    on<CancelBookingRequested>((event, emit) async{
+      emit(BookingLoading());
+      try{
+        await _bookingRepository.cancelBooking(event.bookingId);
+        emit(BookingCancelled(int.tryParse(event.bookingId) ?? 0));
+      }catch(e){
+        emit(BookingLoadFailure(e.toString()));
+      }
+    },);
   }
+
+
 
   // // Handler for FetchTravelerBookingsRequested event
   // Future<void> _onFetchTravelerBookingsRequested(

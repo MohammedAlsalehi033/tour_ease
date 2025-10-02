@@ -9,6 +9,7 @@ import 'package:tour_ease/model/userManagment/user.dart';
 import 'package:tour_ease/view/mapscreen/trackingMap.dart';
 import 'package:tour_ease/view/rideSharing/RideSharingPage.dart';
 import 'package:tour_ease/view/rideSharing/rating_dialog.dart';
+import 'package:tour_ease/components/simple_cancel_button.dart';
 
 class RidebookingscreenTraveler extends StatefulWidget {
   const RidebookingscreenTraveler({super.key});
@@ -227,17 +228,30 @@ class _RidebookingscreenTravelerState extends State<RidebookingscreenTraveler> {
 
                               const SizedBox(height: 24),
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: theme.colorScheme.primary,
-                                      foregroundColor: theme.colorScheme.onPrimary,
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: theme.colorScheme.primary,
+                                        foregroundColor: theme.colorScheme.onPrimary,
+                                        padding: const EdgeInsets.symmetric(vertical: 12),
+                                      ),
+                                      onPressed: () {
+                                        Navigator.push(context, MaterialPageRoute(builder: (context) => LocationTrackingMap(otherUserId: booking.getProviderId(),),));
+                                      },
+                                      icon: const Icon(Icons.location_on, size: 18),
+                                      label: const Text('Check Location'),
                                     ),
-                                    onPressed: () {
-                                      Navigator.push(context, MaterialPageRoute(builder: (context) => LocationTrackingMap(otherUserId: booking.getProviderId(),),));
-                                    },
-                                    child: const Text('Check Location'),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: SimpleCancelButton(
+                                      bookingId: booking.id.toString(),
+                                      onCancelled: () {
+                                        // Refresh the bookings after cancellation
+                                        context.read<BookingForTravelerBloc>().add(FetchTravelerBookingsRequested(UserModel().id));
+                                      },
+                                    ),
                                   ),
                                 ],
                               ),

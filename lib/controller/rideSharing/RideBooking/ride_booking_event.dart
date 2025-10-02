@@ -28,3 +28,9 @@ class MarkBookingAsComplete extends BookingEvent {
 
 
 }
+
+class CancelBookingRequested extends BookingEvent {
+  final String bookingId;
+
+  const CancelBookingRequested({required this.bookingId});
+}

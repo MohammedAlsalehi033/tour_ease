@@ -28,6 +28,7 @@ import 'package:tour_ease/view/rideSharing/transportationProviderScreens/TravelB
 import 'package:tour_ease/view/rideSharing/transportationProviderScreens/providerProfile.dart';
 import 'package:tour_ease/view/rideSharing/transportationProviderScreens/viewRequestDetails.dart';
 import 'package:tour_ease/components/profileAvatar.dart';
+import 'package:tour_ease/components/simple_cancel_button.dart';
 
 class NewTransportationProviderPage extends StatefulWidget {
   const NewTransportationProviderPage({super.key});
@@ -312,24 +313,48 @@ class _NewTransportationProviderPageState
                                     ),
 
                                     const SizedBox(height: 24),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [Expanded(
-                                        child: ElevatedButton(onPressed: () {
-context.read<BookingBloc>().add(MarkBookingAsComplete(bookingId: booking.id.toString()));
-                                        }, child: Text("Mark as complete")),
-                                      ),
-                                        Expanded(
-                                          child: ElevatedButton(
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: theme.colorScheme.primary,
-                                              foregroundColor: theme.colorScheme.onPrimary,
+                                    Column(
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: ElevatedButton.icon(
+                                                onPressed: () {
+                                                  context.read<BookingBloc>().add(MarkBookingAsComplete(bookingId: booking.id.toString()));
+                                                },
+                                                icon: const Icon(Icons.check_circle, size: 18),
+                                                label: const Text("Mark as complete"),
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: Colors.green,
+                                                  foregroundColor: Colors.white,
+                                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                                ),
+                                              ),
                                             ),
-                                            onPressed: () {
-                                              Navigator.push(context, MaterialPageRoute(builder: (context) => LocationTrackingMap(otherUserId: booking.travelerId,),));
-                                            },
-                                            child: const Text('Check Location'),
-                                          ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: ElevatedButton.icon(
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: theme.colorScheme.primary,
+                                                  foregroundColor: theme.colorScheme.onPrimary,
+                                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                                ),
+                                                onPressed: () {
+                                                  Navigator.push(context, MaterialPageRoute(builder: (context) => LocationTrackingMap(otherUserId: booking.travelerId,),));
+                                                },
+                                                icon: const Icon(Icons.location_on, size: 18),
+                                                label: const Text('Check Location'),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 8),
+                                        SimpleCancelButton(
+                                          bookingId: booking.id.toString(),
+                                          onCancelled: () {
+                                            // Refresh the bookings after cancellation
+                                            context.read<BookingForProviderBloc>().add(FetchProviderBookingsRequested(UserModel().id));
+                                          },
                                         ),
                                       ],
                                     ),

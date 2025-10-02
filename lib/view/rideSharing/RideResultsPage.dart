@@ -11,6 +11,7 @@ import 'package:tour_ease/view/rideSharing/rideBookingSheetUp.dart';
 import 'package:tour_ease/Services/ApiService.dart';
 import 'package:tour_ease/model/reviews/reviews_repo.dart';
 import 'package:tour_ease/components/profileAvatar.dart';
+import 'package:tour_ease/components/clickable_location_widget.dart';
 
 class RideResultsPage extends StatefulWidget {
   const RideResultsPage({super.key});
@@ -712,59 +713,11 @@ class _RideResultsPageState extends State<RideResultsPage>
                   child: Column(
                     children: [
                       // Route
-                      Row(
-                        children: [
-                          Column(
-                            children: [
-                              Container(
-                                width: 12.w,
-                                height: 12.h,
-                                decoration: BoxDecoration(
-                                  color: colorScheme.primary,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              Container(
-                                width: 2.w,
-                                height: 30.h,
-                                color: colorScheme.outline.withOpacity(0.5),
-                              ),
-                              Container(
-                                width: 12.w,
-                                height: 12.h,
-                                decoration: BoxDecoration(
-                                  color: colorScheme.secondary,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(width: 16.w),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  ride.startLocationText,
-                                  style: textTheme.bodyMedium?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                SizedBox(height: 16.h),
-                                Text(
-                                  ride.endLocationText,
-                                  style: textTheme.bodyMedium?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                      RouteDisplay(
+                        startLocation: ride.startLocationText,
+                        endLocation: ride.endLocationText,
+                        enableDirections: true,
+                        padding: EdgeInsets.zero,
                       ),
 
                       SizedBox(height: 16.h),

@@ -11,6 +11,7 @@ import 'package:tour_ease/model/rideSharing/rideListing/rideRepository.dart';
 import 'package:tour_ease/view/mapscreen/mappage.dart';
 import 'package:tour_ease/view/rideSharing/RideResultsPage.dart';
 import 'package:tour_ease/view/rideSharing/transportationProviderScreens/newTransportProviderPage.dart';
+import 'package:tour_ease/components/clickable_location_widget.dart';
 
 class RideFilterPage extends StatefulWidget {
   const RideFilterPage({Key? key}) : super(key: key);
@@ -75,41 +76,51 @@ class _RideFilterPageState extends State<RideFilterPage> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       _buildSectionTitle('Where from?', theme),
-                                      Row(
-                                        children: [
-                                          Icon(Icons.location_on, color: theme.primaryColor, size: 18),
-                                          SizedBox(width: 8.w),
-                                          Expanded(
-                                            child: Text(
-                                              state.filterModel.pickupLocation.isEmpty
-                                                  ? 'Select pickup location'
-                                                  : state.filterModel.pickupLocation,
-                                              style: TextStyle(
-                                                color: state.filterModel.pickupLocation.isEmpty
-                                                    ? theme.hintColor
-                                                    : theme.textTheme.bodyMedium?.color,
-                                              ),
+                                      state.filterModel.pickupLocation.isEmpty
+                                          ? Row(
+                                              children: [
+                                                Icon(Icons.location_on, color: theme.primaryColor, size: 18),
+                                                SizedBox(width: 8.w),
+                                                Expanded(
+                                                  child: Text(
+                                                    'Select pickup location',
+                                                    style: TextStyle(
+                                                      color: theme.hintColor,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            )
+                                          : ClickableLocationText(
+                                              locationText: state.filterModel.pickupLocation,
+                                              label: 'Pickup Location',
+                                              iconSize: 18,
                                             ),
-                                          ),
-                                        ],
-                                      ),
                                       Divider(height: 24.h, thickness: 1),
                                       _buildSectionTitle('Where to?', theme),
                                       Row(
                                         children: [
-                                          Icon(Icons.location_on, color: theme.primaryColor, size: 18),
-                                          SizedBox(width: 8.w),
                                           Expanded(
-                                            child: Text(
-                                              state.filterModel.destination.isEmpty
-                                                  ? 'Select destination'
-                                                  : state.filterModel.destination,
-                                              style: TextStyle(
-                                                color: state.filterModel.destination.isEmpty
-                                                    ? theme.hintColor
-                                                    : theme.textTheme.bodyMedium?.color,
-                                              ),
-                                            ),
+                                            child: state.filterModel.destination.isEmpty
+                                                ? Row(
+                                                    children: [
+                                                      Icon(Icons.location_on, color: theme.primaryColor, size: 18),
+                                                      SizedBox(width: 8.w),
+                                                      Expanded(
+                                                        child: Text(
+                                                          'Select destination',
+                                                          style: TextStyle(
+                                                            color: theme.hintColor,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  )
+                                                : ClickableLocationText(
+                                                    locationText: state.filterModel.destination,
+                                                    label: 'Destination',
+                                                    iconSize: 18,
+                                                  ),
                                           ),
                                           Icon(Icons.arrow_forward_ios, color: theme.primaryColor, size: 16),
                                         ],
