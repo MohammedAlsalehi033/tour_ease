@@ -1,5 +1,3 @@
-import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
 import 'package:tour_ease/Services/ApiService.dart';
 import 'package:tour_ease/model/rideSharing/RideFilterData.dart';
 import 'package:tour_ease/model/rideSharing/rideListing/rideListingModel.dart';
@@ -22,11 +20,10 @@ class RideRepositoryImpl implements RideRepository {
     try {
       final queryParameters = <String, dynamic>{};
 
-      if (filter.pickupLocationCoordinates != null) {
-        final coordinates = filter.pickupLocationCoordinates!;
-        queryParameters['lat'] = coordinates.latitude;
-        queryParameters['lng'] = coordinates.longitude;
-      }
+      final coordinates = filter.pickupLocationCoordinates;
+      queryParameters['lat'] = coordinates.latitude;
+      queryParameters['lng'] = coordinates.longitude;
+
       if (filter.numberOfTravelers > 0) {
         queryParameters['minSeats'] = filter.numberOfTravelers;
       }
@@ -52,6 +49,7 @@ class RideRepositoryImpl implements RideRepository {
         );
         queryParameters['departureBefore'] = departureBeforeDateTime.toIso8601String();
       }
+
 
       return await apiService.get<List<RideListingModel>>(
         path: "/api/searchForNearByListing",
@@ -124,36 +122,37 @@ class RideRepositoryImpl implements RideRepository {
     try {
       final queryParameters = <String, dynamic>{};
 
-      if (filter.pickupLocationCoordinates != null) {
-        final coordinates = filter.pickupLocationCoordinates!;
-        queryParameters['lat'] = coordinates.latitude;
-        queryParameters['lng'] = coordinates.longitude;
+      // Location coordinates
+      final coordinates = filter.pickupLocationCoordinates;
+      queryParameters['lat'] = coordinates.latitude;
+      queryParameters['lng'] = coordinates.longitude;
+
+      // Time range (using just time, not full datetime)
+      if (filter.selectedDate != null) {
+        // Format as HH:mm
+        final startTimeStr = '${filter.startTime.hour.toString().padLeft(2, '0')}:${filter.startTime.minute.toString().padLeft(2, '0')}';
+        final endTimeStr = '${filter.endTime.hour.toString().padLeft(2, '0')}:${filter.endTime.minute.toString().padLeft(2, '0')}';
+        
+        queryParameters['startTime'] = startTimeStr;
+        queryParameters['endTime'] = endTimeStr;
       }
-      if (filter.numberOfTravelers > 0) {
-        queryParameters['minSeats'] = filter.numberOfTravelers;
+
+      // Budget range
+      if (filter.priceRange.start > 0) {
+        queryParameters['minBudget'] = filter.priceRange.start.toInt();
       }
       if (filter.priceRange.end > 0) {
-        queryParameters['maxBudget'] = filter.priceRange.end;
+        queryParameters['maxBudget'] = filter.priceRange.end.toInt();
       }
-      if (filter.selectedDate != null) {
-        final departureAfterDateTime = DateTime(
-          filter.selectedDate!.year,
-          filter.selectedDate!.month,
-          filter.selectedDate!.day,
-          filter.startTime.hour,
-          filter.startTime.minute,
-        );
-        queryParameters['departureAfter'] = departureAfterDateTime.toIso8601String();
 
-        final departureBeforeDateTime = DateTime(
-          filter.selectedDate!.year,
-          filter.selectedDate!.month,
-          filter.selectedDate!.day,
-          filter.endTime.hour,
-          filter.endTime.minute,
-        );
-        queryParameters['departureBefore'] = departureBeforeDateTime.toIso8601String();
+      // Seats needed
+      if (filter.numberOfTravelers > 0) {
+        queryParameters['maxSeatsNeeded'] = filter.numberOfTravelers;
       }
+
+      // Default sorting by budget descending
+      queryParameters['sortBy'] = 'budget_desc';
+        queryParameters['radiusKm'] = 180000;
 
       return await apiService.get<List<TravelerRideRequestModel>>(
         path: "/api/searchForNearByRequests",

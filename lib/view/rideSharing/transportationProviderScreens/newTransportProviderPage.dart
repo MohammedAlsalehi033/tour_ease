@@ -1,34 +1,21 @@
-import 'dart:async';
 import 'dart:io';
 
-import 'package:day_night_time_picker/day_night_time_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:intl/intl.dart';
 import 'package:tab_container/tab_container.dart';
 import 'package:tour_ease/controller/rideSharing/RideBooking/provider/booking_for_provider_bloc.dart';
-import 'package:tour_ease/controller/rideSharing/RideBooking/ride_booking_bloc.dart';
-import 'package:tour_ease/controller/rideSharing/RideBooking/ride_booking_event.dart';
-// removed unused ride_booking_state import
-import 'package:tour_ease/controller/rideSharing/RideRequests/ride_request_bloc.dart';
 import 'package:tour_ease/controller/rideSharing/transportationProvider/transporation_provider_bloc.dart';
-import 'package:tour_ease/model/rideSharing/RideFilterData.dart';
-import 'package:tour_ease/model/rideSharing/rideRequest/rideRequestModel.dart';
 import 'package:tour_ease/model/userManagment/UserModelTempForNow.dart';
 import 'package:tour_ease/model/userManagment/transportationProvider.dart';
-
 import 'package:image_picker/image_picker.dart';
-// removed duplicate intl import
 import 'package:tour_ease/model/userManagment/user.dart';
-import 'package:tour_ease/view/mapscreen/trackingMap.dart';
 import 'package:tour_ease/view/rideSharing/transportationProviderScreens/TravelBookingForm.dart';
 import 'package:tour_ease/view/rideSharing/transportationProviderScreens/providerProfile.dart';
-import 'package:tour_ease/view/rideSharing/transportationProviderScreens/viewRequestDetails.dart';
-import 'package:tour_ease/components/profileAvatar.dart';
-import 'package:tour_ease/components/simple_cancel_button.dart';
+import 'package:tour_ease/view/rideSharing/transportationProviderScreens/tabs/requests_tab.dart';
+import 'package:tour_ease/view/rideSharing/transportationProviderScreens/tabs/history_tab.dart';
+import 'package:tour_ease/view/rideSharing/transportationProviderScreens/widgets/active_bookings_view.dart';
+import 'package:tour_ease/view/rideSharing/transportationProviderScreens/widgets/waiting_for_approval_view.dart';
 
 class NewTransportationProviderPage extends StatefulWidget {
   const NewTransportationProviderPage({super.key});
@@ -40,23 +27,11 @@ class NewTransportationProviderPage extends StatefulWidget {
 
 class _NewTransportationProviderPageState
     extends State<NewTransportationProviderPage> with TickerProviderStateMixin {
-  late Timer _refreshTimer;
   
   @override
   void initState() {
     super.initState();
     _initializeData();
-    
-    // Set up auto-refresh every 30 seconds
-    _refreshTimer = Timer.periodic(Duration(seconds: 30), (timer) {
-      _refreshData();
-    });
-  }
-
-  @override
-  void dispose() {
-    _refreshTimer.cancel();
-    super.dispose();
   }
 
   void _initializeData() {
@@ -95,7 +70,7 @@ class _NewTransportationProviderPageState
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh),
             onPressed: _refreshData,
             tooltip: 'Refresh Data',
           ),
@@ -103,285 +78,148 @@ class _NewTransportationProviderPageState
       ),
       body: BlocBuilder<TransporationProviderBloc, TransporationProviderState>(
         builder: (context, state) {
-
-
           if (state is TransportationProviderdataLoading) {
             return Center(
-              child: CircularProgressIndicator(
-                color: colorScheme.primary,
-              ),
+              child: CircularProgressIndicator(color: colorScheme.primary),
             );
           }
 
           if (state is TransportationProviderdataError) {
-            return _buildErrorState1(context, state, textTheme, colorScheme);
+            return _buildErrorState(context, state);
           }
 
           if (state is TransportationProviderdataLoaded) {
-
             final provider = state.transportationProviderModel;
-            if (provider.accountStatus.toLowerCase() == 'active') {
-              return BlocConsumer<BookingForProviderBloc, BookingForProviderState>(
-                listener: (context, state) {
-
-                },
-                builder: (context, stateForBooking) {
-                  print(stateForBooking);
-                  if(stateForBooking is BookingForProviderLoading){
-                    return Center(
-                      child: CircularProgressIndicator(
-                        color: colorScheme.primary,
-                      ),
-                    );
-                  }
-                  else if (stateForBooking is BookingForProviderLoadFailure){
-                    return Text(stateForBooking.error);
-
-                  }
-
-                  else if(stateForBooking is BookingForProviderLoadSuccess){
-                    final bookings = stateForBooking.bookings.where((element) => element.status.toLowerCase() == "pending" || element.status.toLowerCase() == "accepted" ).toList();
-                    if (bookings.length < 1){
-                      return TabContainer(
-                      color: colorScheme.surface,
-                      selectedTextStyle: textTheme.titleMedium?.copyWith(
-                        color: colorScheme.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      unselectedTextStyle: textTheme.titleMedium?.copyWith(
-                        color: colorScheme.onSurface.withOpacity(0.6),
-                      ),
-                      borderRadius: BorderRadius.circular(16.w),
-                      tabEdge: TabEdge.left,
-                      tabCurve: Curves.fastEaseInToSlowEaseOut,
-                      transitionBuilder: (child, animation) {
-                        return FadeTransition(
-                          opacity: CurvedAnimation(
-                            parent: animation,
-                            curve: Curves.easeInOut,
-                          ),
-                          child: ScaleTransition(
-                            scale: Tween<double>(begin: 0.95, end: 1.0)
-                                .animate(animation),
-                            child: child,
-                          ),
-                        );
-                      },
-                      tabs: [
-                        _buildTabHeader(Icons.directions_car, 'Requests', colorScheme),
-                        _buildTabHeader(Icons.add, 'Create', colorScheme),
-                        _buildTabHeader(Icons.person, 'Profile', colorScheme),
-                        _buildTabHeader(Icons.history, 'History', colorScheme),
-                      ],
-                      children: [
-                        _buildRideRequestsTab(textTheme, colorScheme),
-                        TravelBookingForm(travelerId: UserModel().id),
-                        TransportationProviderProfile(
-                            transportationProviderModel: provider),
-                        _buildHistoryTab(textTheme, colorScheme),
-                      ],
-                    );
-                    }
-
-
-                    else {
-                      return RefreshIndicator(
-                        onRefresh: () async {
-                          _refreshData();
-                          // Wait a bit for the refresh to complete
-                          await Future.delayed(Duration(milliseconds: 500));
-                        },
-                        child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: ListView.builder(
-                          itemCount: bookings.length,
-                          itemBuilder: (context, index) {
-                            final booking = bookings[index];
-
-                            // Format date for better readability
-                            final formattedDate = DateFormat('MMM d, yyyy - HH:mm').format(booking.createdAt.toLocal());
-                            // Format status with proper capitalization
-                            final status = booking.status.toUpperCase();
-
-                            return Card(
-                              elevation: 3,
-                              margin: const EdgeInsets.symmetric(vertical: 8),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                side: BorderSide(
-                                  color: _getStatusColor(booking.status, theme),
-                                  width: 1.5,
-                                ),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    // Header with status badge
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          'Booking #${booking.id}',
-                                          style: theme.textTheme.titleMedium?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        _buildStatusChip(status, theme),
-                                      ],
-                                    ),
-                                    const Divider(height: 24),
-
-                                    // Traveler info
-                                    Row(
-                                      children: [
-                                        ProfileAvatar(
-                                          imageURL: (booking.traveler != null && booking.traveler!.mediaUrls.isNotEmpty)
-                                              ? booking.traveler!.mediaUrls.first
-                                              : null,
-                                          userName: booking.traveler?.username ?? 'Traveler',
-                                          radius: 18,
-                                          userId: booking.traveler?.id ?? '',
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Text(
-                                            booking.traveler?.username ?? 'Traveler',
-                                            style: theme.textTheme.titleSmall,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 12),
-
-                                    // Journey details
-                                    if (booking.listing != null) ...[
-                                      _buildInfoRow(
-                                        Icons.location_on_outlined,
-                                        'From',
-                                        booking.listing!.startLocationText,
-                                        theme,
-                                      ),
-                                      const SizedBox(height: 12),
-                                      _buildInfoRow(
-                                        Icons.flag_outlined,
-                                        'To',
-                                        booking.listing!.endLocationText,
-                                        theme,
-                                      ),
-                                      const SizedBox(height: 12),
-                                      _buildInfoRow(
-                                        Icons.access_time,
-                                        'Departure',
-                                        DateFormat('MMM d, yyyy - HH:mm').format(booking.listing!.departureTime.toLocal()),
-                                        theme,
-                                      ),
-                                    ],
-
-                                    // Booking details
-                                    const SizedBox(height: 12),
-                                    _buildInfoRow(
-                                      Icons.event_note,
-                                      'Booked on',
-                                      formattedDate,
-                                      theme,
-                                    ),
-                                    const SizedBox(height: 12),
-                                    _buildInfoRow(
-                                      Icons.airline_seat_recline_normal,
-                                      'Seats',
-                                      booking.seatsBooked.toString(),
-                                      theme,
-                                    ),
-                                    if (booking.luggage != null && booking.luggage!.isNotEmpty) ...[
-                                      const SizedBox(height: 12),
-                                      _buildInfoRow(
-                                        Icons.luggage,
-                                        'Luggage',
-                                        booking.luggage!,
-                                        theme,
-                                      ),
-                                    ],
-                                    const SizedBox(height: 12),
-                                    _buildInfoRow(
-                                      Icons.attach_money,
-                                      'Total Price',
-                                      'PKR ${booking.totalPrice.toStringAsFixed(2)}',
-                                      theme,
-                                    ),
-
-                                    const SizedBox(height: 24),
-                                    Column(
-                                      children: [
-                                        Row(
-                                          children: [
-                                            Expanded(
-                                              child: ElevatedButton.icon(
-                                                onPressed: () {
-                                                  context.read<BookingBloc>().add(MarkBookingAsComplete(bookingId: booking.id.toString()));
-                                                },
-                                                icon: const Icon(Icons.check_circle, size: 18),
-                                                label: const Text("Mark as complete"),
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: Colors.green,
-                                                  foregroundColor: Colors.white,
-                                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Expanded(
-                                              child: ElevatedButton.icon(
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: theme.colorScheme.primary,
-                                                  foregroundColor: theme.colorScheme.onPrimary,
-                                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                                ),
-                                                onPressed: () {
-                                                  Navigator.push(context, MaterialPageRoute(builder: (context) => LocationTrackingMap(otherUserId: booking.travelerId,),));
-                                                },
-                                                icon: const Icon(Icons.location_on, size: 18),
-                                                label: const Text('Check Location'),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 8),
-                                        SimpleCancelButton(
-                                          bookingId: booking.id.toString(),
-                                          onCancelled: () {
-                                            // Refresh the bookings after cancellation
-                                            context.read<BookingForProviderBloc>().add(FetchProviderBookingsRequested(UserModel().id));
-                                          },
-                                        ),
-                                      ],
-                                    ),
-
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ));
-                    }
-                  }
-                  else {
-                    return Text(state.toString());
-                  }
             
-                },
-              );
-            } else {
-              return _buildWaitingForApprovalState(textTheme, colorScheme);
+            if (provider.accountStatus.toLowerCase() != 'active') {
+              return const WaitingForApprovalView();
             }
+
+            return BlocBuilder<BookingForProviderBloc, BookingForProviderState>(
+              builder: (context, bookingState) {
+                if (bookingState is BookingForProviderLoading) {
+                  return Center(
+                    child: CircularProgressIndicator(color: colorScheme.primary),
+                  );
+                }
+
+                if (bookingState is BookingForProviderLoadFailure) {
+                  return Center(child: Text(bookingState.error));
+                }
+
+                if (bookingState is BookingForProviderLoadSuccess) {
+                  final hasActiveBookings = bookingState.bookings.any(
+                    (booking) =>
+                        booking.status.toLowerCase() == "pending" ||
+                        booking.status.toLowerCase() == "accepted",
+                  );
+
+                  if (hasActiveBookings) {
+                    return ActiveBookingsView(onRefresh: _refreshData);
+                  }
+
+                  return _buildTabsView(provider, textTheme, colorScheme);
+                }
+
+                return const Center(child: Text('Loading...'));
+              },
+            );
           }
 
-          return const Center(
-              child: Text('Loading Transportation Provider Data...'));
+          return const Center(child: Text('Loading Transportation Provider Data...'));
         },
+      ),
+    );
+  }
+
+  Widget _buildTabsView(
+    TransportationProviderModel provider,
+    TextTheme textTheme,
+    ColorScheme colorScheme,
+  ) {
+    return TabContainer(
+      color: colorScheme.surface,
+      selectedTextStyle: textTheme.titleMedium?.copyWith(
+        color: colorScheme.primary,
+        fontWeight: FontWeight.bold,
+      ),
+      unselectedTextStyle: textTheme.titleMedium?.copyWith(
+        color: colorScheme.onSurface.withOpacity(0.6),
+      ),
+      borderRadius: BorderRadius.circular(16.w),
+      tabEdge: TabEdge.left,
+      tabCurve: Curves.fastEaseInToSlowEaseOut,
+      transitionBuilder: (child, animation) {
+        return FadeTransition(
+          opacity: CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeInOut,
+          ),
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.95, end: 1.0).animate(animation),
+            child: child,
+          ),
+        );
+      },
+      tabs: [
+        _buildTabHeader(Icons.directions_car, 'Requests', colorScheme),
+        _buildTabHeader(Icons.add, 'Create', colorScheme),
+        _buildTabHeader(Icons.person, 'Profile', colorScheme),
+        _buildTabHeader(Icons.history, 'History', colorScheme),
+      ],
+      children: [
+        const RequestsTab(),
+        TravelBookingForm(travelerId: UserModel().id),
+        TransportationProviderProfile(transportationProviderModel: provider),
+        const HistoryTab(),
+      ],
+    );
+  }
+
+  Widget _buildErrorState(
+    BuildContext context,
+    TransportationProviderdataError state,
+  ) {
+    if (state.error == "Exception: Transportation provider not found") {
+      return TransportationProviderForm();
+    }
+
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: 64.sp,
+            color: colorScheme.error,
+          ),
+          SizedBox(height: 16.h),
+          Text(
+            'Something went wrong',
+            style: textTheme.titleLarge?.copyWith(
+              color: colorScheme.error,
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            state.error,
+            style: textTheme.bodyMedium,
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 24.h),
+          ElevatedButton(
+            onPressed: () {
+              context
+                  .read<TransporationProviderBloc>()
+                  .add(FetchCurrentTransportationProviderData());
+            },
+            child: const Text('Retry'),
+          ),
+        ],
       ),
     );
   }
@@ -404,735 +242,7 @@ class _NewTransportationProviderPageState
     );
   }
 
-  Widget _buildWaitingForApprovalState(TextTheme textTheme, ColorScheme colorScheme) {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(32.w),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.pending_actions,
-              size: 64.sp,
-              color: colorScheme.primary.withOpacity(0.6),
-            ),
-            SizedBox(height: 24.h),
-            Text(
-              'Awaiting Admin Approval',
-              style: textTheme.headlineSmall?.copyWith(
-                color: colorScheme.onSurface,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 12.h),
-            Text(
-              'Your transportation provider account is under review. You will be notified once it\'s approved.',
-              style: textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurface.withOpacity(0.7),
-              ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 24.h),
-            ElevatedButton.icon(
-              onPressed: () {
-                context
-                    .read<TransporationProviderBloc>()
-                    .add(FetchCurrentTransportationProviderData());
-              },
-              icon: Icon(Icons.refresh),
-              label: Text('Check Status'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colorScheme.primary,
-                foregroundColor: colorScheme.onPrimary,
-                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  Widget _buildHistoryTab(TextTheme textTheme, ColorScheme colorScheme) {
-    return BlocBuilder<BookingForProviderBloc, BookingForProviderState>(
-      builder: (context, state) {
-        if (state is BookingForProviderLoading) {
-          return Center(
-            child: CircularProgressIndicator(color: colorScheme.primary),
-          );
-        }
-        
-        if (state is BookingForProviderLoadFailure) {
-          return _buildErrorState1(
-            context, 
-            TransportationProviderdataError(error: state.error), 
-            textTheme, 
-            colorScheme,
-          );
-        }
-        
-        if (state is BookingForProviderLoadSuccess) {
-          final completedBookings = state.bookings
-              .where((booking) => booking.status.toLowerCase() == "completed")
-              .toList();
-              
-          if (completedBookings.isEmpty) {
-            return _buildEmptyHistoryState(textTheme, colorScheme);
-          }
-          
-          return _buildHistoryList(completedBookings, textTheme, colorScheme);
-        }
-        
-        return Center(
-          child: Text(
-            'Loading history...',
-            style: textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurface.withOpacity(0.6),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildEmptyHistoryState(TextTheme textTheme, ColorScheme colorScheme) {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(32.w),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.history,
-              size: 64.sp,
-              color: colorScheme.onSurface.withOpacity(0.3),
-            ),
-            SizedBox(height: 24.h),
-            Text(
-              'No History Yet',
-              style: textTheme.headlineSmall?.copyWith(
-                color: colorScheme.onSurface,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 12.h),
-            Text(
-              'Your completed rides will appear here',
-              style: textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurface.withOpacity(0.6),
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHistoryList(List<dynamic> bookings, TextTheme textTheme, ColorScheme colorScheme) {
-    return RefreshIndicator(
-      onRefresh: () async {
-        context.read<BookingForProviderBloc>().add(FetchProviderBookingsRequested(UserModel().id));
-      },
-      child: ListView.builder(
-        padding: EdgeInsets.all(16.w),
-        itemCount: bookings.length,
-        itemBuilder: (context, index) {
-          final booking = bookings[index];
-          return _buildHistoryCard(booking, textTheme, colorScheme);
-        },
-      ),
-    );
-  }
-
-  Widget _buildHistoryCard(dynamic booking, TextTheme textTheme, ColorScheme colorScheme) {
-    final formattedDate = DateFormat('MMM d, yyyy - HH:mm').format(booking.createdAt.toLocal());
-    
-    return Card(
-      margin: EdgeInsets.only(bottom: 12.h),
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.r),
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(16.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Booking #${booking.id}',
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                  decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(20.r),
-                  ),
-                  child: Text(
-                    'COMPLETED',
-                    style: textTheme.bodySmall?.copyWith(
-                      color: Colors.green,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 12.h),
-            
-            if (booking.listing != null) ...[
-              _buildInfoRow(
-                Icons.location_on_outlined,
-                'Route',
-                '${booking.listing!.startLocationText} → ${booking.listing!.endLocationText}',
-                Theme.of(context),
-              ),
-              SizedBox(height: 8.h),
-            ],
-            
-            _buildInfoRow(
-              Icons.person_outline,
-              'Traveler',
-              booking.traveler?.username ?? 'Unknown',
-              Theme.of(context),
-            ),
-            SizedBox(height: 8.h),
-            
-            _buildInfoRow(
-              Icons.event_note,
-              'Completed on',
-              formattedDate,
-              Theme.of(context),
-            ),
-            SizedBox(height: 8.h),
-            
-            _buildInfoRow(
-              Icons.attach_money,
-              'Earned',
-              'PKR ${booking.totalPrice.toStringAsFixed(2)}',
-              Theme.of(context),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildErrorState1(
-      BuildContext context,
-      TransportationProviderdataError state,
-      TextTheme textTheme,
-      ColorScheme colorScheme) {
-    return state.error == "Exception: Transportation provider not found"
-        ? TransportationProviderForm()
-        : Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.error_outline,
-                  size: 64.sp,
-                  color: colorScheme.error,
-                ),
-                SizedBox(height: 16.h),
-                Text(
-                  'Something went wrong',
-                  style: textTheme.titleLarge?.copyWith(
-                    color: colorScheme.error,
-                  ),
-                ),
-                SizedBox(height: 8.h),
-                Text(
-                  state.error,
-                  style: textTheme.bodyMedium,
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: 24.h),
-                ElevatedButton(
-                  onPressed: () {
-                    context
-                        .read<TransporationProviderBloc>()
-                        .add(FetchCurrentTransportationProviderData());
-                  },
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
-          );
-  }
-
-  // Helper method to build status chip
-  Widget _buildStatusChip(String status, ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: _getStatusColor(status, theme).withOpacity(0.15),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        status,
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: _getStatusColor(status, theme),
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
-  // Helper method to build info rows
-  Widget _buildInfoRow(IconData icon, String label, String value, ThemeData theme) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(
-          icon,
-          size: 18,
-          color: theme.colorScheme.primary,
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                value,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  // Helper method to get color based on status
-  Color _getStatusColor(String status, ThemeData theme) {
-    final statusLower = status.toLowerCase();
-
-    if (statusLower == 'confirmed' || statusLower == 'completed') {
-      return Colors.green;
-    } else if (statusLower == 'pending' || statusLower == 'waiting') {
-      return theme.colorScheme.primary;
-    } else if (statusLower == 'cancelled' || statusLower == 'canceled') {
-      return theme.colorScheme.error;
-    } else {
-      return theme.colorScheme.secondary;
-    }
-  }
-
-
-  Widget _buildRideRequestsTab(TextTheme textTheme, ColorScheme colorScheme) {
-    // Create a more dynamic filter based on current date and nearby locations
-    final now = DateTime.now();
-    final RideFilterModel filter = RideFilterModel(
-      selectedDate: now,
-      endTime: Time(hour: 23, minute: 59, second: 59),
-      startTime: Time(hour: 0, minute: 0, second: 0),
-      numberOfTravelers: 8, // Maximum reasonable capacity
-      luggageCapacity: 15,
-      pickupLocation: 'Current Area', // This would be updated with actual location
-      destination: 'Any Destination',
-      priceRange: const RangeValues(20.0, 500.0), // Broader range
-      pickupLocationCoordinates: const LatLng(33.6844, 73.0479), // Islamabad center
-      destinationCoordinates: const LatLng(33.7293, 73.0931), // Broader area
-    );
-    
-    // Automatically fetch requests when tab is built
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<RideRequestBloc>().add(FetchRideRequests(filter: filter));
-    });
-
-    return BlocBuilder<RideRequestBloc, RideRequestState>(
-      builder: (context, state) {
-        if (state is RideRequestLoading || state is RideRequestInitial) {
-          return Center(
-              child: CircularProgressIndicator(color: colorScheme.primary));
-        } else if (state is RideRequestError) {
-          return _buildErrorState(
-              context, state, filter, textTheme, colorScheme);
-        } else if (state is RideRequestLoaded) {
-          if (state.rideRequests.isEmpty) {
-            return _buildEmptyState(textTheme, colorScheme);
-          }
-          return _buildRideRequestsList(
-              state.rideRequests, filter, textTheme, colorScheme);
-        } else {
-          return Center(child: Text('Waiting for data...'));
-        }
-      },
-    );
-  }
-
-  Widget _buildErrorState(BuildContext context, RideRequestError state,
-      RideFilterModel filter, TextTheme textTheme, ColorScheme colorScheme) {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(16.w),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.warning_amber_rounded,
-                color: colorScheme.error, size: 36.sp),
-            SizedBox(height: 12.h),
-            Text(
-              'Error fetching ride requests:\n${state.error}',
-              style: textTheme.bodyMedium?.copyWith(color: colorScheme.error),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 12.h),
-            ElevatedButton.icon(
-              icon: Icon(Icons.refresh, size: 18.sp),
-              label: Text("Retry"),
-              onPressed: () {
-                context
-                    .read<RideRequestBloc>()
-                    .add(FetchRideRequests(filter: filter));
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colorScheme.errorContainer,
-                foregroundColor: colorScheme.onErrorContainer,
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-              ),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(TextTheme textTheme, ColorScheme colorScheme) {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(16.w),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.search_off_rounded,
-                size: 44.sp,
-                color: colorScheme.onSurfaceVariant.withOpacity(0.6)),
-            SizedBox(height: 12.h),
-            Text(
-              'No ride requests found matching your criteria nearby.',
-              style: textTheme.titleMedium
-                  ?.copyWith(color: colorScheme.onSurfaceVariant),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRideRequestsList(List<TravelerRideRequestModel> requests,
-      RideFilterModel filter, TextTheme textTheme, ColorScheme colorScheme) {
-    return AnimationLimiter(
-      child: RefreshIndicator(
-        onRefresh: () async {
-          context
-              .read<RideRequestBloc>()
-              .add(FetchRideRequests(filter: filter));
-        },
-        child: ListView.builder(
-          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
-          itemCount: requests.length,
-          itemBuilder: (context, index) {
-            final request = requests[index];
-            return AnimationConfiguration.staggeredList(
-              position: index,
-              duration: const Duration(milliseconds: 350),
-              child: SlideAnimation(
-                verticalOffset: 50.0,
-                child: FadeInAnimation(
-                  child: _buildRequestCard(request, textTheme, colorScheme),
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRequestCard(TravelerRideRequestModel request,
-      TextTheme textTheme, ColorScheme colorScheme) {
-    final dateFormat = DateFormat('MMM dd, hh:mm a');
-
-    return Card(
-      margin: EdgeInsets.symmetric(vertical: 5.h, horizontal: 2.w),
-      elevation: 1.5,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () {
-          // Handle tap to view details
-        },
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 12.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header with ID and Time
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'ID: ${request.id}',
-                    style: textTheme.labelMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                      fontSize: 11.sp,
-                    ),
-                  ),
-                  Container(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
-                    decoration: BoxDecoration(
-                      color: colorScheme.primaryContainer.withOpacity(0.7),
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    child: Text(
-                      dateFormat.format(request.departureTime),
-                      style: textTheme.labelMedium?.copyWith(
-                        color: colorScheme.onPrimaryContainer,
-                        fontSize: 11.sp,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 10.h),
-
-              // Route information
-              _buildRouteInfoSection(request, colorScheme, textTheme),
-
-              SizedBox(height: 8.h),
-              Divider(
-                  height: 1,
-                  thickness: 1,
-                  color: colorScheme.outlineVariant.withOpacity(0.3)),
-              SizedBox(height: 8.h),
-
-              // Trip details row
-              _buildTripDetailsRow(request, colorScheme, textTheme),
-
-              SizedBox(height: 10.h),
-
-              // Action buttons
-              _buildActionButtons(colorScheme, request),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRouteInfoSection(TravelerRideRequestModel request,
-      ColorScheme colorScheme, TextTheme textTheme) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        // Route icons column
-        Column(
-          children: [
-            Icon(Icons.trip_origin, color: colorScheme.primary, size: 16.sp),
-            Container(
-              height: 16.h,
-              width: 1.w,
-              color: colorScheme.outline.withOpacity(0.5),
-            ),
-            Icon(Icons.location_on, color: colorScheme.secondary, size: 16.sp),
-          ],
-        ),
-        SizedBox(width: 8.w),
-
-        // Location details column
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // From location
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'From',
-                    style: textTheme.bodySmall?.copyWith(
-                      color: Colors.grey[600],
-                      fontSize: 10.sp,
-                    ),
-                  ),
-                  Text(
-                    request.startLocationText,
-                    style: textTheme.bodyMedium?.copyWith(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-              SizedBox(height: 6.h),
-
-              // To location
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'To',
-                    style: textTheme.bodySmall?.copyWith(
-                      color: Colors.grey[600],
-                      fontSize: 10.sp,
-                    ),
-                  ),
-                  Text(
-                    request.endLocationText,
-                    style: textTheme.bodyMedium?.copyWith(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTripDetailsRow(TravelerRideRequestModel request,
-      ColorScheme colorScheme, TextTheme textTheme) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        // Passengers count
-        _buildDetailChip(
-          icon: Icons.people_outline,
-          label: request.seatsNeeded.toString(),
-          sublabel: 'Seats',
-          color: colorScheme.primaryContainer,
-          textColor: colorScheme.onPrimaryContainer,
-          textTheme: textTheme,
-        ),
-
-        // Budget amount
-        _buildDetailChip(
-          icon: Icons.attach_money,
-          label: '\$${request.budget.toStringAsFixed(0)}',
-          sublabel: 'Budget',
-          color: Colors.green.shade50,
-          textColor: Colors.green.shade700,
-          textTheme: textTheme,
-        ),
-
-        // Distance if available
-        if (request.distanceKm != null && request.distanceKm! > 0)
-          _buildDetailChip(
-            icon: Icons.route_outlined,
-            label: '${request.distanceKm!.toStringAsFixed(1)} km',
-            sublabel: 'Distance',
-            color: colorScheme.secondaryContainer,
-            textColor: colorScheme.onSecondaryContainer,
-            textTheme: textTheme,
-          ),
-      ],
-    );
-  }
-
-  Widget _buildDetailChip({
-    required IconData icon,
-    required String label,
-    required String sublabel,
-    required Color color,
-    required Color textColor,
-    required TextTheme textTheme,
-  }) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(6.r),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14.sp, color: textColor),
-          SizedBox(width: 4.w),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: textTheme.bodyMedium?.copyWith(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w600,
-                  color: textColor,
-                ),
-              ),
-              Text(
-                sublabel,
-                style: textTheme.bodySmall?.copyWith(
-                  fontSize: 9.sp,
-                  color: textColor.withOpacity(0.8),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionButtons(
-      ColorScheme colorScheme, TravelerRideRequestModel request) {
-    return Row(
-      children: [
-        // Make Offer - primary button
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => TravelerRideRequestDetailsPage(
-                        travelerRideRequestModel: request),
-                  ));
-            },
-            child: Text('View Details'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: colorScheme.primary,
-              foregroundColor: colorScheme.onPrimary,
-              padding: EdgeInsets.symmetric(vertical: 4.h),
-              minimumSize: Size(0, 32.h),
-              elevation: 0,
-              textStyle:
-                  TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w500),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 }
 
 class TransportationProviderForm extends StatefulWidget {
