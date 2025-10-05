@@ -71,7 +71,7 @@ class _ProfilePageState extends State<ProfilePage> {
             child: Stack(
               children: [
                 ProfileAvatar(
-                  imageURL: UserModel().mediaUrls[0],
+                  imageURL: UserModel().mediaUrls.isNotEmpty ? UserModel().mediaUrls[0] : null,
                   userName: UserModel().username, 
                   radius: 50.r,
                   userId: UserModel().id, 

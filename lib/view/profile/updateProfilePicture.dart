@@ -8,7 +8,6 @@ import 'dart:io';
 import 'package:tour_ease/Services/ApiService.dart';
 import 'package:tour_ease/model/userManagment/profilePictureUpdateResponse.dart';
 import 'package:tour_ease/model/userManagment/user.dart';
-import 'package:tour_ease/controller/userManagment/JWTController.dart' as jwt;
 
 class UpdateProfilePicturePage extends StatefulWidget {
   const UpdateProfilePicturePage({Key? key}) : super(key: key);
@@ -87,6 +86,8 @@ class _UpdateProfilePicturePageState extends State<UpdateProfilePicturePage> {
   }
 
   Widget _buildCurrentPictureSection(ThemeData theme) {
+    final hasCurrentPicture = UserModel().mediaUrls.isNotEmpty && UserModel().mediaUrls[0].isNotEmpty;
+    
     return Column(
       children: [
         Text(
@@ -101,8 +102,10 @@ class _UpdateProfilePicturePageState extends State<UpdateProfilePicturePage> {
           backgroundColor: theme.colorScheme.primary,
           backgroundImage: _selectedImage != null 
               ? FileImage(_selectedImage!) 
-              : null,
-          child: _selectedImage == null
+              : hasCurrentPicture
+                  ? NetworkImage(UserModel().mediaUrls[0])
+                  : null,
+          child: _selectedImage == null && !hasCurrentPicture
               ? Icon(
                   Icons.person,
                   size: 60.sp,
@@ -255,14 +258,22 @@ class _UpdateProfilePicturePageState extends State<UpdateProfilePicturePage> {
         SizedBox(
           width: double.infinity,
           child: OutlinedButton(
-            onPressed: _isLoading ? null : _removeImage,
+            onPressed: _isLoading ? null : () {
+              // If user has selected a new image, just clear the selection
+              if (_selectedImage != null) {
+                _removeImage();
+              } else {
+                // Otherwise, remove the profile picture from the server
+                _removeProfilePicture();
+              }
+            },
             style: OutlinedButton.styleFrom(
               padding: EdgeInsets.symmetric(vertical: 16.h),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12.r),
               ),
             ),
-            child: const Text('Remove Picture'),
+            child: Text(_selectedImage != null ? 'Clear Selection' : 'Remove Picture'),
           ),
         ),
       ],
@@ -355,8 +366,12 @@ class _UpdateProfilePicturePageState extends State<UpdateProfilePicturePage> {
       );
 
       // Update user model with new profile picture URL
-      // You might want to update a global user state or local storage here
-      print('Profile picture updated: ${response.mediaUrls}');
+      if (response.mediaUrls.isNotEmpty) {
+        UserModel().updateUser(
+          mediaUrls: [response.mediaUrls],
+        );
+        print('Profile picture updated: ${response.mediaUrls}');
+      }
       
     } catch (e) {
       print('Error uploading profile picture: $e');
@@ -368,5 +383,57 @@ class _UpdateProfilePicturePageState extends State<UpdateProfilePicturePage> {
     setState(() {
       _selectedImage = null;
     });
+  }
+
+  Future<void> _removeProfilePicture() async {
+    // Show confirmation dialog
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Remove Profile Picture'),
+        content: const Text('Are you sure you want to remove your profile picture?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Clear the mediaUrls in UserModel
+      UserModel().updateUser(mediaUrls: []);
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Profile picture removed successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      
+      Navigator.pop(context, true); // Return true to indicate success
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to remove profile picture: $e'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 }

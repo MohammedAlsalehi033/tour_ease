@@ -406,32 +406,60 @@ class _RideRequestPageState extends State<RideRequestPage> {
                               // Budget
                               _buildSectionTitle('Your Budget (PKR)', theme,
                                   isValid: isBudgetValid),
-                              TextField(
-                                controller: _budgetController,
-                                keyboardType: TextInputType.numberWithOptions(
-                                    decimal: true),
-                                decoration: InputDecoration(
-                                  suffixText: '\PKR ',
-                                  hintText: 'Enter your maximum budget',
-                                  border: UnderlineInputBorder(
-                                    borderSide:
-                                        BorderSide(color: colorScheme.outline),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: colorScheme.surfaceVariant,
+                                  borderRadius: BorderRadius.circular(12.r),
+                                  border: Border.all(
+                                    color: !isBudgetValid
+                                        ? Colors.red.withOpacity(0.5)
+                                        : colorScheme.outline.withOpacity(0.3),
+                                    width: 1.5,
                                   ),
-                                  enabledBorder: UnderlineInputBorder(
-                                    borderSide:
-                                        BorderSide(color: colorScheme.outline),
-                                  ),
-                                  focusedBorder: UnderlineInputBorder(
-                                    borderSide:
-                                        BorderSide(color: colorScheme.primary),
-                                  ),
-                                  errorText: !isBudgetValid
-                                      ? 'Please enter a valid budget amount'
-                                      : null,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.05),
+                                      blurRadius: 4,
+                                      offset: Offset(0, 2),
+                                    ),
+                                  ],
                                 ),
-                                onChanged: (value) {
-                                  _onBudgetChanged();
-                                },
+                                child: TextField(
+                                  controller: _budgetController,
+                                  keyboardType: TextInputType.numberWithOptions(
+                                      decimal: true),
+                                  decoration: InputDecoration(
+                                    suffixText: 'PKR',
+                                    suffixStyle: textTheme.bodyMedium?.copyWith(
+                                      fontWeight: FontWeight.w500,
+                                      color: colorScheme.onSurface,
+                                    ),
+                                    hintText: 'Enter your maximum budget',
+                                    hintStyle: textTheme.bodyMedium?.copyWith(
+                                      color: colorScheme.onSurface.withOpacity(0.5),
+                                    ),
+                                    prefixIcon: Icon(
+                                      Icons.attach_money,
+                                      color: colorScheme.primary,
+                                      size: 20.sp,
+                                    ),
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 16.w,
+                                      vertical: 14.h,
+                                    ),
+                                    border: InputBorder.none,
+                                    errorText: !isBudgetValid
+                                        ? 'Please enter a valid budget amount'
+                                        : null,
+                                    errorStyle: TextStyle(
+                                      color: Colors.red,
+                                      fontSize: 12.sp,
+                                    ),
+                                  ),
+                                  onChanged: (value) {
+                                    _onBudgetChanged();
+                                  },
+                                ),
                               ),
                               SizedBox(height: 32.h),
 
@@ -501,24 +529,9 @@ class _RideRequestPageState extends State<RideRequestPage> {
                       BlocBuilder<RideRequestBloc, RideRequestState>(
                         builder: (context, state) {
                           return Expanded(flex: 2,
-                            child: ElevatedButton(
+                            child: ElevatedButton.icon(
                               onPressed: (isSubmitting || state is RideRequestLoading) ? null : _submitRequest,
-                              style: ElevatedButton.styleFrom(
-                                elevation: 0,
-                                backgroundColor: colorScheme.primary,
-                                foregroundColor: colorScheme.onPrimary,
-                                padding: EdgeInsets.symmetric(vertical: 16.h),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8.r),
-                                ),
-                                textStyle: textTheme.labelLarge?.copyWith(
-                                  fontWeight: FontWeight.w500,
-                                  letterSpacing: 0.5,
-                                ),
-                                disabledBackgroundColor:
-                                    colorScheme.primary.withOpacity(0.8),
-                              ),
-                              child: isSubmitting
+                              icon: (isSubmitting || state is RideRequestLoading)
                                   ? SizedBox(
                                       height: 20.h,
                                       width: 20.w,
@@ -529,7 +542,25 @@ class _RideRequestPageState extends State<RideRequestPage> {
                                                 colorScheme.onPrimary),
                                       ),
                                     )
-                                  : const Text('Submit Request'),
+                                  : Icon(Icons.send, size: 20.sp),
+                              label: Text(
+                                'Submit Request',
+                                style: textTheme.labelLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                elevation: 2,
+                                backgroundColor: colorScheme.primary,
+                                foregroundColor: colorScheme.onPrimary,
+                                padding: EdgeInsets.symmetric(vertical: 16.h),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12.r),
+                                ),
+                                disabledBackgroundColor:
+                                    colorScheme.primary.withOpacity(0.6),
+                              ),
                             ),
                           );
                         },
@@ -568,33 +599,45 @@ class _RideRequestPageState extends State<RideRequestPage> {
   }) {
     return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(12.r),
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 12.h),
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
         decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(color: theme.colorScheme.outline),
+          color: theme.colorScheme.surfaceVariant,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(
+            color: theme.colorScheme.outline.withOpacity(0.3),
+            width: 1.5,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           children: [
             Icon(
               icon,
               size: 20.sp,
-              color: theme.colorScheme.onSurface,
+              color: theme.colorScheme.primary,
             ),
             SizedBox(width: 12.w),
             Expanded(
               child: Text(
                 title,
                 style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
                   color: theme.colorScheme.onSurface,
                 ),
               ),
             ),
             Icon(
               Icons.chevron_right,
-              size: 20.sp,
-              color: theme.colorScheme.outline,
+              size: 18.sp,
+              color: theme.colorScheme.primary,
             ),
           ],
         ),
@@ -611,11 +654,23 @@ class _RideRequestPageState extends State<RideRequestPage> {
     String? errorText,
   }) {
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 16.h),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
       decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: theme.colorScheme.outline),
+        color: theme.colorScheme.surfaceVariant,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(
+          color: errorText != null
+              ? Colors.red.withOpacity(0.5)
+              : theme.colorScheme.outline.withOpacity(0.3),
+          width: 1.5,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -626,6 +681,7 @@ class _RideRequestPageState extends State<RideRequestPage> {
               Text(
                 title,
                 style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w500,
                   color: theme.colorScheme.onSurface,
                 ),
               ),
@@ -640,8 +696,9 @@ class _RideRequestPageState extends State<RideRequestPage> {
                   SizedBox(width: 24.w),
                   Text(
                     '$value',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w500,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.primary,
                     ),
                   ),
                   SizedBox(width: 24.w),
@@ -679,26 +736,30 @@ class _RideRequestPageState extends State<RideRequestPage> {
   }) {
     return InkWell(
       onTap: enabled ? onTap : null,
+      borderRadius: BorderRadius.circular(18.r),
       child: Container(
-        width: 32.w,
-        height: 32.h,
+        width: 36.w,
+        height: 36.h,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
+          color: enabled
+              ? theme.colorScheme.primary.withOpacity(0.1)
+              : theme.colorScheme.surfaceVariant,
           border: Border.all(
-            color:
-                enabled ? theme.colorScheme.primary : theme.colorScheme.outline,
-            width: 1,
+            color: enabled
+                ? theme.colorScheme.primary
+                : theme.colorScheme.outline.withOpacity(0.3),
+            width: 1.5,
           ),
         ),
         child: Icon(
           icon,
-          size: 16.sp,
-          color:
-              enabled ? theme.colorScheme.primary : theme.colorScheme.outline,
+          size: 18.sp,
+          color: enabled
+              ? theme.colorScheme.primary
+              : theme.colorScheme.outline,
         ),
       ),
     );
   }
 }
-
-

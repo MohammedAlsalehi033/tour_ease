@@ -5,6 +5,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:tour_ease/model/userManagment/user.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 
 class LocationTrackingMap extends StatefulWidget {
 
@@ -329,169 +332,297 @@ class _LocationTrackingMapState extends State<LocationTrackingMap> {
     });
   }
 
-  void _updatePolyline() {
+  void _updatePolyline() async {
     // Create polyline only if both users' locations are available
     if (_markers.containsKey(myUserId) && _markers.containsKey(otherUserId)) {
-      setState(() {
-        _polylines = {
-          Polyline(
-            polylineId: PolylineId('user_connection'),
-            points: [
-              _markers[myUserId]!.position,
-              _markers[otherUserId]!.position,
-            ],
-            color: Colors.blue,
-            width: 5,
-            patterns: [PatternItem.dash(20), PatternItem.gap(10)], // Dashed line
-          )
-        };
-      });
+      final myLocation = _markers[myUserId]!.position;
+      final otherLocation = _markers[otherUserId]!.position;
+      
+      // Fetch the actual route
+      await _drawRoute(myLocation, otherLocation);
     }
+  }
+
+  Future<void> _drawRoute(LatLng origin, LatLng destination) async {
+    try {
+      final polylinePoints = PolylinePoints();
+      
+      // You'll need to add your Google Maps API key here
+      // Get it from Google Cloud Console
+      const String googleApiKey = 'AIzaSyAZz-3_lbGxmqlTXqNAYWVfLzV8O2J1bV0';
+      
+      PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+        googleApiKey: googleApiKey,
+        request: PolylineRequest(
+          origin: PointLatLng(origin.latitude, origin.longitude),
+          destination: PointLatLng(destination.latitude, destination.longitude),
+          mode: TravelMode.driving,
+        ),
+      );
+
+      if (result.points.isNotEmpty) {
+        List<LatLng> polylineCoordinates = result.points
+            .map((point) => LatLng(point.latitude, point.longitude))
+            .toList();
+
+        setState(() {
+          _polylines = {
+            Polyline(
+              polylineId: PolylineId('route'),
+              points: polylineCoordinates,
+              color: Colors.blue,
+              width: 5,
+              geodesic: true,
+            )
+          };
+        });
+      } else {
+        // Fallback to straight line if route fetching fails
+        _drawStraightLine(origin, destination);
+      }
+    } catch (e) {
+      print("Error drawing route: $e");
+      // Fallback to straight line on error
+      _drawStraightLine(origin, destination);
+    }
+  }
+
+  void _drawStraightLine(LatLng origin, LatLng destination) {
+    setState(() {
+      _polylines = {
+        Polyline(
+          polylineId: PolylineId('user_connection'),
+          points: [origin, destination],
+          color: Colors.blue.withOpacity(0.6),
+          width: 5,
+          patterns: [PatternItem.dash(20), PatternItem.gap(10)],
+        )
+      };
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Location Tracking'),
+        title: Text('Live Tracking'),
+        elevation: 0,
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Colors.white,
         actions: [
-          // Add debug button to manually check for inactivity
           IconButton(
-            icon: Icon(Icons.refresh),
-            onPressed: () {
-              // Force check for user activity status
-              if (_lastOtherUserUpdate != null) {
-                final timeSinceLastUpdate = DateTime.now().difference(_lastOtherUserUpdate!).inSeconds;
-                setState(() {
-                  _isOtherUserActive = timeSinceLastUpdate <= 60;
-                });
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text('User activity status updated: ${_isOtherUserActive ? 'Active' : 'Inactive'}'),
-                  duration: Duration(seconds: 2),
-                ));
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text('No activity data received from other user'),
-                  duration: Duration(seconds: 2),
-                ));
-              }
-            },
+            icon: Icon(Icons.my_location),
+            onPressed: _fitAllMarkers,
+            tooltip: 'Show all locations',
           ),
         ],
       ),
-      body: Column(
+      body: Stack(
         children: [
+          // Google Map
+          GoogleMap(
+            initialCameraPosition: CameraPosition(
+              target: LatLng(37.42796133580664, -122.085749655962),
+              zoom: 14,
+            ),
+            markers: _markers.values.toSet(),
+            polylines: _polylines,
+            myLocationEnabled: true,
+            myLocationButtonEnabled: false,
+            zoomControlsEnabled: false,
+            mapToolbarEnabled: false,
+            onMapCreated: (GoogleMapController controller) {
+              _controller = controller;
+
+              // Once map is created, fit markers if we have any
+              if (_markers.isNotEmpty) {
+                Future.delayed(Duration(milliseconds: 300), () {
+                  _fitAllMarkers();
+                });
+              }
+            },
+          ),
+
+          // Status banner at top
           if (!_isOtherUserActive)
-            Container(
-              color: Colors.amber.shade300,
-              padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-              width: double.infinity,
-              child: Row(
-                children: [
-                  Icon(Icons.warning, color: Colors.red),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Other user is not active',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.orange.shade400, Colors.deepOrange.shade400],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
                     ),
+                  ],
+                ),
+                padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                child: Row(
+                  children: [
+                    Icon(Icons.warning_amber_rounded, color: Colors.white, size: 24),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Other user is offline',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              fontSize: 16,
+                            ),
+                          ),
+                          Text(
+                            'Last seen: ${_lastOtherUserUpdate != null ? _formatTimeSince(_lastOtherUserUpdate!) : 'Unknown'}',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+          // Info card at bottom
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 80,
+            child: Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 10,
+                    offset: Offset(0, 4),
                   ),
                 ],
               ),
-            ),
-          Expanded(
-            child: Stack(
-              children: [
-                GoogleMap(
-                  initialCameraPosition: CameraPosition(
-                    target: LatLng(37.42796133580664, -122.085749655962),
-                    zoom: 14,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildInfoItem(
+                        Icons.directions_car,
+                        'You',
+                        Colors.blue,
+                      ),
+                      Container(
+                        width: 2,
+                        height: 40,
+                        color: Colors.grey.shade300,
+                      ),
+                      _buildInfoItem(
+                        _isOtherUserActive ? Icons.directions_car : Icons.location_off,
+                        _isOtherUserActive ? 'Driver' : 'Offline',
+                        _isOtherUserActive ? Colors.red : Colors.grey,
+                      ),
+                      Container(
+                        width: 2,
+                        height: 40,
+                        color: Colors.grey.shade300,
+                      ),
+                      _buildInfoItem(
+                        Icons.location_on,
+                        'Start',
+                        Colors.green,
+                      ),
+                    ],
                   ),
-                  markers: _markers.values.toSet(),
-                  polylines: _polylines,
-                  myLocationEnabled: true,
-                  myLocationButtonEnabled: true,
-                  onMapCreated: (GoogleMapController controller) {
-                    _controller = controller;
-
-                    // Once map is created, fit markers if we have any
-                    if (_markers.isNotEmpty) {
-                      Future.delayed(Duration(milliseconds: 300), () {
-                        _fitAllMarkers();
-                      });
-                    }
-                  },
-                ),
-                // Legend in bottom-left corner
-                Positioned(
-                  left: 16,
-                  bottom: 16,
-                  child: Container(
-                    padding: EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.8),
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 4,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
+                  if (_markers.containsKey(myUserId) && _markers.containsKey(otherUserId)) ...[
+                    SizedBox(height: 12),
+                    Divider(height: 1),
+                    SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 12,
-                              height: 12,
-                              color: Colors.blue,
-                            ),
-                            SizedBox(width: 8),
-                            Text('My Car', style: TextStyle(fontSize: 12)),
-                          ],
-                        ),
-                        SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Container(
-                              width: 12,
-                              height: 12,
-                              color: Colors.red,
-                            ),
-                            SizedBox(width: 8),
-                            Text('Other User', style: TextStyle(fontSize: 12)),
-                          ],
-                        ),
-                        SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Container(
-                              width: 12,
-                              height: 12,
-                              color: Colors.green,
-                            ),
-                            SizedBox(width: 8),
-                            Text('Start Location', style: TextStyle(fontSize: 12)),
-                          ],
+                        Icon(Icons.route, color: Theme.of(context).colorScheme.primary, size: 20),
+                        SizedBox(width: 8),
+                        Text(
+                          'Distance: ${_calculateDistance(
+                            _markers[myUserId]!.position,
+                            _markers[otherUserId]!.position,
+                          ).toStringAsFixed(2)} km',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                ),
-              ],
+                  ],
+                ],
+              ),
             ),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _fitAllMarkers,
-        child: Icon(Icons.my_location),
+        child: Icon(Icons.center_focus_strong),
+        backgroundColor: Theme.of(context).colorScheme.primary,
       ),
     );
+  }
+
+  Widget _buildInfoItem(IconData icon, String label, Color color) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: color, size: 24),
+        ),
+        SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey.shade700,
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _formatTimeSince(DateTime time) {
+    final duration = DateTime.now().difference(time);
+    if (duration.inMinutes < 1) return 'Just now';
+    if (duration.inMinutes < 60) return '${duration.inMinutes}m ago';
+    if (duration.inHours < 24) return '${duration.inHours}h ago';
+    return '${duration.inDays}d ago';
+  }
+
+  double _calculateDistance(LatLng pos1, LatLng pos2) {
+    return Geolocator.distanceBetween(
+      pos1.latitude,
+      pos1.longitude,
+      pos2.latitude,
+      pos2.longitude,
+    ) / 1000; // Convert to kilometers
   }
 
   void _fitAllMarkers() {

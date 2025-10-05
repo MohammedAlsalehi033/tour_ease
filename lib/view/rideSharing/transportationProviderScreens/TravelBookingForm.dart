@@ -281,12 +281,16 @@ class _TravelBookingFormState extends State<TravelBookingForm> {
                   child: Container(
                     padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
                     decoration: BoxDecoration(
-                      color: theme.cardColor,
-                      borderRadius: BorderRadius.circular(12),
+                      color: theme.colorScheme.surfaceVariant,
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(
+                        color: theme.colorScheme.outline.withOpacity(0.3),
+                        width: 1.5,
+                      ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 5,
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 4,
                           offset: Offset(0, 2),
                         ),
                       ],
@@ -297,14 +301,18 @@ class _TravelBookingFormState extends State<TravelBookingForm> {
                         _buildSectionTitle('Where from?', theme),
                         Row(
                           children: [
-                            Icon(Icons.location_on, color: theme.primaryColor, size: 18),
-                            SizedBox(width: 8.w),
+                            Icon(Icons.location_on, color: theme.primaryColor, size: 20.sp),
+                            SizedBox(width: 12.w),
                             Expanded(
                               child: Text(
                                 state.filterModel.pickupLocation.isEmpty
                                     ? 'Select pickup location'
                                     : state.filterModel.pickupLocation,
                                 style: TextStyle(
+                                  fontSize: 16.sp,
+                                  fontWeight: state.filterModel.pickupLocation.isEmpty
+                                      ? FontWeight.normal
+                                      : FontWeight.w600,
                                   color: state.filterModel.pickupLocation.isEmpty
                                       ? theme.hintColor
                                       : theme.textTheme.bodyMedium?.color,
@@ -317,21 +325,25 @@ class _TravelBookingFormState extends State<TravelBookingForm> {
                         _buildSectionTitle('Where to?', theme),
                         Row(
                           children: [
-                            Icon(Icons.location_on, color: theme.primaryColor, size: 18),
-                            SizedBox(width: 8.w),
+                            Icon(Icons.location_on, color: theme.primaryColor, size: 20.sp),
+                            SizedBox(width: 12.w),
                             Expanded(
                               child: Text(
                                 state.filterModel.destination.isEmpty
                                     ? 'Select destination'
                                     : state.filterModel.destination,
                                 style: TextStyle(
+                                  fontSize: 16.sp,
+                                  fontWeight: state.filterModel.destination.isEmpty
+                                      ? FontWeight.normal
+                                      : FontWeight.w600,
                                   color: state.filterModel.destination.isEmpty
                                       ? theme.hintColor
                                       : theme.textTheme.bodyMedium?.color,
                                 ),
                               ),
                             ),
-                            Icon(Icons.arrow_forward_ios, color: theme.primaryColor, size: 16),
+                            Icon(Icons.arrow_forward_ios, color: theme.primaryColor, size: 16.sp),
                           ],
                         ),
                       ],
@@ -501,22 +513,24 @@ class _TravelBookingFormState extends State<TravelBookingForm> {
             // Submit button
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
+              child: ElevatedButton.icon(
                 onPressed: () => _submitForm(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(vertical: 16.h),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                ),
-                child: Text(
+                icon: Icon(Icons.check_circle, size: 20.sp),
+                label: Text(
                   'Create Ride Listing',
                   style: theme.textTheme.labelLarge?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                   ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 16.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  elevation: 2,
                 ),
               ),
             ),
@@ -577,27 +591,39 @@ class _TravelBookingFormState extends State<TravelBookingForm> {
   }) {
     return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(12.r),
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 12.h),
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
         decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(color: theme.colorScheme.outline),
+          color: theme.colorScheme.surfaceVariant,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(
+            color: theme.colorScheme.outline.withOpacity(0.3),
+            width: 1.5,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           children: [
             Icon(
               icon,
               size: 20.sp,
-              color: theme.colorScheme.onSurface,
+              color: theme.colorScheme.primary,
             ),
             SizedBox(width: 12.w),
             Expanded(
               child: Text(
                 title,
-                style: theme.textTheme.bodyMedium?.copyWith(
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
                   color: title.contains('Select') || title.contains('Any')
-                      ? theme.colorScheme.onSurface.withOpacity(0.6)
+                      ? theme.colorScheme.onSurface.withOpacity(0.5)
                       : theme.colorScheme.onSurface,
                 ),
               ),
@@ -605,7 +631,7 @@ class _TravelBookingFormState extends State<TravelBookingForm> {
             Icon(
               Icons.chevron_right,
               size: 20.sp,
-              color: theme.colorScheme.outline,
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ],
         ),
@@ -621,18 +647,29 @@ class _TravelBookingFormState extends State<TravelBookingForm> {
     required ThemeData theme,
   }) {
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 16.h),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
       decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: theme.colorScheme.outline),
+        color: theme.colorScheme.surfaceVariant,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(
+          color: theme.colorScheme.outline.withOpacity(0.3),
+          width: 1.5,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             title,
-            style: theme.textTheme.bodyMedium?.copyWith(
+            style: theme.textTheme.bodyLarge?.copyWith(
+              fontWeight: FontWeight.w600,
               color: theme.colorScheme.onSurface,
             ),
           ),
@@ -644,14 +681,15 @@ class _TravelBookingFormState extends State<TravelBookingForm> {
                 enabled: value > 1,
                 theme: theme,
               ),
-              SizedBox(width: 24.w),
+              SizedBox(width: 16.w),
               Text(
                 '$value',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w500,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.primary,
                 ),
               ),
-              SizedBox(width: 24.w),
+              SizedBox(width: 16.w),
               _buildCircleButton(
                 icon: Icons.add,
                 onTap: onIncrease,
@@ -673,20 +711,24 @@ class _TravelBookingFormState extends State<TravelBookingForm> {
   }) {
     return InkWell(
       onTap: enabled ? onTap : null,
+      borderRadius: BorderRadius.circular(20.r),
       child: Container(
-        width: 32.w,
-        height: 32.h,
+        width: 36.w,
+        height: 36.h,
         decoration: BoxDecoration(
+          color: enabled 
+              ? theme.colorScheme.primary.withOpacity(0.1) 
+              : theme.colorScheme.surfaceVariant,
           shape: BoxShape.circle,
           border: Border.all(
-            color: enabled ? theme.colorScheme.primary : theme.colorScheme.outline,
-            width: 1,
+            color: enabled ? theme.colorScheme.primary : theme.colorScheme.outline.withOpacity(0.3),
+            width: 1.5,
           ),
         ),
         child: Icon(
           icon,
-          size: 16.sp,
-          color: enabled ? theme.colorScheme.primary : theme.colorScheme.outline,
+          size: 18.sp,
+          color: enabled ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant.withOpacity(0.4),
         ),
       ),
     );

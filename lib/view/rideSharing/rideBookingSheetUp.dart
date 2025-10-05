@@ -8,9 +8,9 @@ import 'package:tour_ease/model/rideSharing/rideListing/rideListingModel.dart';
 import 'package:intl/intl.dart';
 import 'package:tour_ease/model/userManagment/user.dart';
 import 'dart:ui';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:tour_ease/view/chat/chatDetailsPage.dart';
-import 'package:tour_ease/components/clickable_location_widget.dart';
 
 class RideDetailsSheet extends StatefulWidget {
   final RideListingModel ride;
@@ -24,16 +24,11 @@ class _RideDetailsSheetState extends State<RideDetailsSheet>
     with TickerProviderStateMixin {
   double counterOffer = 0;
   bool isCountering = false;
-  bool isFavorite = false;
 
   late AnimationController _slideController;
-  late AnimationController _counterOfferController;
-  late AnimationController _favoriteController;
   late AnimationController _expandController;
 
   late Animation<Offset> _slideAnimation;
-  late Animation<double> _counterOfferAnimation;
-  late Animation<double> _favoriteAnimation;
   late Animation<double> _fadeAnimation;
 
   int _seatsRequested = 1;
@@ -59,16 +54,6 @@ class _RideDetailsSheetState extends State<RideDetailsSheet>
       vsync: this,
     );
 
-    _counterOfferController = AnimationController(
-      duration: const Duration(milliseconds: 400),
-      vsync: this,
-    );
-
-    _favoriteController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-
     _expandController = AnimationController(
       duration: const Duration(milliseconds: 500),
       vsync: this,
@@ -80,22 +65,6 @@ class _RideDetailsSheetState extends State<RideDetailsSheet>
     ).animate(CurvedAnimation(
       parent: _slideController,
       curve: Curves.easeOutCubic,
-    ));
-
-    _counterOfferAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _counterOfferController,
-      curve: Curves.easeInOutBack,
-    ));
-
-    _favoriteAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.3,
-    ).animate(CurvedAnimation(
-      parent: _favoriteController,
-      curve: Curves.elasticOut,
     ));
 
     _fadeAnimation = Tween<double>(
@@ -110,8 +79,6 @@ class _RideDetailsSheetState extends State<RideDetailsSheet>
   @override
   void dispose() {
     _slideController.dispose();
-    _counterOfferController.dispose();
-    _favoriteController.dispose();
     _expandController.dispose();
     _priceController.dispose();
     _messageController.dispose();
@@ -125,8 +92,7 @@ class _RideDetailsSheetState extends State<RideDetailsSheet>
     });
 
     if (isCountering) {
-      _counterOfferController.forward();
-      // Auto scroll to show counter offer section
+      // Auto scroll to bottom to show offer form
       Future.delayed(const Duration(milliseconds: 200), () {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
@@ -134,28 +100,40 @@ class _RideDetailsSheetState extends State<RideDetailsSheet>
           curve: Curves.easeOut,
         );
       });
-    } else {
-      _counterOfferController.reverse();
     }
   }
 
-  void _toggleFavorite() {
-    setState(() {
-      isFavorite = !isFavorite;
-    });
-    _favoriteController.forward().then((_) {
-      _favoriteController.reverse();
-    });
-  }
-
   void _sendOffer() {
-    final parsedPrice = double.tryParse(_priceController.text.trim());
-    final seats = _seatsRequested.clamp(1, widget.ride.seatsAvailable);
-    if (parsedPrice == null || parsedPrice <= 0) {
+    // Validate price
+    final priceText = _priceController.text.trim();
+    if (priceText.isEmpty) {
+      _showSnackBar('Please enter a price', isError: true);
+      return;
+    }
+
+    final parsedPrice = double.tryParse(priceText);
+    if (parsedPrice == null) {
       _showSnackBar('Please enter a valid price', isError: true);
       return;
     }
 
+    if (parsedPrice <= 0) {
+      _showSnackBar('Price must be greater than 0', isError: true);
+      return;
+    }
+
+    // Validate seats
+    if (_seatsRequested < 1) {
+      _showSnackBar('Please select at least 1 seat', isError: true);
+      return;
+    }
+
+    if (_seatsRequested > widget.ride.seatsAvailable) {
+      _showSnackBar('Only ${widget.ride.seatsAvailable} seats available', isError: true);
+      return;
+    }
+
+    // Send the offer
     context.read<OfferBloc>().add(
       CreateOfferEvent(
         transportationListingId: widget.ride.id,
@@ -163,7 +141,7 @@ class _RideDetailsSheetState extends State<RideDetailsSheet>
         senderId: UserModel().id,
         recipientId: widget.ride.providerId,
         pricePerSeat: parsedPrice,
-        seatsRequested: seats,
+        seatsRequested: _seatsRequested,
       ),
     );
   }
@@ -194,10 +172,12 @@ class _RideDetailsSheetState extends State<RideDetailsSheet>
           listener: (context, state) {
             if (state is OfferCreated) {
               _showSnackBar('Offer sent successfully! 🎉');
-              setState(() {
-                isCountering = false;
+              // Close the sheet and go back after successful offer
+              Future.delayed(const Duration(milliseconds: 1500), () {
+                if (mounted) {
+                  Navigator.pop(context);
+                }
               });
-              _counterOfferController.reverse();
             } else if (state is OfferError) {
               _showSnackBar('Failed to send offer: ${state.message}', isError: true);
             }
@@ -279,39 +259,7 @@ class _RideDetailsSheetState extends State<RideDetailsSheet>
                 ),
 
                 // Duration badge
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        theme.colorScheme.primary.withOpacity(0.1),
-                        theme.colorScheme.secondary.withOpacity(0.1),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(20.r),
-                    border: Border.all(
-                      color: theme.colorScheme.primary.withOpacity(0.2),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.access_time_rounded,
-                        size: 18.sp,
-                        color: theme.colorScheme.primary,
-                      ),
-                      SizedBox(width: 6.w),
-                      Text(
-                        '35 min',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+               
 
                 SizedBox(width: 12.w),
 
@@ -354,9 +302,7 @@ class _RideDetailsSheetState extends State<RideDetailsSheet>
             _buildVehicleCard(theme),
             SizedBox(height: 20.h),
             _buildPriceCard(theme),
-            SizedBox(height: 20.h),
-            _buildCounterOfferSection(theme),
-            SizedBox(height: 20.h), // Extra space for FAB
+            SizedBox(height: 20.h), // Extra space for bottom
           ],
         ),
       ),
@@ -396,79 +342,180 @@ class _RideDetailsSheetState extends State<RideDetailsSheet>
   Widget _buildRouteCard(ThemeData theme) {
     return Container(
       decoration: _getCardDecoration(theme),
-      padding: EdgeInsets.all(24.w),
+      padding: EdgeInsets.all(20.w),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Route',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(height: 20.h),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Route indicators
+              Text(
+                'Route',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              InkWell(
+                onTap: () => _openDirections(),
+                borderRadius: BorderRadius.circular(8.r),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.directions_rounded,
+                        size: 16.sp,
+                        color: theme.colorScheme.primary,
+                      ),
+                      SizedBox(width: 4.w),
+                      Text(
+                        'Directions',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16.h),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Route line indicator
               Column(
                 children: [
                   Container(
-                    width: 16.w,
-                    height: 16.h,
+                    width: 12.w,
+                    height: 12.w,
                     decoration: BoxDecoration(
                       color: theme.colorScheme.primary,
                       shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: theme.colorScheme.primary.withOpacity(0.3),
-                          blurRadius: 8,
-                          spreadRadius: 2,
-                        ),
-                      ],
+                      border: Border.all(
+                        color: theme.colorScheme.primary.withOpacity(0.3),
+                        width: 3,
+                      ),
                     ),
                   ),
                   Container(
                     width: 2.w,
                     height: 40.h,
-                    margin: EdgeInsets.symmetric(vertical: 8.h),
+                    margin: EdgeInsets.symmetric(vertical: 4.h),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
                           theme.colorScheme.primary,
-                          theme.colorScheme.secondary,
+                          theme.colorScheme.primary.withOpacity(0.3),
                         ],
                       ),
-                      borderRadius: BorderRadius.circular(1.r),
                     ),
                   ),
                   Container(
-                    width: 16.w,
-                    height: 16.h,
+                    width: 12.w,
+                    height: 12.w,
                     decoration: BoxDecoration(
-                      color: Colors.transparent,
+                      color: theme.colorScheme.surface,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: theme.colorScheme.secondary,
-                        width: 3,
+                        color: theme.colorScheme.primary,
+                        width: 2.5,
                       ),
                     ),
                   ),
                 ],
               ),
-
-              SizedBox(width: 20.w),
-
-              // Route display
+              SizedBox(width: 16.w),
+              // Locations - Clickable
               Expanded(
-                child: RouteDisplay(
-                  startLocation: widget.ride.startLocationText,
-                  endLocation: widget.ride.endLocationText,
-                  enableDirections: true,
-                  padding: EdgeInsets.zero,
-                  routeTitle: "Trip Route",
-                  showDirectionsButton: true,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Start location - clickable
+                    InkWell(
+                      onTap: () => _openDirections(),
+                      borderRadius: BorderRadius.circular(8.r),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(vertical: 4.h, horizontal: 8.w),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.location_on_outlined,
+                              size: 16.sp,
+                              color: theme.colorScheme.primary,
+                            ),
+                            SizedBox(width: 6.w),
+                            Expanded(
+                              child: Text(
+                                widget.ride.startLocationText,
+                                style: theme.textTheme.bodyLarge?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.colorScheme.onSurface,
+                                  height: 1.3,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            Icon(
+                              Icons.directions_rounded,
+                              size: 14.sp,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 32.h),
+                    // End location - clickable
+                    InkWell(
+                      onTap: () => _openDirections(),
+                      borderRadius: BorderRadius.circular(8.r),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(vertical: 4.h, horizontal: 8.w),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.secondaryContainer.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.location_on,
+                              size: 16.sp,
+                              color: theme.colorScheme.secondary,
+                            ),
+                            SizedBox(width: 6.w),
+                            Expanded(
+                              child: Text(
+                                widget.ride.endLocationText,
+                                style: theme.textTheme.bodyLarge?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.colorScheme.onSurface,
+                                  height: 1.3,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            Icon(
+                              Icons.directions_rounded,
+                              size: 14.sp,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -478,134 +525,108 @@ class _RideDetailsSheetState extends State<RideDetailsSheet>
     );
   }
 
+  // Open directions from start to end location
+  Future<void> _openDirections() async {
+    final startLat = widget.ride.startLocationLat!;
+    final startLng = widget.ride.startLocationLng!;
+    final endLat = widget.ride.endLocationLat!;
+    final endLng = widget.ride.endLocationLng!;
+    
+    final url = Uri.parse(
+      'https://www.google.com/maps/dir/?api=1&origin=$startLat,$startLng&destination=$endLat,$endLng&travelmode=driving'
+    );
+    
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) {
+        _showSnackBar('Could not open directions', isError: true);
+      }
+    }
+  }
+
   Widget _buildDriverCard(ThemeData theme) {
     return Container(
       decoration: _getCardDecoration(theme),
-      padding: EdgeInsets.all(24.w),
+      padding: EdgeInsets.all(20.w),
       child: Row(
         children: [
-          // Driver avatar with glow effect
-          Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: theme.colorScheme.primary.withOpacity(0.2),
-                  blurRadius: 20,
-                  spreadRadius: 4,
-                ),
-              ],
-            ),
-            child: CircleAvatar(
-              radius: 32.r,
-              backgroundColor: theme.colorScheme.primaryContainer,
-              child: Text(
-                widget.ride.provider!.user.username.substring(0, 1).toUpperCase(),
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  color: theme.colorScheme.onPrimaryContainer,
-                  fontWeight: FontWeight.bold,
-                ),
+          // Driver avatar
+          CircleAvatar(
+            radius: 28.r,
+            backgroundColor: theme.colorScheme.primaryContainer,
+            child: Text(
+              widget.ride.provider!.user.username.substring(0, 1).toUpperCase(),
+              style: theme.textTheme.headlineSmall?.copyWith(
+                color: theme.colorScheme.onPrimaryContainer,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ),
 
-          SizedBox(width: 20.w),
+          SizedBox(width: 16.w),
 
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       widget.ride.provider!.user.username,
-                      style: theme.textTheme.titleLarge?.copyWith(
+                      style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    ScaleTransition(
-                      scale: _favoriteAnimation,
-                      child: IconButton(
-                        icon: Icon(
-                          isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                          color: isFavorite ? Colors.red : theme.colorScheme.onSurfaceVariant,
-                          size: 24.sp,
-                        ),
-                        onPressed: _toggleFavorite,
-                      ),
+                    SizedBox(width: 8.w),
+                    Icon(
+                      Icons.verified_rounded,
+                      size: 16.sp,
+                      color: Colors.green,
                     ),
                   ],
                 ),
 
-                SizedBox(height: 8.h),
+                SizedBox(height: 6.h),
 
-                // Rating
+                // Rating - Compact
                 Row(
                   children: [
-                    ...List.generate(5, (index) {
-                      return Icon(
-                        index < 4 ? Icons.star_rounded : Icons.star_border_rounded,
-                        color: Colors.amber,
-                        size: 18.sp,
-                      );
-                    }),
-                    SizedBox(width: 8.w),
+                    Icon(Icons.star_rounded, color: Colors.amber, size: 16.sp),
+                    SizedBox(width: 4.w),
                     Text(
                       '4.2',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    SizedBox(width: 8.w),
+                    SizedBox(width: 4.w),
                     Text(
-                      '(124 reviews)',
+                      '(124)',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    SizedBox(width: 16.w),
+                    Icon(
+                      Icons.local_taxi_rounded,
+                      size: 16.sp,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    SizedBox(width: 4.w),
+                    Text(
+                      '${widget.ride.provider!.vehicleType}',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
                 ),
-
-                SizedBox(height: 12.h),
-
-                // Verified badge
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.green.withOpacity(0.1),
-                        Colors.green.withOpacity(0.05),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(20.r),
-                    border: Border.all(
-                      color: Colors.green.withOpacity(0.3),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.verified_rounded,
-                        size: 16.sp,
-                        color: Colors.green,
-                      ),
-                      SizedBox(width: 4.w),
-                      Text(
-                        'Verified Driver',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: Colors.green.shade700,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               ],
             ),
           ),
+
+        
         ],
       ),
     );
@@ -614,92 +635,57 @@ class _RideDetailsSheetState extends State<RideDetailsSheet>
   Widget _buildVehicleCard(ThemeData theme) {
     return Container(
       decoration: _getCardDecoration(theme),
-      padding: EdgeInsets.all(24.w),
+      padding: EdgeInsets.all(20.w),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(
+            'Trip Details',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 16.h),
+
+          // Trip info in a grid
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(12.w),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(16.r),
-                    ),
-                    child: Icon(
-                      Icons.directions_car_rounded,
-                      color: theme.colorScheme.primary,
-                      size: 24.sp,
-                    ),
-                  ),
-                  SizedBox(width: 12.w),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.ride.provider!.vehicleType,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        'Comfort class',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12.r),
+              Expanded(
+                child: _buildInfoItem(
+                  Icons.event_seat_rounded,
+                  'Seats',
+                  '${widget.ride.seatsAvailable} available',
+                  theme,
                 ),
-                child: Text(
-                  'AC',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: _buildInfoItem(
+                  Icons.access_time_rounded,
+                  'Departure',
+                  DateFormat('h:mm a').format(widget.ride.departureTime),
+                  theme,
                 ),
               ),
             ],
           ),
-
-          SizedBox(height: 20.h),
-
-          // Vehicle features
+          SizedBox(height: 12.h),
           Row(
             children: [
               Expanded(
-                child: _buildFeatureItem(
-                  Icons.event_seat_rounded,
-                  '${widget.ride.seatsAvailable}',
-                  'Seats available',
-                  theme,
-                ),
-              ),
-              SizedBox(width: 16.w),
-              Expanded(
-                child: _buildFeatureItem(
+                child: _buildInfoItem(
                   Icons.luggage_rounded,
-                  '2',
-                  'Bags allowed',
+                  'Baggage',
+                  'Medium',
                   theme,
                 ),
               ),
-              SizedBox(width: 16.w),
+              SizedBox(width: 12.w),
               Expanded(
-                child: _buildFeatureItem(
+                child: _buildInfoItem(
                   Icons.smoke_free_rounded,
-                  'No',
                   'Smoking',
+                  'Not allowed',
                   theme,
                 ),
               ),
@@ -710,34 +696,39 @@ class _RideDetailsSheetState extends State<RideDetailsSheet>
     );
   }
 
-  Widget _buildFeatureItem(IconData icon, String value, String label, ThemeData theme) {
+  Widget _buildInfoItem(IconData icon, String label, String value, ThemeData theme) {
     return Container(
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(12.r),
       ),
-      child: Column(
+      child: Row(
         children: [
           Icon(
             icon,
             color: theme.colorScheme.primary,
             size: 20.sp,
           ),
-          SizedBox(height: 8.h),
-          Text(
-            value,
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.bold,
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                Text(
+                  value,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
-          ),
-          SizedBox(height: 4.h),
-          Text(
-            label,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -747,209 +738,61 @@ class _RideDetailsSheetState extends State<RideDetailsSheet>
   Widget _buildPriceCard(ThemeData theme) {
     return Container(
       decoration: _getCardDecoration(theme, hasGradient: true),
-      padding: EdgeInsets.all(24.w),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: EdgeInsets.all(20.w),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Price Breakdown',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+                'Price per seat',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
-              Icon(
-                Icons.info_outline_rounded,
-                color: theme.colorScheme.onSurfaceVariant,
-                size: 20.sp,
+              SizedBox(height: 4.h),
+              Text(
+                'PKR ${widget.ride.pricePerSeat.toStringAsFixed(0)}',
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: -0.5,
+                ),
               ),
             ],
           ),
-
-          SizedBox(height: 20.h),
-
-          _buildPriceRow('Base fare', widget.ride.pricePerSeat * 0.85, theme),
-          SizedBox(height: 12.h),
-          _buildPriceRow('Service fee', widget.ride.pricePerSeat * 0.15, theme),
-
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: 16.h),
-            child: Divider(
-              color: theme.colorScheme.outlineVariant.withOpacity(0.5),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(12.r),
             ),
-          ),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Total per seat',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.info_outline_rounded,
+                  color: theme.colorScheme.onPrimaryContainer,
+                  size: 18.sp,
                 ),
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      theme.colorScheme.primary,
-                      theme.colorScheme.secondary,
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                child: Text(
-                  'PKR ${widget.ride.pricePerSeat.toStringAsFixed(0)}',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: theme.colorScheme.onPrimary,
-                    fontWeight: FontWeight.bold,
+                SizedBox(width: 6.w),
+                Text(
+                  'Details',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onPrimaryContainer,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildPriceRow(String label, double amount, ThemeData theme) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-        Text(
-          'PKR ${amount.toStringAsFixed(0)}',
-          style: theme.textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCounterOfferSection(ThemeData theme) {
-    return SizeTransition(
-      sizeFactor: _counterOfferAnimation,
-      axisAlignment: -1.0,
-      child: ClipRRect(
-        child: Container(
-          decoration: _getCardDecoration(theme, accentBorder: true),
-          padding: EdgeInsets.all(24.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.handshake_rounded,
-                    color: theme.colorScheme.primary,
-                    size: 24.sp,
-                  ),
-                  SizedBox(width: 12.w),
-                  Text(
-                    'Make Your Offer',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 20.h),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: TextField(
-                      controller: _priceController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: 'Price per seat',
-                        prefixText: 'PKR ',
-                        prefixStyle: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.primary,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16.r),
-                        ),
-                        filled: true,
-                        fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 16.w),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(16.r),
-                      border: Border.all(
-                        color: theme.colorScheme.outline.withOpacity(0.3),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          onPressed: _seatsRequested > 1
-                              ? () => setState(() => _seatsRequested--)
-                              : null,
-                          icon: Icon(Icons.remove_rounded, size: 20.sp),
-                          style: IconButton.styleFrom(minimumSize: Size(32.w, 32.h)),
-                        ),
-                        Text(
-                          '$_seatsRequested',
-                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                        IconButton(
-                          onPressed: _seatsRequested < widget.ride.seatsAvailable
-                              ? () => setState(() => _seatsRequested++)
-                              : null,
-                          icon: Icon(Icons.add_rounded, size: 20.sp),
-                          style: IconButton.styleFrom(minimumSize: Size(32.w, 32.h)),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 16.h),
-              TextField(
-                controller: _messageController,
-                maxLines: 2,
-                decoration: InputDecoration(
-                  labelText: 'Optional message to driver',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16.r),
-                  ),
-                  filled: true,
-                  fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildActionButtons(ThemeData theme) {
-    // Check if this is an active/confirmed booking that can be cancelled
-    final bool canCancel = _isActiveBooking();
-    
     return Container(
       padding: EdgeInsets.fromLTRB(24.w, 16.h, 24.w, 32.h),
       decoration: BoxDecoration(
@@ -968,149 +811,288 @@ class _RideDetailsSheetState extends State<RideDetailsSheet>
           ),
         ),
       ),
-      child: canCancel ? _buildActiveRideActions(theme) : _buildBookingActions(theme),
-    );
-  }
-
-  Widget _buildBookingActions(ThemeData theme) {
-    return Row(
-      children: [
-        // Secondary Button: Message or Cancel Counter
-        Expanded(
-          child: OutlinedButton(
-            onPressed: () {
-              if (isCountering) {
-                _toggleCountering(); // Cancel counter offer
-              } else {
-                // Navigate to chat
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ChatPage(
-                      currentUserId: UserModel().id,
-                      otherUserId: widget.ride.providerId,
-                      apiBaseUrl: "apiBaseUrl", // Placeholder
-                      otherUserName: widget.ride.provider?.user.username ?? "N/A",
-                      otherUserAvatar: "otherUserAvatar", // Placeholder
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Show offer form when countering
+          if (isCountering) ...[
+            _buildOfferForm(theme),
+            SizedBox(height: 16.h),
+          ],
+          
+          // Action buttons
+          Row(
+            children: [
+              // Message Button
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ChatPage(
+                          currentUserId: UserModel().id,
+                          otherUserId: widget.ride.providerId,
+                          apiBaseUrl: "apiBaseUrl",
+                          otherUserName: widget.ride.provider?.user.username ?? "N/A",
+                          otherUserAvatar: "otherUserAvatar",
+                        ),
+                      ),
+                    );
+                  },
+                  icon: Icon(Icons.message_rounded, size: 18.sp),
+                  label: Text('Message'),
+                  style: OutlinedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(vertical: 16.h),
+                    foregroundColor: theme.colorScheme.primary,
+                    side: BorderSide(
+                      color: theme.colorScheme.primary.withOpacity(0.5),
+                      width: 1.5,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16.r),
                     ),
                   ),
-                );
-              }
-            },
-            style: OutlinedButton.styleFrom(
-              padding: EdgeInsets.symmetric(vertical: 16.h),
-              foregroundColor: isCountering ? theme.colorScheme.error : theme.colorScheme.primary,
-              side: BorderSide(
-                color: isCountering ? theme.colorScheme.error.withOpacity(0.5) : theme.colorScheme.primary.withOpacity(0.5),
-                width: 1.5,
+                ),
               ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16.r),
+              SizedBox(width: 12.w),
+              // Make Offer / Send Offer Button
+              Expanded(
+                flex: 2,
+                child: BlocBuilder<OfferBloc, OfferState>(
+                  builder: (context, state) {
+                    final isLoading = state is OfferLoading;
+                    
+                    return ElevatedButton.icon(
+                      onPressed: isLoading ? null : (isCountering ? _sendOffer : _toggleCountering),
+                      icon: isLoading 
+                          ? SizedBox(
+                              width: 18.sp,
+                              height: 18.sp,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: theme.colorScheme.onPrimary,
+                              ),
+                            )
+                          : Icon(
+                              isCountering ? Icons.send_rounded : Icons.local_offer_rounded,
+                              size: 18.sp,
+                            ),
+                      label: Text(
+                        isCountering ? 'Send Offer' : 'Make an Offer',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: theme.colorScheme.onPrimary,
+                        padding: EdgeInsets.symmetric(vertical: 16.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                        ),
+                        elevation: 4,
+                        shadowColor: theme.colorScheme.primary.withOpacity(0.3),
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
-            child: Text(isCountering ? 'Cancel' : 'Message'),
+            ],
           ),
-        ),
-        SizedBox(width: 16.w),
-        // Primary Button: Make Offer or Send Offer
-        Expanded(
-          flex: 2,
-          child: ElevatedButton(
-            onPressed: isCountering ? _sendOffer : _toggleCountering,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: theme.colorScheme.onPrimary,
-              padding: EdgeInsets.symmetric(vertical: 16.h),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16.r),
-              ),
-              elevation: 4,
-              shadowColor: theme.colorScheme.primary.withOpacity(0.3),
-            ),
-            child: Text(
-              isCountering ? 'Send Offer' : 'Make an Offer',
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _buildActiveRideActions(ThemeData theme) {
-    return Column(
-      children: [
-        // Regular actions (Message, Complete, etc.)
-        Row(
-          children: [
-            // Message Button
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ChatPage(
-                        currentUserId: UserModel().id,
-                        otherUserId: widget.ride.providerId,
-                        apiBaseUrl: "apiBaseUrl", // Placeholder
-                        otherUserName: widget.ride.provider?.user.username ?? "N/A",
-                        otherUserAvatar: "otherUserAvatar", // Placeholder
+  Widget _buildOfferForm(ThemeData theme) {
+    return Container(
+      padding: EdgeInsets.all(20.w),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(
+          color: theme.colorScheme.primary.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.handshake_rounded,
+                color: theme.colorScheme.primary,
+                size: 20.sp,
+              ),
+              SizedBox(width: 8.w),
+              Text(
+                'Your Offer',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              Spacer(),
+              TextButton(
+                onPressed: _toggleCountering,
+                child: Text('Cancel'),
+                style: TextButton.styleFrom(
+                  foregroundColor: theme.colorScheme.error,
+                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16.h),
+          
+          // Price and Seats Row
+          Row(
+            children: [
+              // Price Input
+              Expanded(
+                flex: 3,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Price per seat',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                  );
-                },
-                icon: Icon(Icons.message, size: 18.sp),
-                label: Text('Message'),
-                style: OutlinedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 16.h),
-                  foregroundColor: theme.colorScheme.primary,
-                  side: BorderSide(
-                    color: theme.colorScheme.primary.withOpacity(0.5),
-                    width: 1.5,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16.r),
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(width: 12.w),
-            // Complete/Track Button (example)
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  // Handle ride completion or tracking
-                  // You can implement ride completion logic here
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Ride completion feature coming soon!'),
-                      behavior: SnackBarBehavior.floating,
+                    SizedBox(height: 8.h),
+                    TextField(
+                      controller: _priceController,
+                      keyboardType: TextInputType.number,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      decoration: InputDecoration(
+                        prefixText: 'PKR ',
+                        prefixStyle: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        filled: true,
+                        fillColor: theme.colorScheme.surface,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                      ),
                     ),
-                  );
-                },
-                icon: Icon(Icons.check_circle, size: 18.sp),
-                label: Text('Complete'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(vertical: 16.h),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16.r),
-                  ),
+                  ],
                 ),
               ),
+              SizedBox(width: 16.w),
+              
+              // Seats Counter
+              Expanded(
+                flex: 2,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Seats',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface,
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(
+                          color: theme.colorScheme.outline.withOpacity(0.3),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          IconButton(
+                            onPressed: _seatsRequested > 1
+                                ? () => setState(() => _seatsRequested--)
+                                : null,
+                            icon: Icon(Icons.remove_rounded, size: 20.sp),
+                            style: IconButton.styleFrom(
+                              foregroundColor: theme.colorScheme.primary,
+                            ),
+                          ),
+                          Text(
+                            '$_seatsRequested',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: _seatsRequested < widget.ride.seatsAvailable
+                                ? () => setState(() => _seatsRequested++)
+                                : null,
+                            icon: Icon(Icons.add_rounded, size: 20.sp),
+                            style: IconButton.styleFrom(
+                              foregroundColor: theme.colorScheme.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          
+          SizedBox(height: 12.h),
+          
+          // Optional Message
+          TextField(
+            controller: _messageController,
+            maxLines: 2,
+            decoration: InputDecoration(
+              labelText: 'Message (optional)',
+              hintText: 'Add a message to the driver...',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              filled: true,
+              fillColor: theme.colorScheme.surface,
+              contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
             ),
-          ],
-        ),
-      ],
+          ),
+          
+          SizedBox(height: 12.h),
+          
+          // Total Preview
+          Container(
+            padding: EdgeInsets.all(12.w),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Total offer',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  'PKR ${(double.tryParse(_priceController.text) ?? 0) * _seatsRequested}',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
-  }
-
-  bool _isActiveBooking() {
-    // Check if this is an active ride that can be cancelled
-    // You'll need to adjust these status values based on your actual status values
-    final activeStatuses = ['confirmed', 'active', 'in_progress', 'booked'];
-    return activeStatuses.contains(widget.ride.status.toLowerCase());
   }
 }

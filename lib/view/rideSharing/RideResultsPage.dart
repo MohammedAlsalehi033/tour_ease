@@ -11,7 +11,6 @@ import 'package:tour_ease/view/rideSharing/rideBookingSheetUp.dart';
 import 'package:tour_ease/Services/ApiService.dart';
 import 'package:tour_ease/model/reviews/reviews_repo.dart';
 import 'package:tour_ease/components/profileAvatar.dart';
-import 'package:tour_ease/components/clickable_location_widget.dart';
 
 class RideResultsPage extends StatefulWidget {
   const RideResultsPage({super.key});
@@ -565,14 +564,15 @@ class _RideResultsPageState extends State<RideResultsPage>
   Widget _buildRideCard(RideListingModel ride, ThemeData theme, int index) {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
-    final dateFormat = DateFormat('MMM dd • hh:mm a');
+    final dateFormat = DateFormat('MMM dd');
+    final timeFormat = DateFormat('hh:mm a');
 
     return Container(
-      margin: EdgeInsets.only(bottom: 16.h),
+      margin: EdgeInsets.only(bottom: 20.h),
       child: Material(
-        elevation: 3,
-        shadowColor: colorScheme.shadow.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20.r),
+        elevation: 2,
+        shadowColor: colorScheme.shadow.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(24.r),
         child: InkWell(
           onTap: () {
             Navigator.push(
@@ -595,23 +595,115 @@ class _RideResultsPageState extends State<RideResultsPage>
               ),
             );
           },
-          borderRadius: BorderRadius.circular(20.r),
+          borderRadius: BorderRadius.circular(24.r),
           child: Container(
             padding: EdgeInsets.all(20.w),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20.r),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  colorScheme.surface,
-                  colorScheme.surface.withOpacity(0.8),
-                ],
+              borderRadius: BorderRadius.circular(24.r),
+              color: colorScheme.surface,
+              border: Border.all(
+                color: colorScheme.outline.withOpacity(0.2),
+                width: 1,
               ),
             ),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Driver info and price row
+                // Price and Rating Header
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Price - Make it prominent
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'PKR ${ride.pricePerSeat.toStringAsFixed(0)}',
+                          style: textTheme.headlineSmall?.copyWith(
+                            color: colorScheme.primary,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        Text(
+                          'per seat',
+                          style: textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                    // Rating
+                    _RideListingRatingBadge(listingId: ride.id),
+                  ],
+                ),
+
+                SizedBox(height: 20.h),
+
+                // Route - Integrated design
+                _buildIntegratedRoute(
+                  ride.startLocationText,
+                  ride.endLocationText,
+                  colorScheme,
+                  textTheme,
+                ),
+
+                SizedBox(height: 20.h),
+
+                // Time and Seats - Inline, minimal
+                Row(
+                  children: [
+                    Icon(
+                      Icons.schedule_rounded,
+                      size: 18.sp,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                    SizedBox(width: 8.w),
+                    Text(
+                      '${dateFormat.format(ride.departureTime)} at ${timeFormat.format(ride.departureTime)}',
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(width: 16.w),
+                    Container(
+                      width: 4.w,
+                      height: 4.w,
+                      decoration: BoxDecoration(
+                        color: colorScheme.onSurfaceVariant.withOpacity(0.4),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    SizedBox(width: 16.w),
+                    Icon(
+                      Icons.event_seat_rounded,
+                      size: 18.sp,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                    SizedBox(width: 8.w),
+                    Text(
+                      '${ride.seatsAvailable} left',
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+
+                SizedBox(height: 20.h),
+
+                // Divider
+                Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: colorScheme.outlineVariant.withOpacity(0.5),
+                ),
+
+                SizedBox(height: 16.h),
+
+                // Driver info - Bottom section
                 Row(
                   children: [
                     Hero(
@@ -624,38 +716,38 @@ class _RideResultsPageState extends State<RideResultsPage>
                         userName: ride.provider != null 
                             ? ride.provider!.user.username 
                             : 'Driver',
-                        radius: 28.r,
+                        radius: 22.r,
                         userId: ride.provider != null 
                             ? ride.provider!.user.id 
                             : '',
                       ),
                     ),
-                    SizedBox(width: 16.w),
+                    SizedBox(width: 12.w),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             ride.provider!.user.username,
-                            style: textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
+                            style: textTheme.bodyLarge?.copyWith(
+                              fontWeight: FontWeight.w600,
                               color: colorScheme.onSurface,
                             ),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          SizedBox(height: 4.h),
+                          SizedBox(height: 2.h),
                           Row(
                             children: [
                               Icon(
                                 Icons.directions_car_rounded,
                                 color: colorScheme.onSurfaceVariant,
-                                size: 16.sp,
+                                size: 14.sp,
                               ),
-                              SizedBox(width: 6.w),
+                              SizedBox(width: 4.w),
                               Text(
                                 ride.provider!.vehicleType,
                                 style: textTheme.bodySmall?.copyWith(
                                   color: colorScheme.onSurfaceVariant,
-                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ],
@@ -663,125 +755,38 @@ class _RideResultsPageState extends State<RideResultsPage>
                         ],
                       ),
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 16.w,
-                            vertical: 8.h,
+                    // Book button - Compact
+                    FilledButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          PageRouteBuilder(
+                            pageBuilder: (context, animation, secondaryAnimation) =>
+                                RideDetailsSheet(ride: ride),
+                            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                              return SlideTransition(
+                                position: Tween<Offset>(
+                                  begin: const Offset(0.0, 1.0),
+                                  end: Offset.zero,
+                                ).animate(CurvedAnimation(
+                                  parent: animation,
+                                  curve: Curves.easeOutCubic,
+                                )),
+                                child: child,
+                              );
+                            },
                           ),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [colorScheme.primary, colorScheme.secondary],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(16.r),
-                            boxShadow: [
-                              BoxShadow(
-                                color: colorScheme.primary.withOpacity(0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Text(
-                            'PKR ${ride.pricePerSeat.toStringAsFixed(0)}',
-                            style: textTheme.titleSmall?.copyWith(
-                              color: colorScheme.onPrimary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                        );
+                      },
+                      style: FilledButton.styleFrom(
+                        padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
                         ),
-                        SizedBox(height: 8.h),
-                        _RideListingRatingBadge(listingId: ride.id),
-                      ],
+                      ),
+                      child: Text('Book'),
                     ),
                   ],
-                ),
-
-                SizedBox(height: 20.h),
-
-                // Route and details
-                Container(
-                  padding: EdgeInsets.all(16.w),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceVariant.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(16.r),
-                  ),
-                  child: Column(
-                    children: [
-                      // Route
-                      RouteDisplay(
-                        startLocation: ride.startLocationText,
-                        endLocation: ride.endLocationText,
-                        enableDirections: true,
-                        padding: EdgeInsets.zero,
-                      ),
-
-                      SizedBox(height: 16.h),
-
-                      // Details row
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildDetailChip(
-                              icon: Icons.access_time_rounded,
-                              label: dateFormat.format(ride.departureTime),
-                              colorScheme: colorScheme,
-                              textTheme: textTheme,
-                            ),
-                          ),
-                          SizedBox(width: 8.w),
-                          _buildDetailChip(
-                            icon: Icons.people_rounded,
-                            label: '${ride.seatsAvailable} seats',
-                            colorScheme: colorScheme,
-                            textTheme: textTheme,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                SizedBox(height: 20.h),
-
-                // Book button
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        PageRouteBuilder(
-                          pageBuilder: (context, animation, secondaryAnimation) =>
-                              RideDetailsSheet(ride: ride),
-                          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                            return SlideTransition(
-                              position: Tween<Offset>(
-                                begin: const Offset(0.0, 1.0),
-                                end: Offset.zero,
-                              ).animate(CurvedAnimation(
-                                parent: animation,
-                                curve: Curves.easeOutCubic,
-                              )),
-                              child: child,
-                            );
-                          },
-                        ),
-                      );
-                    },
-                    icon: Icon(Icons.directions_car_filled_rounded),
-                    label: Text('Book This Ride'),
-                    style: FilledButton.styleFrom(
-                      padding: EdgeInsets.symmetric(vertical: 16.h),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16.r),
-                      ),
-                    ),
-                  ),
                 ),
               ],
             ),
@@ -791,40 +796,90 @@ class _RideResultsPageState extends State<RideResultsPage>
     );
   }
 
-  Widget _buildDetailChip({
-    required IconData icon,
-    required String label,
-    required ColorScheme colorScheme,
-    required TextTheme textTheme,
-  }) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(
-          color: colorScheme.outline.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            color: colorScheme.primary,
-            size: 16.sp,
-          ),
-          SizedBox(width: 6.w),
-          Text(
-            label,
-            style: textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.w500,
-              color: colorScheme.onSurface,
+  Widget _buildIntegratedRoute(
+    String startLocation,
+    String endLocation,
+    ColorScheme colorScheme,
+    TextTheme textTheme,
+  ) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Route line indicator
+        Column(
+          children: [
+            Container(
+              width: 12.w,
+              height: 12.w,
+              decoration: BoxDecoration(
+                color: colorScheme.primary,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: colorScheme.primary.withOpacity(0.3),
+                  width: 3,
+                ),
+              ),
             ),
+            Container(
+              width: 2.w,
+              height: 40.h,
+              margin: EdgeInsets.symmetric(vertical: 4.h),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    colorScheme.primary,
+                    colorScheme.primary.withOpacity(0.3),
+                  ],
+                ),
+              ),
+            ),
+            Container(
+              width: 12.w,
+              height: 12.w,
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: colorScheme.primary,
+                  width: 2.5,
+                ),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(width: 16.w),
+        // Locations
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                startLocation,
+                style: textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onSurface,
+                  height: 1.3,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              SizedBox(height: 32.h),
+              Text(
+                endLocation,
+                style: textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onSurface,
+                  height: 1.3,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

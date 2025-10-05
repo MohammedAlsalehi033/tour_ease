@@ -187,7 +187,17 @@ class _RideRequestSearchWidgetState extends State<RideRequestSearchWidget> {
                 decoration: BoxDecoration(
                   color: colorScheme.surfaceVariant,
                   borderRadius: BorderRadius.circular(12.r),
-                  border: Border.all(color: colorScheme.outline.withOpacity(0.3)),
+                  border: Border.all(
+                    color: colorScheme.outline.withOpacity(0.3),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Row(
                   children: [
@@ -201,13 +211,14 @@ class _RideRequestSearchWidgetState extends State<RideRequestSearchWidget> {
                             'Date',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
-                          SizedBox(height: 2.h),
+                          SizedBox(height: 4.h),
                           Text(
                             DateFormat('MMM dd, yyyy').format(_selectedDate),
                             style: theme.textTheme.bodyLarge?.copyWith(
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
@@ -297,7 +308,17 @@ class _RideRequestSearchWidgetState extends State<RideRequestSearchWidget> {
         decoration: BoxDecoration(
           color: colorScheme.surfaceVariant,
           borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(color: colorScheme.outline.withOpacity(0.3)),
+          border: Border.all(
+            color: colorScheme.outline.withOpacity(0.3),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           children: [
@@ -311,15 +332,16 @@ class _RideRequestSearchWidgetState extends State<RideRequestSearchWidget> {
                     label,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w500,
                         ),
                   ),
-                  SizedBox(height: 2.h),
+                  SizedBox(height: 4.h),
                   Text(
                     controller.text.isEmpty ? hint : controller.text,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w600,
                           color: controller.text.isEmpty
-                              ? colorScheme.onSurfaceVariant.withOpacity(0.6)
+                              ? colorScheme.onSurfaceVariant.withOpacity(0.5)
                               : colorScheme.onSurface,
                         ),
                     maxLines: 1,
@@ -346,9 +368,19 @@ class _RideRequestSearchWidgetState extends State<RideRequestSearchWidget> {
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceVariant.withOpacity(0.5),
+        color: colorScheme.surfaceVariant.withOpacity(0.3),
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: colorScheme.outline.withOpacity(0.2)),
+        border: Border.all(
+          color: colorScheme.outline.withOpacity(0.3),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -358,9 +390,10 @@ class _RideRequestSearchWidgetState extends State<RideRequestSearchWidget> {
             'Time Range',
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
             ),
           ),
-          SizedBox(height: 8.h),
+          SizedBox(height: 12.h),
           Row(
             children: [
               Expanded(
@@ -390,57 +423,65 @@ class _RideRequestSearchWidgetState extends State<RideRequestSearchWidget> {
               ),
             ],
           ),
-          SizedBox(height: 16.h),
+          SizedBox(height: 20.h),
 
           // Number of Travelers
           Text(
             'Number of Travelers: $_numberOfTravelers',
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
             ),
           ),
+          SizedBox(height: 4.h),
           Slider(
             value: _numberOfTravelers.toDouble(),
             min: 1,
             max: 20,
             divisions: 19,
             label: _numberOfTravelers.toString(),
+            activeColor: colorScheme.primary,
             onChanged: (value) {
               setState(() {
                 _numberOfTravelers = value.toInt();
               });
             },
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: 16.h),
 
           // Luggage Capacity
           Text(
             'Luggage Capacity: $_luggageCapacity',
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
             ),
           ),
+          SizedBox(height: 4.h),
           Slider(
             value: _luggageCapacity.toDouble(),
             min: 0,
             max: 50,
             divisions: 50,
             label: _luggageCapacity.toString(),
+            activeColor: colorScheme.primary,
             onChanged: (value) {
               setState(() {
                 _luggageCapacity = value.toInt();
               });
             },
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: 16.h),
 
           // Price Range
           Text(
             'Price Range: PKR ${_priceRange.start.toInt()} - ${_priceRange.end.toInt()}',
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
             ),
           ),
+          SizedBox(height: 4.h),
           RangeSlider(
             values: _priceRange,
             min: 0,
@@ -450,6 +491,7 @@ class _RideRequestSearchWidgetState extends State<RideRequestSearchWidget> {
               _priceRange.start.toInt().toString(),
               _priceRange.end.toInt().toString(),
             ),
+            activeColor: colorScheme.primary,
             onChanged: (RangeValues values) {
               setState(() {
                 _priceRange = values;
@@ -478,13 +520,23 @@ class _RideRequestSearchWidgetState extends State<RideRequestSearchWidget> {
           ),
         );
       },
-      borderRadius: BorderRadius.circular(8.r),
+      borderRadius: BorderRadius.circular(12.r),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
         decoration: BoxDecoration(
           color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(8.r),
-          border: Border.all(color: colorScheme.outline.withOpacity(0.3)),
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(
+            color: colorScheme.outline.withOpacity(0.3),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -493,17 +545,18 @@ class _RideRequestSearchWidgetState extends State<RideRequestSearchWidget> {
               label,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
                   ),
             ),
-            SizedBox(height: 4.h),
+            SizedBox(height: 6.h),
             Row(
               children: [
-                Icon(Icons.access_time, size: 16.sp, color: colorScheme.primary),
-                SizedBox(width: 6.w),
+                Icon(Icons.access_time, color: colorScheme.primary, size: 18.sp),
+                SizedBox(width: 8.w),
                 Text(
-                  '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w500,
+                  time.format(context),
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
                       ),
                 ),
               ],
