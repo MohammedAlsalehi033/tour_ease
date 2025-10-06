@@ -146,6 +146,7 @@ class _RideRequestPageState extends State<RideRequestPage> {
                 rideFilterState.filterModel.destinationCoordinates.longitude,
             departureTime: _getDepartureDateTime(),
             seatsNeeded: seatsNeeded,
+            
             budget: budget));
       } else {
       }

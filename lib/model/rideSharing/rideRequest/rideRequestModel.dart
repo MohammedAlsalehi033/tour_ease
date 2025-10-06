@@ -14,6 +14,7 @@ class TravelerRideRequestModel {
   final double? startLocationLng;
   final String startLocationText;
   final double? distanceKm;
+  final int? luggage;
 
   TravelerRideRequestModel({
     required this.id,
@@ -29,6 +30,7 @@ class TravelerRideRequestModel {
     this.startLocationLng,
     required this.startLocationText,
     this.distanceKm,
+    this.luggage,
   });
 
   factory TravelerRideRequestModel.fromJson(Map<String, dynamic> json) {
@@ -46,6 +48,7 @@ class TravelerRideRequestModel {
       startLocationLng: json['startLocationLng']?.toDouble(),
       startLocationText: json['startLocationText'],
       distanceKm: json['distance_km']?.toDouble(),
+      luggage: json['luggage'] as int?,
     );
   }
 

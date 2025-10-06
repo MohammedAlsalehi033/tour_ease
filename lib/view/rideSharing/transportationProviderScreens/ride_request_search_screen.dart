@@ -45,6 +45,8 @@ class _RideRequestSearchScreenState extends State<RideRequestSearchScreen> with 
   }
 
   void _handleSearch(RideFilterModel filter) {
+
+    print('Search initiated with filter: ${filter.luggageCapacity}');
     setState(() {
       _lastFilter = filter;
       _isSearchCollapsed = true;
@@ -477,6 +479,13 @@ class _RideRequestSearchScreenState extends State<RideRequestSearchScreen> with 
                     colorScheme: colorScheme,
                     textTheme: textTheme,
                   ),
+                  if (request.luggage != null && request.luggage! > 0)
+                    _buildInfoChip(
+                      icon: Icons.luggage,
+                      label: '${request.luggage} bags',
+                      colorScheme: colorScheme,
+                      textTheme: textTheme,
+                    ),
                   if (request.distanceKm != null && request.distanceKm! > 0)
                     _buildInfoChip(
                       icon: Icons.route,

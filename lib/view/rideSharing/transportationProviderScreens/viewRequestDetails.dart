@@ -218,6 +218,15 @@ class _TravelerRideRequestDetailsPageState extends State<TravelerRideRequestDeta
               'Budget',
               currencyFormat.format(model.budget),
             ),
+            if (model.luggage != null && model.luggage! > 0) ...[
+              const Divider(height: 24),
+              _buildDetailRow(
+                context,
+                Icons.luggage,
+                'Luggage',
+                '${model.luggage} bags',
+              ),
+            ],
           ],
         ),
       ),

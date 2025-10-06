@@ -17,6 +17,7 @@ class RideListingModel {
   final DateTime createdAt;
   final double? distanceKm;
   final TransportationProviderModel? provider;
+  final int? luggage;
 
   RideListingModel({
     required this.id,
@@ -35,6 +36,7 @@ class RideListingModel {
     required this.createdAt,
     this.distanceKm,
     this.provider,
+    this.luggage,
   });
 
   factory RideListingModel.fromJson(Map<String, dynamic> json) {
@@ -69,6 +71,7 @@ class RideListingModel {
       createdAt: DateTime.parse(json['createdAt']),
       distanceKm: json['route_distance_km']?.toDouble(),
       provider: parsedProvider, // Use the safely parsed object
+      luggage: json['luggage'] as int?,
     );
   }
 

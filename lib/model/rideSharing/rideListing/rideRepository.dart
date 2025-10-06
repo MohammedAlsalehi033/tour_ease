@@ -20,16 +20,33 @@ class RideRepositoryImpl implements RideRepository {
     try {
       final queryParameters = <String, dynamic>{};
 
+      // Start/Pickup location coordinates
       final coordinates = filter.pickupLocationCoordinates;
       queryParameters['lat'] = coordinates.latitude;
       queryParameters['lng'] = coordinates.longitude;
 
+      // Destination/End location coordinates (if available)
+      if (filter.destination.isNotEmpty && 
+          filter.destinationCoordinates.latitude != 10 && 
+          filter.destinationCoordinates.longitude != 10) {
+        queryParameters['endLat'] = filter.destinationCoordinates.latitude;
+        queryParameters['endLng'] = filter.destinationCoordinates.longitude;
+      }
+
+      // Search radius in kilometers
+      queryParameters['radiusKm'] = 40;
+
+      // Number of seats needed
       if (filter.numberOfTravelers > 0) {
         queryParameters['minSeats'] = filter.numberOfTravelers;
       }
+
+      // Maximum price per seat
       if (filter.priceRange.end > 0) {
         queryParameters['maxPrice'] = filter.priceRange.end;
       }
+
+      // Date and time filters
       if (filter.selectedDate != null) {
         final departureAfterDateTime = DateTime(
           filter.selectedDate!.year,
@@ -50,6 +67,10 @@ class RideRepositoryImpl implements RideRepository {
         queryParameters['departureBefore'] = departureBeforeDateTime.toIso8601String();
       }
 
+      // Luggage capacity
+      if(filter.luggageCapacity > 0) {
+        queryParameters['luggage'] = filter.luggageCapacity;
+      }
 
       return await apiService.get<List<RideListingModel>>(
         path: "/api/searchForNearByListing",
@@ -77,6 +98,7 @@ class RideRepositoryImpl implements RideRepository {
         'startLocationLng': rideListing.startLocationLng,
         'endLocationLat': rideListing.endLocationLat,
         'endLocationLng': rideListing.endLocationLng,
+        'luggage': rideListing.luggage,
       };
       requestData.removeWhere((key, value) => value == null);
 
@@ -104,6 +126,7 @@ class RideRepositoryImpl implements RideRepository {
         'startLocationLng': rideRequest.startLocationLng,
         'endLocationLat': rideRequest.endLocationLat,
         'endLocationLng': rideRequest.endLocationLng,
+        'luggage': rideRequest.luggage,
       };
       requestData.removeWhere((key, value) => value == null);
 
@@ -122,19 +145,37 @@ class RideRepositoryImpl implements RideRepository {
     try {
       final queryParameters = <String, dynamic>{};
 
-      // Location coordinates
+      // Start/Pickup location coordinates
       final coordinates = filter.pickupLocationCoordinates;
       queryParameters['lat'] = coordinates.latitude;
       queryParameters['lng'] = coordinates.longitude;
 
-      // Time range (using just time, not full datetime)
+      print('📍 Pickup coordinates: lat=${coordinates.latitude}, lng=${coordinates.longitude}');
+
+      // Search radius in kilometers
+      queryParameters['radiusKm'] = 30;
+
+      // Destination/End location coordinates (if available)
+      if (filter.destination.isNotEmpty && 
+          filter.destinationCoordinates.latitude != 10 && 
+          filter.destinationCoordinates.longitude != 10) {
+        queryParameters['latEnd'] = filter.destinationCoordinates.latitude;
+        queryParameters['lngEnd'] = filter.destinationCoordinates.longitude;
+        print('📍 Destination coordinates: latEnd=${filter.destinationCoordinates.latitude}, lngEnd=${filter.destinationCoordinates.longitude}');
+      }
+
+      // Date (if selected)
       if (filter.selectedDate != null) {
-        // Format as HH:mm
+        queryParameters['date'] = filter.selectedDate!.toIso8601String().split('T')[0]; // YYYY-MM-DD format
+        
+        // Time range - Format as HH:mm
         final startTimeStr = '${filter.startTime.hour.toString().padLeft(2, '0')}:${filter.startTime.minute.toString().padLeft(2, '0')}';
         final endTimeStr = '${filter.endTime.hour.toString().padLeft(2, '0')}:${filter.endTime.minute.toString().padLeft(2, '0')}';
         
         queryParameters['startTime'] = startTimeStr;
         queryParameters['endTime'] = endTimeStr;
+        
+        print('📅 Date: ${queryParameters['date']}, Time: $startTimeStr - $endTimeStr');
       }
 
       // Budget range
@@ -145,14 +186,20 @@ class RideRepositoryImpl implements RideRepository {
         queryParameters['maxBudget'] = filter.priceRange.end.toInt();
       }
 
-      // Seats needed
+      // Maximum seats needed
       if (filter.numberOfTravelers > 0) {
         queryParameters['maxSeatsNeeded'] = filter.numberOfTravelers;
       }
 
-      // Default sorting by budget descending
-      queryParameters['sortBy'] = 'budget_desc';
-        queryParameters['radiusKm'] = 180000;
+      // Luggage capacity
+      if (filter.luggageCapacity > 0) {
+        queryParameters['luggage'] = filter.luggageCapacity;
+      }
+
+      // Sorting (default is 'distance')
+      queryParameters['sortBy'] = 'distance';
+
+      print('🔧 Final query parameters: $queryParameters');
 
       return await apiService.get<List<TravelerRideRequestModel>>(
         path: "/api/searchForNearByRequests",
@@ -162,6 +209,7 @@ class RideRepositoryImpl implements RideRepository {
             .toList(),
       );
     } catch (e) {
+      print('❌ Error fetching ride requests: $e');
       throw Exception('Failed to fetch ride requests: $e');
     }
   }

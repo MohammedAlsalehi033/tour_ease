@@ -1032,8 +1032,8 @@ class _RideDetailsSheetState extends State<RideDetailsSheet>
               Expanded(
                 child: _buildInfoItem(
                   Icons.luggage_rounded,
-                  'Baggage',
-                  'Medium',
+                  'Luggage',
+                  widget.ride.luggage != null ? '${widget.ride.luggage} bags' : 'Not specified',
                   theme,
                 ),
               ),

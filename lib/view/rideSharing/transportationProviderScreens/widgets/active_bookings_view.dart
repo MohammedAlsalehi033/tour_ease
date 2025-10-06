@@ -4,10 +4,12 @@ import 'package:intl/intl.dart';
 import 'package:tour_ease/controller/rideSharing/RideBooking/provider/booking_for_provider_bloc.dart';
 import 'package:tour_ease/controller/rideSharing/RideBooking/ride_booking_bloc.dart';
 import 'package:tour_ease/controller/rideSharing/RideBooking/ride_booking_event.dart';
+import 'package:tour_ease/controller/rideSharing/RideBooking/ride_booking_state.dart';
 import 'package:tour_ease/model/userManagment/user.dart';
 import 'package:tour_ease/view/mapscreen/trackingMap.dart';
 import 'package:tour_ease/components/profileAvatar.dart';
 import 'package:tour_ease/components/simple_cancel_button.dart';
+import 'package:tour_ease/view/chat/chatDetailsPage.dart';
 
 class ActiveBookingsView extends StatelessWidget {
   final Function() onRefresh;
@@ -22,21 +24,38 @@ class ActiveBookingsView extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return BlocBuilder<BookingForProviderBloc, BookingForProviderState>(
-      builder: (context, state) {
-        if (state is BookingForProviderLoading) {
-          return Center(
-            child: CircularProgressIndicator(color: colorScheme.primary),
+    return BlocListener<BookingBloc, BookingState>(
+      listener: (context, bookingState) {
+        // Refresh the provider bookings list when a booking is marked as complete
+        if (bookingState is BookingMarkedComplete) {
+          context.read<BookingForProviderBloc>().add(
+                FetchProviderBookingsRequested(UserModel().id),
+              );
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Booking marked as complete!'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 2),
+            ),
           );
-        } else if (state is BookingForProviderLoadFailure) {
-          return Center(child: Text(state.error));
-        } else if (state is BookingForProviderLoadSuccess) {
-          final bookings = state.bookings
-              .where((element) =>
-                  element.status.toLowerCase() == "pending" ||
-                  element.status.toLowerCase() == "accepted")
-              .toList();
+        }
+      },
+      child: BlocBuilder<BookingForProviderBloc, BookingForProviderState>(
+        builder: (context, state) {
+          if (state is BookingForProviderLoading) {
+            return Center(
+              child: CircularProgressIndicator(color: colorScheme.primary),
+            );
+          } else if (state is BookingForProviderLoadFailure) {
+            return Center(child: Text(state.error));
+          } else if (state is BookingForProviderLoadSuccess) {
+            final bookings = state.bookings
+                .where((element) =>
+                    element.status.toLowerCase() == "pending" ||
+                    element.status.toLowerCase() == "accepted")
+                .toList();
 
+          print('Active Bookings: ${bookings[0].toJson()}');
           return RefreshIndicator(
             onRefresh: () async {
               onRefresh();
@@ -82,6 +101,43 @@ class ActiveBookingsView extends StatelessWidget {
                           ),
                           const Divider(height: 24),
 
+                          // Booking Source Badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: booking.bookingSource == 'request'
+                                  ? Colors.purple.withOpacity(0.15)
+                                  : Colors.blue.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  booking.bookingSource == 'request'
+                                      ? Icons.request_quote
+                                      : Icons.list_alt,
+                                  size: 14,
+                                  color: booking.bookingSource == 'request'
+                                      ? Colors.purple
+                                      : Colors.blue,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'From ${booking.bookingSource == 'request' ? 'Request' : 'Listing'}',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: booking.bookingSource == 'request'
+                                        ? Colors.purple
+                                        : Colors.blue,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+
                           // Traveler info
                           Row(
                             children: [
@@ -106,7 +162,7 @@ class ActiveBookingsView extends StatelessWidget {
                           ),
                           const SizedBox(height: 12),
 
-                          // Journey details
+                          // Journey details - Check both listing and request
                           if (booking.listing != null) ...[
                             _buildInfoRow(
                               Icons.location_on_outlined,
@@ -129,6 +185,81 @@ class ActiveBookingsView extends StatelessWidget {
                                   booking.listing!.departureTime.toLocal()),
                               theme,
                             ),
+                          ] else if (booking.request != null) ...[
+                            // Show request details when booking is from request
+                            _buildInfoRow(
+                              Icons.location_on_outlined,
+                              'From',
+                              booking.request!.startLocationText,
+                              theme,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildInfoRow(
+                              Icons.flag_outlined,
+                              'To',
+                              booking.request!.endLocationText,
+                              theme,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildInfoRow(
+                              Icons.access_time,
+                              'Departure',
+                              DateFormat('MMM d, yyyy - HH:mm').format(
+                                  booking.request!.departureTime.toLocal()),
+                              theme,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildInfoRow(
+                              Icons.monetization_on,
+                              'Budget',
+                              'PKR ${booking.request!.budget.toStringAsFixed(2)}',
+                              theme,
+                            ),
+                            if (booking.offer?.message != null && 
+                                booking.offer!.message!.isNotEmpty) ...[
+                              const SizedBox(height: 12),
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: theme.colorScheme.primary.withOpacity(0.3),
+                                  ),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(
+                                      Icons.message,
+                                      size: 18,
+                                      color: theme.colorScheme.primary,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Your Offer Message',
+                                            style: theme.textTheme.bodySmall?.copyWith(
+                                              color: theme.colorScheme.onSurface.withOpacity(0.6),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            booking.offer!.message!,
+                                            style: theme.textTheme.bodyMedium?.copyWith(
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ],
 
                           // Booking details
@@ -211,7 +342,45 @@ class ActiveBookingsView extends StatelessWidget {
                                       },
                                       icon: const Icon(Icons.location_on,
                                           size: 18),
-                                      label: const Text('Check Location'),
+                                      label: const Text('Track Location'),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: theme.colorScheme.primary,
+                                        side: BorderSide(
+                                          color: theme.colorScheme.primary,
+                                          width: 1.5,
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 12),
+                                      ),
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => ChatPage(
+                                              currentUserId: UserModel().id,
+                                              otherUserId: booking.travelerId,
+                                              apiBaseUrl: 'http://10.0.2.2:300/api',
+                                              otherUserName: booking.traveler?.username ?? 'Traveler',
+                                              otherUserAvatar: (booking.traveler != null &&
+                                                      booking.traveler!.mediaUrls.isNotEmpty)
+                                                  ? booking.traveler!.mediaUrls.first
+                                                  : '',
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      icon: const Icon(Icons.chat_bubble_outline,
+                                          size: 18),
+                                      label: const Text('Chat with Traveler'),
                                     ),
                                   ),
                                 ],
@@ -240,6 +409,7 @@ class ActiveBookingsView extends StatelessWidget {
           return Center(child: Text(state.toString()));
         }
       },
+      ),
     );
   }
 

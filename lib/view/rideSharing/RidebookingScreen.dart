@@ -7,6 +7,8 @@ import 'package:tour_ease/model/userManagment/user.dart';
 import 'package:tour_ease/view/mapscreen/trackingMap.dart';
 import 'package:tour_ease/view/rideSharing/RideSharingPage.dart';
 import 'package:tour_ease/components/simple_cancel_button.dart';
+import 'package:tour_ease/view/chat/chatDetailsPage.dart';
+import 'package:tour_ease/components/profileAvatar.dart';
 
 class RidebookingscreenTraveler extends StatefulWidget {
   const RidebookingscreenTraveler({super.key});
@@ -100,16 +102,52 @@ class _RidebookingscreenTravelerState extends State<RidebookingscreenTraveler> {
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                                    Text(
-                                      booking.listing != null
-                                          ? 'From Ride Listing'
-                                          : booking.request != null
-                                              ? 'From Ride Request'
-                                              : 'Via Offer',
-                                      style:
-                                          theme.textTheme.bodySmall?.copyWith(
-                                        color: theme.colorScheme.onSurface
-                                            .withOpacity(0.6),
+                                    const SizedBox(height: 4),
+                                    // Source Badge
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: booking.listing != null
+                                            ? Colors.blue.withOpacity(0.15)
+                                            : booking.request != null
+                                                ? Colors.purple.withOpacity(0.15)
+                                                : Colors.orange.withOpacity(0.15),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            booking.listing != null
+                                                ? Icons.list_alt
+                                                : booking.request != null
+                                                    ? Icons.request_page
+                                                    : Icons.local_offer,
+                                            size: 12,
+                                            color: booking.listing != null
+                                                ? Colors.blue
+                                                : booking.request != null
+                                                    ? Colors.purple
+                                                    : Colors.orange,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            booking.listing != null
+                                                ? 'From Ride Listing'
+                                                : booking.request != null
+                                                    ? 'From Ride Request'
+                                                    : 'Via Offer',
+                                            style: theme.textTheme.bodySmall?.copyWith(
+                                              color: booking.listing != null
+                                                  ? Colors.blue
+                                                  : booking.request != null
+                                                      ? Colors.purple
+                                                      : Colors.orange,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ],
@@ -119,6 +157,88 @@ class _RidebookingscreenTravelerState extends State<RidebookingscreenTraveler> {
                             ],
                           ),
                           const Divider(height: 24),
+
+                          // Provider Information (if available from listing)
+                          if (booking.listing?.provider != null) ...[
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: theme.colorScheme.primary.withOpacity(0.3),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  ProfileAvatar(
+                                    imageURL: booking.listing!.provider!.user.mediaUrls.isNotEmpty
+                                        ? booking.listing!.provider!.user.mediaUrls[0]
+                                        : null,
+                                    userName: booking.listing!.provider!.user.username,
+                                    userId: booking.listing!.provider!.providerId,
+                                    radius: 24,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Text(
+                                              'Driver: ',
+                                              style: theme.textTheme.bodySmall?.copyWith(
+                                                color: theme.colorScheme.onSurface.withOpacity(0.6),
+                                              ),
+                                            ),
+                                            Text(
+                                              booking.listing!.provider!.user.username,
+                                              style: theme.textTheme.titleSmall?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              Icons.directions_car,
+                                              size: 16,
+                                              color: theme.colorScheme.primary,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              booking.listing!.provider!.vehicleType,
+                                              style: theme.textTheme.bodySmall?.copyWith(
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Icon(
+                                              Icons.event_seat,
+                                              size: 16,
+                                              color: theme.colorScheme.primary,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              '${booking.listing!.provider!.seatsAvailable} seats',
+                                              style: theme.textTheme.bodySmall?.copyWith(
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                          ],
 
                           // Journey details - Handle both listings and requests
                           if (booking.listing != null) ...[
@@ -143,6 +263,15 @@ class _RidebookingscreenTravelerState extends State<RidebookingscreenTraveler> {
                                   booking.listing!.departureTime.toLocal()),
                               theme,
                             ),
+                            if (booking.listing!.distanceKm != null) ...[
+                              const SizedBox(height: 12),
+                              _buildInfoRow(
+                                Icons.straighten,
+                                'Distance',
+                                '${booking.listing!.distanceKm!.toStringAsFixed(1)} km',
+                                theme,
+                              ),
+                            ],
                           ] else if (booking.request != null) ...[
                             _buildInfoRow(
                               Icons.location_on_outlined,
@@ -222,8 +351,57 @@ class _RidebookingscreenTravelerState extends State<RidebookingscreenTraveler> {
                             'PKR ${booking.totalPrice.toStringAsFixed(2)}',
                             theme,
                           ),
+                          
+                          // Show offer message if booking is via offer
+                          if (booking.offer?.message != null && 
+                              booking.offer!.message!.isNotEmpty) ...[
+                            const SizedBox(height: 16),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: Colors.orange.withOpacity(0.3),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Icon(
+                                    Icons.message,
+                                    size: 18,
+                                    color: Colors.orange,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Offer Message',
+                                          style: theme.textTheme.bodySmall?.copyWith(
+                                            color: Colors.orange,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          booking.offer!.message!,
+                                          style: theme.textTheme.bodyMedium,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
 
                           const SizedBox(height: 24),
+                          
+                          // Action buttons row 1: Track Location & Chat
                           Row(
                             children: [
                               Expanded(
@@ -247,10 +425,74 @@ class _RidebookingscreenTravelerState extends State<RidebookingscreenTraveler> {
                                         ));
                                   },
                                   icon: const Icon(Icons.location_on, size: 18),
-                                  label: const Text('Check Location'),
+                                  label: const Text('Track'),
                                 ),
                               ),
                               const SizedBox(width: 12),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: theme.colorScheme.primary,
+                                    side: BorderSide(
+                                      color: theme.colorScheme.primary,
+                                      width: 1.5,
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12),
+                                  ),
+                                  onPressed: () {
+                                    final providerId = booking.getProviderId();
+                                    if (providerId.isEmpty) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Unable to identify driver'),
+                                        ),
+                                      );
+                                      return;
+                                    }
+                                    
+                                    // Get provider info for chat
+                                    String driverName = 'Driver';
+                                    String driverAvatar = '';
+                                    
+                                    if (booking.listing?.provider != null) {
+                                      driverName = booking.listing!.provider!.user.username;
+                                      driverAvatar = booking.listing!.provider!.user.mediaUrls.isNotEmpty
+                                          ? booking.listing!.provider!.user.mediaUrls[0]
+                                          : '';
+                                    } else if (booking.offer?.sender != null) {
+                                      final senderData = booking.offer!.sender!;
+                                      driverName = senderData['username'] ?? 'Driver';
+                                      if (senderData['mediaUrls'] != null && 
+                                          (senderData['mediaUrls'] as List).isNotEmpty) {
+                                        driverAvatar = senderData['mediaUrls'][0];
+                                      }
+                                    }
+                                    
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => ChatPage(
+                                          currentUserId: UserModel().id,
+                                          otherUserId: providerId,
+                                          apiBaseUrl: 'http://10.0.2.2:3000/api',
+                                          otherUserName: driverName,
+                                          otherUserAvatar: driverAvatar,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                                  label: const Text('Chat'),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          
+                          // Action buttons row 2: Cancel
+                          Row(
+                            children: [
                               Expanded(
                                 child: SimpleCancelButton(
                                   bookingId: booking.id.toString(),

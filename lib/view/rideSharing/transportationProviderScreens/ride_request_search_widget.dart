@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:day_night_time_picker/day_night_time_picker.dart';
+import 'package:tour_ease/bloc/rideFilterBloc.dart';
 import 'package:tour_ease/model/rideSharing/RideFilterData.dart';
+import 'package:tour_ease/view/mapscreen/mappage.dart';
 
 class RideRequestSearchWidget extends StatefulWidget {
   final Function(RideFilterModel) onSearch;
@@ -21,7 +24,7 @@ class _RideRequestSearchWidgetState extends State<RideRequestSearchWidget> {
   // Basic search fields
   String _pickupLocation = '';
   String _destination = '';
-  DateTime _selectedDate = DateTime.now();
+  DateTime? _selectedDate; // Nullable - if null, don't filter by date
   LatLng? _pickupCoordinates;
   LatLng? _destinationCoordinates;
 
@@ -29,9 +32,9 @@ class _RideRequestSearchWidgetState extends State<RideRequestSearchWidget> {
   bool _showAdvancedOptions = false;
   Time _startTime = Time(hour: 0, minute: 0, second: 0);
   Time _endTime = Time(hour: 23, minute: 59, second: 59);
-  int _numberOfTravelers = 20; // Maximum to get all requests
-  int _luggageCapacity = 50; // Maximum to get all requests
-  RangeValues _priceRange = const RangeValues(0.0, 10000.0); // Broad range
+  int _numberOfTravelers = 0; // 0 means no filter
+  int _luggageCapacity = 0; // 0 means no filter
+  RangeValues _priceRange = const RangeValues(0.0, 0.0); // 0 means no filter
 
   final TextEditingController _pickupController = TextEditingController();
   final TextEditingController _destinationController = TextEditingController();
@@ -44,21 +47,28 @@ class _RideRequestSearchWidgetState extends State<RideRequestSearchWidget> {
   }
 
   void _performSearch() {
-    // Use default coordinates if not set (Islamabad area - broad coverage)
-    final pickupCoords = _pickupCoordinates ?? const LatLng(33.6844, 73.0479);
-    final destCoords = _destinationCoordinates ?? const LatLng(33.7293, 73.0931);
+    // Use Islamabad as default if no pickup coordinates are selected
+    final pickupCoords = _pickupCoordinates ?? const LatLng(33.6844, 73.0479); // Islamabad
+    
+    print('🔍 Search initiated:');
+    print('  Pickup: $_pickupLocation at $pickupCoords');
+    print('  Destination: $_destination at $_destinationCoordinates');
+    print('  Date: $_selectedDate');
+    print('  Travelers: $_numberOfTravelers');
+    print('  Luggage: $_luggageCapacity');
+    print('  Budget: ${_priceRange.start} - ${_priceRange.end}');
 
     final filter = RideFilterModel(
-      selectedDate: _selectedDate,
+      selectedDate: _selectedDate, // Can be null
       startTime: _startTime,
       endTime: _endTime,
       numberOfTravelers: _numberOfTravelers,
       luggageCapacity: _luggageCapacity,
-      pickupLocation: _pickupLocation.isEmpty ? 'Any Location' : _pickupLocation,
+      pickupLocation: _pickupLocation.isEmpty ? 'Islamabad (Default)' : _pickupLocation,
       destination: _destination.isEmpty ? 'Any Destination' : _destination,
       priceRange: _priceRange,
       pickupLocationCoordinates: pickupCoords,
-      destinationCoordinates: destCoords,
+      destinationCoordinates: _destinationCoordinates ?? const LatLng(10, 10), // Use default if not set
     );
 
     widget.onSearch(filter);
@@ -67,7 +77,7 @@ class _RideRequestSearchWidgetState extends State<RideRequestSearchWidget> {
   Future<void> _selectDate() async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: _selectedDate,
+      initialDate: _selectedDate ?? DateTime.now(),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
       builder: (context, child) {
@@ -80,7 +90,7 @@ class _RideRequestSearchWidgetState extends State<RideRequestSearchWidget> {
       },
     );
 
-    if (picked != null && picked != _selectedDate) {
+    if (picked != null) {
       setState(() {
         _selectedDate = picked;
       });
@@ -145,9 +155,9 @@ class _RideRequestSearchWidgetState extends State<RideRequestSearchWidget> {
             // Pickup Location
             _buildLocationField(
               controller: _pickupController,
-              label: 'Pickup Location',
+              label: 'Pickup Location *',  // Added asterisk to show it's required
               icon: Icons.my_location,
-              hint: 'Select pickup location',
+              hint: 'Tap to select pickup location',
               onTap: () => _showLocationSearch(isPickup: true),
               onClear: () {
                 setState(() {
@@ -163,9 +173,9 @@ class _RideRequestSearchWidgetState extends State<RideRequestSearchWidget> {
             // Destination
             _buildLocationField(
               controller: _destinationController,
-              label: 'Destination',
+              label: 'Destination (Optional)',
               icon: Icons.location_on,
-              hint: 'Select destination',
+              hint: 'Tap to select destination',
               onTap: () => _showLocationSearch(isPickup: false),
               onClear: () {
                 setState(() {
@@ -175,6 +185,53 @@ class _RideRequestSearchWidgetState extends State<RideRequestSearchWidget> {
                 });
               },
               colorScheme: colorScheme,
+            ),
+            SizedBox(height: 16.h),
+
+            // Map Selection Button
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  // Navigate to map screen
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => MapScreen()),
+                  );
+                  
+                  // Update locations from map selection if available
+                  if (mounted) {
+                    final state = context.read<RideFilterBloc>().state;
+                    setState(() {
+                      if (state.filterModel.pickupLocation.isNotEmpty &&
+                          state.filterModel.pickupLocationCoordinates.latitude != 10) {
+                        _pickupLocation = state.filterModel.pickupLocation;
+                        _pickupController.text = state.filterModel.pickupLocation;
+                        _pickupCoordinates = state.filterModel.pickupLocationCoordinates;
+                      }
+                      if (state.filterModel.destination.isNotEmpty &&
+                          state.filterModel.destinationCoordinates.latitude != 10) {
+                        _destination = state.filterModel.destination;
+                        _destinationController.text = state.filterModel.destination;
+                        _destinationCoordinates = state.filterModel.destinationCoordinates;
+                      }
+                    });
+                  }
+                },
+                icon: Icon(Icons.map, size: 20.sp),
+                label: Text(
+                  'Select Locations on Map',
+                  style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w600),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: colorScheme.primary,
+                  side: BorderSide(color: colorScheme.primary, width: 1.5),
+                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                ),
+              ),
             ),
             SizedBox(height: 12.h),
 
@@ -208,7 +265,7 @@ class _RideRequestSearchWidgetState extends State<RideRequestSearchWidget> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Date',
+                            'Date (Optional)',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: colorScheme.onSurfaceVariant,
                               fontWeight: FontWeight.w500,
@@ -216,15 +273,37 @@ class _RideRequestSearchWidgetState extends State<RideRequestSearchWidget> {
                           ),
                           SizedBox(height: 4.h),
                           Text(
-                            DateFormat('MMM dd, yyyy').format(_selectedDate),
+                            _selectedDate != null
+                                ? DateFormat('MMM dd, yyyy').format(_selectedDate!)
+                                : 'Any Date',
                             style: theme.textTheme.bodyLarge?.copyWith(
                               fontWeight: FontWeight.w600,
+                              color: _selectedDate == null
+                                  ? colorScheme.onSurfaceVariant.withOpacity(0.5)
+                                  : colorScheme.onSurface,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    Icon(Icons.arrow_drop_down, color: colorScheme.onSurfaceVariant),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (_selectedDate != null)
+                          IconButton(
+                            icon: Icon(Icons.clear, size: 20.sp),
+                            onPressed: () {
+                              setState(() {
+                                _selectedDate = null;
+                              });
+                            },
+                            color: colorScheme.onSurfaceVariant,
+                            padding: EdgeInsets.zero,
+                            constraints: BoxConstraints(),
+                          ),
+                        Icon(Icons.arrow_drop_down, color: colorScheme.onSurfaceVariant),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -303,62 +382,69 @@ class _RideRequestSearchWidgetState extends State<RideRequestSearchWidget> {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12.r),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceVariant,
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(
-            color: colorScheme.outline.withOpacity(0.3),
-            width: 1.5,
+      child: IgnorePointer(
+        ignoring: true, // Make the container non-interactive to prevent text selection
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceVariant,
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(
+              color: colorScheme.outline.withOpacity(0.3),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 4,
+                offset: Offset(0, 2),
+              ),
+            ],
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 4,
-              offset: Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: colorScheme.primary, size: 20.sp),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                          fontWeight: FontWeight.w500,
-                        ),
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    controller.text.isEmpty ? hint : controller.text,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: controller.text.isEmpty
-                              ? colorScheme.onSurfaceVariant.withOpacity(0.5)
-                              : colorScheme.onSurface,
-                        ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+          child: Row(
+            children: [
+              Icon(icon, color: colorScheme.primary, size: 20.sp),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w500,
+                          ),
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      controller.text.isEmpty ? hint : controller.text,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: controller.text.isEmpty
+                                ? colorScheme.onSurfaceVariant.withOpacity(0.5)
+                                : colorScheme.onSurface,
+                          ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
-            ),
-            if (controller.text.isNotEmpty)
-              IconButton(
-                icon: Icon(Icons.clear, size: 20.sp),
-                onPressed: onClear,
-                color: colorScheme.onSurfaceVariant,
-                padding: EdgeInsets.zero,
-                constraints: BoxConstraints(),
+              IgnorePointer(
+                ignoring: false, // Allow the clear button to be interactive
+                child: controller.text.isNotEmpty
+                    ? IconButton(
+                        icon: Icon(Icons.clear, size: 20.sp),
+                        onPressed: onClear,
+                        color: colorScheme.onSurfaceVariant,
+                        padding: EdgeInsets.zero,
+                        constraints: BoxConstraints(),
+                      )
+                    : SizedBox.shrink(),
               ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -427,7 +513,7 @@ class _RideRequestSearchWidgetState extends State<RideRequestSearchWidget> {
 
           // Number of Travelers
           Text(
-            'Number of Travelers: $_numberOfTravelers',
+            'Max Seats Needed: ${_numberOfTravelers == 0 ? 'Any' : _numberOfTravelers}',
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.bold,
               color: colorScheme.onSurface,
@@ -436,10 +522,10 @@ class _RideRequestSearchWidgetState extends State<RideRequestSearchWidget> {
           SizedBox(height: 4.h),
           Slider(
             value: _numberOfTravelers.toDouble(),
-            min: 1,
+            min: 0,
             max: 20,
-            divisions: 19,
-            label: _numberOfTravelers.toString(),
+            divisions: 20,
+            label: _numberOfTravelers == 0 ? 'Any' : _numberOfTravelers.toString(),
             activeColor: colorScheme.primary,
             onChanged: (value) {
               setState(() {
@@ -451,7 +537,7 @@ class _RideRequestSearchWidgetState extends State<RideRequestSearchWidget> {
 
           // Luggage Capacity
           Text(
-            'Luggage Capacity: $_luggageCapacity',
+            'Luggage: ${_luggageCapacity == 0 ? 'Any' : _luggageCapacity}',
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.bold,
               color: colorScheme.onSurface,
@@ -463,7 +549,7 @@ class _RideRequestSearchWidgetState extends State<RideRequestSearchWidget> {
             min: 0,
             max: 50,
             divisions: 50,
-            label: _luggageCapacity.toString(),
+            label: _luggageCapacity == 0 ? 'Any' : _luggageCapacity.toString(),
             activeColor: colorScheme.primary,
             onChanged: (value) {
               setState(() {
@@ -475,7 +561,7 @@ class _RideRequestSearchWidgetState extends State<RideRequestSearchWidget> {
 
           // Price Range
           Text(
-            'Price Range: PKR ${_priceRange.start.toInt()} - ${_priceRange.end.toInt()}',
+            'Budget Range: ${_priceRange.start.toInt() == 0 && _priceRange.end.toInt() == 0 ? 'Any' : 'PKR ${_priceRange.start.toInt()} - ${_priceRange.end.toInt()}'}',
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.bold,
               color: colorScheme.onSurface,
