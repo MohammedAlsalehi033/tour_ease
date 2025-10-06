@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:tour_ease/components/profileAvatar.dart';
 import 'package:tour_ease/controller/rideSharing/offers/offers_bloc.dart';
 import 'package:tour_ease/controller/rideSharing/offers/offers_event.dart';
 import 'package:tour_ease/controller/rideSharing/offers/offers_state.dart';
@@ -9,6 +10,8 @@ import 'package:intl/intl.dart';
 import 'package:tour_ease/model/userManagment/user.dart';
 import 'dart:ui';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:tour_ease/Services/ApiService.dart';
+import 'package:tour_ease/model/reviews/reviews_repo.dart';
 
 import 'package:tour_ease/view/chat/chatDetailsPage.dart';
 
@@ -36,6 +39,12 @@ class _RideDetailsSheetState extends State<RideDetailsSheet>
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
+  // Reviews state
+  double? _averageRating;
+  int? _totalReviews;
+  List<Map<String, dynamic>> _reviews = [];
+  bool _loadingReviews = true;
+
   @override
   void initState() {
     super.initState();
@@ -43,6 +52,7 @@ class _RideDetailsSheetState extends State<RideDetailsSheet>
     _priceController.text = widget.ride.pricePerSeat.toStringAsFixed(0);
 
     _initializeAnimations();
+    _fetchReviews();
 
     // Start entrance animation
     _slideController.forward();
@@ -74,6 +84,36 @@ class _RideDetailsSheetState extends State<RideDetailsSheet>
       parent: _slideController,
       curve: const Interval(0.3, 1.0, curve: Curves.easeIn),
     ));
+  }
+
+  Future<void> _fetchReviews() async {
+    try {
+      final api = context.read<APIService>();
+      final repo = ReviewsRepositoryApi(api);
+      
+      final stats = await repo.getDriverStats(driverId: widget.ride.providerId);
+      
+      if (!mounted) return;
+      
+      setState(() {
+        _averageRating = stats.stats['averageRating'] is num
+            ? (stats.stats['averageRating'] as num).toDouble()
+            : double.tryParse(stats.stats['averageRating']?.toString() ?? '0') ?? 0;
+        _totalReviews = stats.stats['totalReviews'] is int
+            ? (stats.stats['totalReviews'] as int)
+            : int.tryParse(stats.stats['totalReviews']?.toString() ?? '0') ?? 0;
+        _reviews = stats.reviews
+                .map((e) => e as Map<String, dynamic>)
+                .toList();
+        _loadingReviews = false;
+      });
+    } catch (e) {
+      print("Error fetching reviews: $e");
+      if (!mounted) return;
+      setState(() {
+        _loadingReviews = false;
+      });
+    }
   }
 
   @override
@@ -298,6 +338,8 @@ class _RideDetailsSheetState extends State<RideDetailsSheet>
             _buildRouteCard(theme),
             SizedBox(height: 20.h),
             _buildDriverCard(theme),
+            SizedBox(height: 20.h),
+            _buildReviewsCard(theme),
             SizedBox(height: 20.h),
             _buildVehicleCard(theme),
             SizedBox(height: 20.h),
@@ -594,19 +636,32 @@ class _RideDetailsSheetState extends State<RideDetailsSheet>
                   children: [
                     Icon(Icons.star_rounded, color: Colors.amber, size: 16.sp),
                     SizedBox(width: 4.w),
-                    Text(
-                      '4.2',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    _loadingReviews
+                        ? SizedBox(
+                            width: 30.w,
+                            height: 16.h,
+                            child: const Center(
+                              child: SizedBox(
+                                width: 12,
+                                height: 12,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                            ),
+                          )
+                        : Text(
+                            _averageRating?.toStringAsFixed(1) ?? 'N/A',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                     SizedBox(width: 4.w),
-                    Text(
-                      '(124)',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                    if (!_loadingReviews && _totalReviews != null && _totalReviews! > 0)
+                      Text(
+                        '($_totalReviews)',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
-                    ),
                     SizedBox(width: 16.w),
                     Icon(
                       Icons.local_taxi_rounded,
@@ -629,6 +684,308 @@ class _RideDetailsSheetState extends State<RideDetailsSheet>
         
         ],
       ),
+    );
+  }
+
+  Widget _buildReviewsCard(ThemeData theme) {
+    if (_loadingReviews) {
+      return Container(
+        decoration: _getCardDecoration(theme),
+        padding: EdgeInsets.all(20.w),
+        child: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (_reviews.isEmpty) {
+      return Container(
+        decoration: _getCardDecoration(theme),
+        padding: EdgeInsets.all(20.w),
+        child: Column(
+          children: [
+            Icon(
+              Icons.rate_review_outlined,
+              size: 48.sp,
+              color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+            ),
+            SizedBox(height: 12.h),
+            Text(
+              'No reviews yet',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      decoration: _getCardDecoration(theme),
+      padding: EdgeInsets.all(20.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                'Reviews',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const Spacer(),
+              if (_averageRating != null)
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.amber.shade400, Colors.orange.shade400],
+                    ),
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.star_rounded, color: Colors.white, size: 16.sp),
+                      SizedBox(width: 4.w),
+                      Text(
+                        _averageRating!.toStringAsFixed(1),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14.sp,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+          SizedBox(height: 16.h),
+          
+          // Reviews list
+          ...List.generate(
+            _reviews.length > 3 ? 3 : _reviews.length,
+            (index) {
+              final review = _reviews[index];
+              return Padding(
+                padding: EdgeInsets.only(bottom: 16.h),
+                child: _buildReviewItem(review, theme),
+              );
+            },
+          ),
+          
+          if (_reviews.length > 3)
+            Center(
+              child: TextButton(
+                onPressed: () {
+                  _showAllReviewsDialog(context, theme);
+                },
+                child: Text('See all ${_reviews.length > 10 ? '10' : _reviews.length} reviews'),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReviewItem(Map<String, dynamic> review, ThemeData theme) {
+    final rating = review['rating'] is num
+        ? (review['rating'] as num).toDouble()
+        : double.tryParse(review['rating']?.toString() ?? '0') ?? 0.0;
+    final comment = review['comment']?.toString() ?? '';
+    final reviewerName = review['reviewer']["username"]?.toString() ?? 'Anonymous';
+    final createdAt = review['createdAt']?.toString();
+    
+    String timeAgo = '';
+    if (createdAt != null) {
+      try {
+        final date = DateTime.parse(createdAt);
+        final now = DateTime.now();
+        final difference = now.difference(date);
+        
+        if (difference.inDays > 30) {
+          timeAgo = '${(difference.inDays / 30).floor()} month${(difference.inDays / 30).floor() > 1 ? 's' : ''} ago';
+        } else if (difference.inDays > 0) {
+          timeAgo = '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
+        } else if (difference.inHours > 0) {
+          timeAgo = '${difference.inHours} hour${difference.inHours > 1 ? 's' : ''} ago';
+        } else {
+          timeAgo = 'Just now';
+        }
+      } catch (e) {
+        timeAgo = '';
+      }
+    }
+
+    return Container(
+      padding: EdgeInsets.all(12.w),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              ProfileAvatar(
+                          imageURL: review['reviewer']["mediaUrls"][0] ?? '',
+                          radius: 16.r,
+                          userId: review['reviewer']["id"] ?? '',
+                          userName: reviewerName,
+
+                      ),
+              SizedBox(width: 8.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      reviewerName,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (timeAgo.isNotEmpty)
+                      Text(
+                        timeAgo,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontSize: 11.sp,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              Row(
+                children: [
+                  Icon(Icons.star_rounded, color: Colors.amber, size: 14.sp),
+                  SizedBox(width: 2.w),
+                  Text(
+                    rating.toStringAsFixed(1),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          if (comment.isNotEmpty) ...[
+            SizedBox(height: 8.h),
+            Text(
+              comment,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface,
+              ),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _showAllReviewsDialog(BuildContext context, ThemeData theme) {
+    final reviewsToShow = _reviews.take(10).toList();
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.r),
+          ),
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.8,
+              maxWidth: 500.w,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header
+                Container(
+                  padding: EdgeInsets.all(20.w),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(20.r),
+                      topRight: Radius.circular(20.r),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.star_rounded,
+                        color: Colors.amber,
+                        size: 24.sp,
+                      ),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'All Reviews',
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            if (_averageRating != null)
+                              Text(
+                                '${_averageRating!.toStringAsFixed(1)} average rating',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                        style: IconButton.styleFrom(
+                          backgroundColor: theme.colorScheme.surface.withOpacity(0.8),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                // Reviews list
+                Flexible(
+                  child: ListView.separated(
+                    padding: EdgeInsets.all(20.w),
+                    shrinkWrap: true,
+                    itemCount: reviewsToShow.length,
+                    separatorBuilder: (context, index) => SizedBox(height: 16.h),
+                    itemBuilder: (context, index) {
+                      return _buildReviewItem(reviewsToShow[index], theme);
+                    },
+                  ),
+                ),
+                
+                // Footer note if there are more than 10 reviews
+                if (_reviews.length > 10)
+                  Padding(
+                    padding: EdgeInsets.all(16.w),
+                    child: Text(
+                      'Showing 10 of ${_reviews.length} reviews',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

@@ -58,7 +58,7 @@ class ReviewsRepositoryApi implements ReviewsRepository {
   @override
   Future<ReviewStats> getDriverStats({required String driverId}) async {
     return await apiService.get<ReviewStats>(
-      path: '/api/reviews/stats/TRANSPORTATION_PROVIDER/$driverId',
+      path: '/api/reviews/item/TRANSPORTATION_PROVIDER/$driverId',
       fromJson: (json) => ReviewStats.fromApiResponse({'data': json}),
     );
   }

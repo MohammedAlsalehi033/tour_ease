@@ -138,17 +138,21 @@ class ReviewStats {
   final int totalReviews;
   final double averageRating;
   final Map<String, int> ratingDistribution;
+  final Map<String, dynamic> stats;
+  final List<dynamic> reviews;
 
   ReviewStats({
     required this.totalReviews,
     required this.averageRating,
     required this.ratingDistribution,
+    required this.stats,  
+    required this.reviews,
   });
 
   factory ReviewStats.fromApiResponse(Map<String, dynamic> json) {
-    // API shape: { success, data: { totalReviews, averageRating, ratingDistribution } }
+    // API shape: { success, data: { totalReviews, averageRating, ratingDistribution, stats, reviews } }
     final data = json['data'] ?? json;
-    return ReviewStats(
+    return ReviewStats( 
       totalReviews: data['totalReviews'] ?? 0,
       averageRating: (data['averageRating'] is num)
           ? (data['averageRating'] as num).toDouble()
@@ -156,6 +160,10 @@ class ReviewStats {
       ratingDistribution: (data['ratingDistribution'] as Map<String, dynamic>?)
               ?.map((key, value) => MapEntry(key, (value as num).toInt()))
           ?? <String, int>{},
+      stats: data['stats'] ?? <String, dynamic>{},
+      reviews: (data['reviews'] is List) 
+          ? (data['reviews'] as List<dynamic>) 
+          : <dynamic>[],
     );
   }
 }

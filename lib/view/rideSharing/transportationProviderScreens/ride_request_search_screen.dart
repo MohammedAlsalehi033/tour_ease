@@ -8,6 +8,7 @@ import 'package:tour_ease/model/rideSharing/RideFilterData.dart';
 import 'package:tour_ease/model/rideSharing/rideRequest/rideRequestModel.dart';
 import 'package:tour_ease/view/rideSharing/transportationProviderScreens/ride_request_search_widget.dart';
 import 'package:tour_ease/view/rideSharing/transportationProviderScreens/viewRequestDetails.dart';
+import 'package:tour_ease/model/userManagment/user.dart';
 
 class RideRequestSearchScreen extends StatefulWidget {
   const RideRequestSearchScreen({Key? key}) : super(key: key);
@@ -122,11 +123,17 @@ class _RideRequestSearchScreenState extends State<RideRequestSearchScreen> with 
                 } else if (state is RideRequestError) {
                   return _buildErrorState(context, state, textTheme, colorScheme);
                 } else if (state is RideRequestLoaded) {
-                  if (state.rideRequests.isEmpty) {
+                  // Filter out current user's own requests
+                  final currentUserId = UserModel().id;
+                  final filteredRequests = state.rideRequests
+                      .where((request) => request.travelerId != currentUserId)
+                      .toList();
+                  
+                  if (filteredRequests.isEmpty) {
                     return _buildEmptyState(textTheme, colorScheme);
                   }
                   return _buildRideRequestsList(
-                    state.rideRequests,
+                    filteredRequests,
                     textTheme,
                     colorScheme,
                   );

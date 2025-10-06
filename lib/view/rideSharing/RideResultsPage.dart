@@ -11,6 +11,7 @@ import 'package:tour_ease/view/rideSharing/rideBookingSheetUp.dart';
 import 'package:tour_ease/Services/ApiService.dart';
 import 'package:tour_ease/model/reviews/reviews_repo.dart';
 import 'package:tour_ease/components/profileAvatar.dart';
+import 'package:tour_ease/model/userManagment/user.dart';
 
 class RideResultsPage extends StatefulWidget {
   const RideResultsPage({super.key});
@@ -20,8 +21,8 @@ class RideResultsPage extends StatefulWidget {
 }
 
 class _RideListingRatingBadge extends StatefulWidget {
-  final int listingId;
-  const _RideListingRatingBadge({required this.listingId});
+  final String driverID;
+  const _RideListingRatingBadge({required this.driverID});
 
   @override
   State<_RideListingRatingBadge> createState() => _RideListingRatingBadgeState();
@@ -62,15 +63,21 @@ class _RideListingRatingBadgeState extends State<_RideListingRatingBadge>
     try {
       final api = context.read<APIService>();
       final repo = ReviewsRepositoryApi(api);
-      final stats = await repo.getDriverStats(driverId: "xeSEu67NIjZjSj92CIMjVixNQPr2");
+      
+      final stats = await repo.getDriverStats(driverId: widget.driverID);
       if (!mounted) return;
       setState(() {
-        _average = stats.averageRating;
-        _count = stats.totalReviews;
+        _average = stats.stats['averageRating'] is num
+            ? (stats.stats['averageRating'] as num).toDouble()
+            : double.tryParse(stats.stats['averageRating']?.toString() ?? '0') ?? 0;
+        _count = stats.stats['totalReviews'] is int
+            ? (stats.stats['totalReviews'] as int)
+            : int.tryParse(stats.stats['totalReviews']?.toString() ?? '0') ?? 0;
         _loading = false;
       });
       _animationController.forward();
-    } catch (_) {
+    } catch (e) {
+      print("Error fetching driver stats: $e");
       if (!mounted) return;
       setState(() {
         _loading = false;
@@ -237,8 +244,14 @@ class _RideResultsPageState extends State<RideResultsPage>
                   BlocBuilder<RideResultBloc, RideResultState>(
                     builder: (context, state) {
                       if (!state.isLoading && state.error == null) {
+                        // Filter out current user's rides for the count
+                        final currentUserId = UserModel().id;
+                        final filteredCount = state.rides
+                            .where((ride) => ride.providerId != currentUserId)
+                            .length;
+                        
                         return Text(
-                          '${state.rides.length} ride${state.rides.length != 1 ? 's' : ''} found',
+                          '$filteredCount ride${filteredCount != 1 ? 's' : ''} found',
                           style: textTheme.bodySmall?.copyWith(
                             color: colorScheme.onSurfaceVariant,
                           ),
@@ -297,11 +310,17 @@ class _RideResultsPageState extends State<RideResultsPage>
             return _buildErrorState(state.error!, colorScheme, textTheme);
           }
 
-          if (state.rides.isEmpty) {
+          // Filter out the current user's own rides
+          final currentUserId = UserModel().id;
+          final filteredRides = state.rides
+              .where((ride) => ride.providerId != currentUserId)
+              .toList();
+
+          if (filteredRides.isEmpty) {
             return _buildEmptyState(colorScheme, textTheme);
           }
 
-          return _buildRidesList(state.rides, theme);
+          return _buildRidesList(filteredRides, theme);
         },
       ),
     );
@@ -633,8 +652,8 @@ class _RideResultsPageState extends State<RideResultsPage>
                         ),
                       ],
                     ),
-                    // Rating
-                    _RideListingRatingBadge(listingId: ride.id),
+                    
+                    _RideListingRatingBadge(driverID: ride.providerId),
                   ],
                 ),
 
