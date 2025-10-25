@@ -33,9 +33,11 @@ class _TravelBookingFormState extends State<TravelBookingForm> {
 
   // State variables for time and date
   Time startTime = Time(hour: 10, minute: 0);
-  Time endTime = Time(hour: 12, minute: 0);
   DateTime selectedDate = DateTime.now().add(const Duration(days: 1));
   String formattedDate = 'Any date';
+  
+  // Submission state
+  bool isSubmitting = false;
 
   @override
   void initState() {
@@ -74,7 +76,7 @@ class _TravelBookingFormState extends State<TravelBookingForm> {
 
 
         bookingModel.endLocationLat = state.filterModel.destinationCoordinates.latitude;
-        bookingModel.endLocationLng = state.filterModel.destinationCoordinates.longitude!;
+        bookingModel.endLocationLng = state.filterModel.destinationCoordinates.longitude;
 
     });
   }
@@ -96,27 +98,11 @@ class _TravelBookingFormState extends State<TravelBookingForm> {
       _showErrorSnackBar(context, validationError);
       return;
     }
-
-    // Show loading indicator
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              ),
-            ),
-            SizedBox(width: 16),
-            Text('Creating ride listing...'),
-          ],
-        ),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    
+    // Set submitting state
+    setState(() {
+      isSubmitting = true;
+    });
 
     // Combine date and time
     final departureDateTime = _combineDateAndTime(selectedDate, startTime);
@@ -135,6 +121,7 @@ class _TravelBookingFormState extends State<TravelBookingForm> {
       departureTime: bookingModel.departureTime,
       pricePerSeat: double.tryParse(pricePerSeatController.text) ?? 0.0,
       seatsAvailable: bookingModel.seatsNeeded,
+      luggage: bookingModel.luggageCount > 0 ? bookingModel.luggageCount : null,
       status: "active",
       mediaUrls: [],
       createdAt: DateTime.now(),
@@ -259,48 +246,67 @@ class _TravelBookingFormState extends State<TravelBookingForm> {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
 
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: 16.h),
+    return BlocListener<TransporationProviderBloc, TransporationProviderState>(
+      listener: (context, state) {
+        if (state is TransportationProviderListingCreated) {
+          setState(() {
+            isSubmitting = false;
+          });
+          _showSuccessSnackBar(context);
+          
+          // Navigate back after successful creation
+          Future.delayed(Duration(seconds: 2), () {
+            Navigator.pop(context);
+          });
+        } else if (state is TransportationProviderdataError) {
+          setState(() {
+            isSubmitting = false;
+          });
+          _showErrorSnackBar(context, state.error);
+        }
+      },
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.w),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: 16.h),
 
-            // Location selection section
-            BlocConsumer<RideFilterBloc, RideFilterState>(
-              listener: (context, state) {
-                _updateBookingModelFromFilterState(state);
-              },
-              builder: (context, state) {
-                return GestureDetector(
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => MapScreen()),
-                  ),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceVariant,
-                      borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(
-                        color: theme.colorScheme.outline.withOpacity(0.3),
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 4,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
+              // Location selection section
+              BlocConsumer<RideFilterBloc, RideFilterState>(
+                listener: (context, state) {
+                  _updateBookingModelFromFilterState(state);
+                },
+                builder: (context, state) {
+                  return GestureDetector(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => MapScreen()),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildSectionTitle('Where from?', theme),
-                        Row(
-                          children: [
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceVariant,
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(
+                          color: theme.colorScheme.outline.withOpacity(0.3),
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 4,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildSectionTitle('Where from?', theme),
+                          Row(
+                            children: [
                             Icon(Icons.location_on, color: theme.primaryColor, size: 20.sp),
                             SizedBox(width: 12.w),
                             Expanded(
@@ -374,16 +380,47 @@ class _TravelBookingFormState extends State<TravelBookingForm> {
                         maxDate: DateTime.now().add(const Duration(days: 90)),
                         onSelectionChanged: (DateRangePickerSelectionChangedArgs args) {
                           if (args.value is DateTime) {
+                            final newDate = args.value as DateTime;
+                            final combinedDateTime = _combineDateAndTime(newDate, startTime);
+                            
+                            // Check if the combined date and time is in the past
+                            if (combinedDateTime.isBefore(DateTime.now())) {
+                              Navigator.pop(dialogContext);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Row(
+                                    children: [
+                                      Icon(Icons.warning_amber_rounded, color: Colors.white),
+                                      SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          'The selected date with current time (${startTime.format(context)}) is in the past. Please adjust the time.',
+                                          style: TextStyle(fontWeight: FontWeight.w500),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  backgroundColor: Colors.orange,
+                                  duration: Duration(seconds: 4),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                              // Still allow the date to be set, but warn the user
+                            }
+                            
                             setState(() {
-                              selectedDate = args.value;
+                              selectedDate = newDate;
                               formattedDate = DateFormat('EEE, MMM d, yyyy').format(selectedDate);
                               bookingModel.departureTime = _combineDateAndTime(
                                   selectedDate,
                                   startTime
                               );
                             });
+                            
+                            if (!combinedDateTime.isBefore(DateTime.now())) {
+                              Navigator.pop(dialogContext);
+                            }
                           }
-                          Navigator.pop(dialogContext);
                         },
                         headerStyle: DateRangePickerHeaderStyle(
                           textStyle: textTheme.titleMedium?.copyWith(
@@ -412,62 +449,57 @@ class _TravelBookingFormState extends State<TravelBookingForm> {
             SizedBox(height: 16.h),
 
             // Time section
-            _buildSectionTitle('Time', theme),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildSelectionTile(
-                    icon: Icons.access_time,
-                    title: "Starts ${startTime.format(context)}",
-                    onTap: () async {
-                      Navigator.of(context).push(
-                        showPicker(
-                          themeData: Theme.of(context),
-                          context: context,
-                          value: startTime,
-                          sunrise: TimeOfDay(hour: 6, minute: 0),
-                          sunset: TimeOfDay(hour: 18, minute: 0),
-                          duskSpanInMinutes: 120,
-                          onChange: (newTime) {
-                            setState(() {
-                              startTime = newTime;
-                              bookingModel.departureTime = _combineDateAndTime(
-                                  selectedDate,
-                                  startTime
-                              );
-                            });
-                          },
-                        ),
-                      );
+            _buildSectionTitle('Preferred Time', theme),
+            _buildSelectionTile(
+              icon: Icons.access_time,
+              title: startTime.format(context),
+              onTap: () async {
+                Navigator.of(context).push(
+                  showPicker(
+                    themeData: Theme.of(context),
+                    context: context,
+                    value: startTime,
+                    sunrise: TimeOfDay(hour: 6, minute: 0),
+                    sunset: TimeOfDay(hour: 18, minute: 0),
+                    duskSpanInMinutes: 120,
+                    onChange: (newTime) {
+                      // Validate if selected time is in the past
+                      final combinedDateTime = _combineDateAndTime(selectedDate, newTime);
+                      if (combinedDateTime.isBefore(DateTime.now())) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Row(
+                              children: [
+                                Icon(Icons.error_outline, color: Colors.white),
+                                SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    'Cannot select a time in the past. Please choose a future time.',
+                                    style: TextStyle(fontWeight: FontWeight.w500),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            backgroundColor: Colors.red,
+                            duration: Duration(seconds: 3),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                        return;
+                      }
+                      
+                      setState(() {
+                        startTime = newTime;
+                        bookingModel.departureTime = _combineDateAndTime(
+                            selectedDate,
+                            startTime
+                        );
+                      });
                     },
-                    theme: theme,
                   ),
-                ),
-                SizedBox(width: 20.w),
-                Expanded(
-                  child: _buildSelectionTile(
-                    icon: Icons.access_time,
-                    title: "Ends ${endTime.format(context)}",
-                    onTap: () async {
-                      Navigator.of(context).push(
-                        showPicker(
-                          context: context,
-                          value: endTime,
-                          sunrise: TimeOfDay(hour: 6, minute: 0),
-                          sunset: TimeOfDay(hour: 18, minute: 0),
-                          duskSpanInMinutes: 120,
-                          onChange: (newTime) {
-                            setState(() {
-                              endTime = newTime;
-                            });
-                          },
-                        ),
-                      );
-                    },
-                    theme: theme,
-                  ),
-                ),
-              ],
+                );
+              },
+              theme: theme,
             ),
 
             SizedBox(height: 16.h),
@@ -494,18 +526,80 @@ class _TravelBookingFormState extends State<TravelBookingForm> {
 
             SizedBox(height: 16.h),
 
+            // Luggage section
+            _buildSectionTitle('Luggage', theme),
+            _buildCounterTile(
+              title: 'Pieces of Luggage',
+              value: bookingModel.luggageCount,
+              onDecrease: () {
+                if (bookingModel.luggageCount > 0) {
+                  setState(() {
+                    bookingModel.luggageCount--;
+                  });
+                }
+              },
+              onIncrease: () {
+                if (bookingModel.luggageCount < 20) {
+                  setState(() {
+                    bookingModel.luggageCount++;
+                  });
+                }
+              },
+              theme: theme,
+              minValue: 0,
+              maxValue: 20,
+            ),
+
+            SizedBox(height: 16.h),
+
             // Price section
             _buildSectionTitle('Price per person (PKR)', theme),
-            _buildMinimalTextField(
-              controller: pricePerSeatController,
-              hintText: 'Enter price per seat in PKR',
-              theme: theme,
-              onChanged: (value) {
-                setState(() {
-                  bookingModel.budget = int.tryParse(value) ?? 0;
-                });
-              },
-              keyboardType: TextInputType.number,
+            Container(
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceVariant,
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(
+                  color: theme.colorScheme.outline.withOpacity(0.3),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: pricePerSeatController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  suffixText: 'PKR',
+                  suffixStyle: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                  hintText: 'Enter price per seat in PKR',
+                  hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.5),
+                  ),
+                  prefixIcon: Icon(
+                    Icons.attach_money,
+                    color: theme.colorScheme.primary,
+                    size: 20.sp,
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 14.h,
+                  ),
+                  border: InputBorder.none,
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    bookingModel.budget = int.tryParse(value) ?? 0;
+                  });
+                },
+              ),
             ),
 
             SizedBox(height: 32.h),
@@ -514,10 +608,19 @@ class _TravelBookingFormState extends State<TravelBookingForm> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () => _submitForm(context),
-                icon: Icon(Icons.check_circle, size: 20.sp),
+                onPressed: isSubmitting ? null : () => _submitForm(context),
+                icon: isSubmitting 
+                  ? SizedBox(
+                      width: 20.sp,
+                      height: 20.sp,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : Icon(Icons.check_circle, size: 20.sp),
                 label: Text(
-                  'Create Ride Listing',
+                  isSubmitting ? 'Creating...' : 'Create Ride Listing',
                   style: theme.textTheme.labelLarge?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -538,6 +641,7 @@ class _TravelBookingFormState extends State<TravelBookingForm> {
           ],
         ),
       ),
+    ),
     );
   }
 
@@ -551,35 +655,6 @@ class _TravelBookingFormState extends State<TravelBookingForm> {
           color: theme.colorScheme.primary,
         ),
       ),
-    );
-  }
-
-  Widget _buildMinimalTextField({
-    required TextEditingController controller,
-    required String hintText,
-    required ThemeData theme,
-    required Function(String) onChanged,
-    TextInputType keyboardType = TextInputType.text,
-  }) {
-    return TextField(
-      controller: controller,
-      decoration: InputDecoration(
-        hintText: hintText,
-        hintStyle: theme.textTheme.bodyMedium,
-        contentPadding: EdgeInsets.symmetric(vertical: 16.h),
-        border: UnderlineInputBorder(
-          borderSide: BorderSide(color: theme.colorScheme.outline),
-        ),
-        enabledBorder: UnderlineInputBorder(
-          borderSide: BorderSide(color: theme.colorScheme.outline),
-        ),
-        focusedBorder: UnderlineInputBorder(
-          borderSide: BorderSide(color: theme.colorScheme.primary),
-        ),
-      ),
-      cursorColor: theme.colorScheme.primary,
-      keyboardType: keyboardType,
-      onChanged: onChanged,
     );
   }
 
@@ -645,6 +720,8 @@ class _TravelBookingFormState extends State<TravelBookingForm> {
     required VoidCallback onDecrease,
     required VoidCallback onIncrease,
     required ThemeData theme,
+    int minValue = 1,
+    int maxValue = 100,
   }) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
@@ -678,7 +755,7 @@ class _TravelBookingFormState extends State<TravelBookingForm> {
               _buildCircleButton(
                 icon: Icons.remove,
                 onTap: onDecrease,
-                enabled: value > 1,
+                enabled: value > minValue,
                 theme: theme,
               ),
               SizedBox(width: 16.w),
@@ -693,7 +770,7 @@ class _TravelBookingFormState extends State<TravelBookingForm> {
               _buildCircleButton(
                 icon: Icons.add,
                 onTap: onIncrease,
-                enabled: true,
+                enabled: value < maxValue,
                 theme: theme,
               ),
             ],
@@ -747,6 +824,7 @@ class TravelBookingModel {
   DateTime departureTime;
   int seatsNeeded;
   int budget;
+  int luggageCount;
 
   TravelBookingModel({
     required this.travelerId,
@@ -759,6 +837,7 @@ class TravelBookingModel {
     required this.departureTime,
     required this.seatsNeeded,
     required this.budget,
+    this.luggageCount = 0,
   });
 
   Map<String, dynamic> toJson() {
@@ -773,6 +852,7 @@ class TravelBookingModel {
       'departureTime': departureTime.toIso8601String(),
       'seatsNeeded': seatsNeeded,
       'budget': budget,
+      'luggageCount': luggageCount,
     };
   }
 }

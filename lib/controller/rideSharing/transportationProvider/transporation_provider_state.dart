@@ -21,3 +21,8 @@ class TransportationProviderdataError extends TransporationProviderState {
 
 }
 
+class TransportationProviderListingCreated extends TransporationProviderState {
+  final RideListingModel rideListing;
+
+  TransportationProviderListingCreated({required this.rideListing});
+}

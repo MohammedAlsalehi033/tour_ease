@@ -32,6 +32,7 @@ class RideRequestBloc extends Bloc<RideRequestEvent, RideRequestState> {
           departureTime: event.departureTime,
           budget: event.budget,
           seatsNeeded: event.seatsNeeded,
+          luggage: event.luggageCount > 0 ? event.luggageCount : null,
           id: 0, // Usually assigned by backend
           travelerId: UserModel().id, // Get actual user ID from auth state/service
           createdAt: DateTime.now(), // Usually set by backend

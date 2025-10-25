@@ -16,6 +16,7 @@ class CreateRideRequest extends RideRequestEvent {
   final DateTime departureTime;
   final int seatsNeeded;
   final double budget;
+  final int luggageCount;
 
   CreateRideRequest({
     required this.startLocationText,
@@ -27,6 +28,7 @@ class CreateRideRequest extends RideRequestEvent {
     required this.departureTime,
     required this.seatsNeeded,
     required this.budget,
+    this.luggageCount = 0,
   });
 }
 

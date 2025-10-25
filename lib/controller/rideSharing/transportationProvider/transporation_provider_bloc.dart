@@ -37,7 +37,8 @@ class TransporationProviderBloc extends Bloc<TransporationProviderEvent, Transpo
     });
     on<CreateTransportationProviderListing>((event,emit) async {
       try {
-        _rideRepository.createRidesListing(event.rideListing);
+        final createdListing = await _rideRepository.createRidesListing(event.rideListing);
+        emit(TransportationProviderListingCreated(rideListing: createdListing));
       }catch (e){
         emit(TransportationProviderdataError(error: e.toString()));
       }

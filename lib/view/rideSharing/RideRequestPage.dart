@@ -29,6 +29,7 @@ class _RideRequestPageState extends State<RideRequestPage> {
   String startLocationText = '';
   String endLocationText = '';
   int seatsNeeded = 1;
+  int luggageCount = 0;
   double budget = 50.0;
 
   @override
@@ -105,11 +106,28 @@ class _RideRequestPageState extends State<RideRequestPage> {
     }
   }
 
+  void _incrementLuggage() {
+    if (luggageCount < 20) {
+      setState(() {
+        luggageCount++;
+      });
+    }
+  }
+
+  void _decrementLuggage() {
+    if (luggageCount > 0) {
+      setState(() {
+        luggageCount--;
+      });
+    }
+  }
+
   void _resetForm() {
     setState(() {
       startLocationText = '';
       endLocationText = '';
       seatsNeeded = 1;
+      luggageCount = 0;
       budget = 5000.0;
       _budgetController.text = budget.toString();
       isStartLocationValid = true;
@@ -146,7 +164,7 @@ class _RideRequestPageState extends State<RideRequestPage> {
                 rideFilterState.filterModel.destinationCoordinates.longitude,
             departureTime: _getDepartureDateTime(),
             seatsNeeded: seatsNeeded,
-            
+            luggageCount: luggageCount,
             budget: budget));
       } else {
       }
@@ -346,9 +364,61 @@ class _RideRequestPageState extends State<RideRequestPage> {
                                           onSelectionChanged:
                                               (DateRangePickerSelectionChangedArgs
                                                   args) {
+                                            if (args.value is DateTime) {
+                                              final newDate = args.value as DateTime;
+                                              final currentTime = state.filterModel.startTime;
+                                              final combinedDateTime = DateTime(
+                                                newDate.year,
+                                                newDate.month,
+                                                newDate.day,
+                                                currentTime.hour,
+                                                currentTime.minute,
+                                              );
+                                              
+                                              // Check if the combined date and time is in the past
+                                              if (combinedDateTime.isBefore(DateTime.now())) {
+                                                Navigator.pop(dialogContext);
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(
+                                                    content: Row(
+                                                      children: [
+                                                        Icon(Icons.warning_amber_rounded, color: Colors.white),
+                                                        SizedBox(width: 12),
+                                                        Expanded(
+                                                          child: Text(
+                                                            'The selected date with current time (${currentTime.format(context)}) is in the past. Please adjust the time.',
+                                                            style: TextStyle(fontWeight: FontWeight.w500),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    backgroundColor: Colors.orange,
+                                                    duration: Duration(seconds: 4),
+                                                    behavior: SnackBarBehavior.floating,
+                                                  ),
+                                                );
+                                                // Still allow the date to be set, but warn the user
+                                              }
+                                            }
+                                            
                                             rideFilterBloc
                                                 .add(UpdateDate(args.value));
-                                            Navigator.pop(dialogContext);
+                                            
+                                            // Only close if time is valid
+                                            if (args.value is DateTime) {
+                                              final newDate = args.value as DateTime;
+                                              final currentTime = state.filterModel.startTime;
+                                              final combinedDateTime = DateTime(
+                                                newDate.year,
+                                                newDate.month,
+                                                newDate.day,
+                                                currentTime.hour,
+                                                currentTime.minute,
+                                              );
+                                              if (!combinedDateTime.isBefore(DateTime.now())) {
+                                                Navigator.pop(dialogContext);
+                                              }
+                                            }
                                           },
                                           headerStyle:
                                               DateRangePickerHeaderStyle(
@@ -379,7 +449,7 @@ class _RideRequestPageState extends State<RideRequestPage> {
                               SizedBox(height: 16.h),
 
                               // Time Selection
-                              _buildSectionTitle('Departure Time', theme),
+                              _buildSectionTitle('Preferred Time', theme),
                               _buildSelectionTile(
                                 icon: Icons.access_time,
                                 title:
@@ -393,6 +463,39 @@ class _RideRequestPageState extends State<RideRequestPage> {
                                       sunset: TimeOfDay(hour: 18, minute: 0),
                                       duskSpanInMinutes: 120,
                                       onChange: (newTime) {
+                                        // Validate if selected time is in the past
+                                        final selectedDate = state.filterModel.selectedDate ?? DateTime.now();
+                                        final combinedDateTime = DateTime(
+                                          selectedDate.year,
+                                          selectedDate.month,
+                                          selectedDate.day,
+                                          newTime.hour,
+                                          newTime.minute,
+                                        );
+                                        
+                                        if (combinedDateTime.isBefore(DateTime.now())) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Row(
+                                                children: [
+                                                  Icon(Icons.error_outline, color: Colors.white),
+                                                  SizedBox(width: 12),
+                                                  Expanded(
+                                                    child: Text(
+                                                      'Cannot select a time in the past. Please choose a future time.',
+                                                      style: TextStyle(fontWeight: FontWeight.w500),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              backgroundColor: Colors.red,
+                                              duration: Duration(seconds: 3),
+                                              behavior: SnackBarBehavior.floating,
+                                            ),
+                                          );
+                                          return;
+                                        }
+                                        
                                         context
                                             .read<RideFilterBloc>()
                                             .add(UpdateStartTime(newTime));
@@ -478,7 +581,19 @@ class _RideRequestPageState extends State<RideRequestPage> {
                                     : null,
                               ),
 
+                              SizedBox(height: 32.h),
 
+                              // Luggage
+                              _buildSectionTitle('Luggage', theme),
+                              _buildCounterTile(
+                                title: 'Pieces of Luggage',
+                                value: luggageCount,
+                                onDecrease: _decrementLuggage,
+                                onIncrease: _incrementLuggage,
+                                theme: theme,
+                                minValue: 0,
+                                maxValue: 20,
+                              ),
 
                               SizedBox(height: 100.h),
                             ],
@@ -653,6 +768,8 @@ class _RideRequestPageState extends State<RideRequestPage> {
     required VoidCallback onIncrease,
     required ThemeData theme,
     String? errorText,
+    int minValue = 1,
+    int maxValue = 100,
   }) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
@@ -691,7 +808,7 @@ class _RideRequestPageState extends State<RideRequestPage> {
                   _buildCircleButton(
                     icon: Icons.remove,
                     onTap: onDecrease,
-                    enabled: value > 1,
+                    enabled: value > minValue,
                     theme: theme,
                   ),
                   SizedBox(width: 24.w),
@@ -706,7 +823,7 @@ class _RideRequestPageState extends State<RideRequestPage> {
                   _buildCircleButton(
                     icon: Icons.add,
                     onTap: onIncrease,
-                    enabled: true,
+                    enabled: value < maxValue,
                     theme: theme,
                   ),
                 ],
