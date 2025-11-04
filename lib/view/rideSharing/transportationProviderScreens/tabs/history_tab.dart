@@ -28,7 +28,7 @@ class HistoryTab extends StatelessWidget {
         
         if (state is BookingForProviderLoadSuccess) {
           final completedBookings = state.bookings
-              .where((booking) => booking.status.toLowerCase() == "completed")
+              .where((booking) => booking.status.toLowerCase() == "complete")
               .toList();
               
           if (completedBookings.isEmpty) {

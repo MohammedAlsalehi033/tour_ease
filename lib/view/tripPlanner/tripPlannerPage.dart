@@ -4,7 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:tour_ease/controller/tripPlanner/tripPlannerBloc.dart';
 import 'package:tour_ease/model/tripPlanner/tripPlannerModels.dart';
-import 'package:tour_ease/view/tripPlanner/TripResultsPage.dart';
+import 'package:tour_ease/view/tripPlanner/TripResultsPage_v1.dart';
 
 class TripPlannerPage extends StatefulWidget {
   const TripPlannerPage({Key? key}) : super(key: key);
