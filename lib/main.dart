@@ -21,9 +21,11 @@ import 'package:tour_ease/controller/userManagment/JWTController.dart';
 import 'package:tour_ease/controller/question/commets/comments_bloc.dart';
 import 'package:tour_ease/controller/question/questionBloc.dart';
 import 'package:tour_ease/controller/question/votes/votes_bloc.dart';
+import 'package:tour_ease/controller/tripPlanner/tripPlannerBloc.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:tour_ease/model/chat/chatRepo.dart';
 import 'package:tour_ease/model/report/report_repository.dart';
+import 'package:tour_ease/model/tripPlanner/tripPlannerRepository.dart';
 import 'package:tour_ease/model/rideSharing/RideBooking/RideBookingRepo.dart';
 import 'package:tour_ease/model/rideSharing/offer/offerRepo.dart';
 import 'package:tour_ease/model/userManagment/transportationProviderRepo.dart';
@@ -127,12 +129,19 @@ void main() async {
                       apiService: context.read<APIService>(),
                       apiBaseUrl: context.read<APIService>().baseUrl,
                       currentUserId: UserModel().id),
-                  currentUserId: UserModel().id))
-        ,BlocProvider(create: (context) => MessagesBloc(chatService: ChatService(
+                  currentUserId: UserModel().id)),
+        BlocProvider(create: (context) => MessagesBloc(chatService: ChatService(
               apiService: context.read<APIService>(),
               apiBaseUrl: context.read<APIService>().baseUrl,
               currentUserId: UserModel().id), currentUserId: UserModel().id,),),
-        BlocProvider(create: (context) => ReportBloc(reportRepository: ReportRepoFromAPI(apiService) ),)
+        BlocProvider(create: (context) => ReportBloc(reportRepository: ReportRepoFromAPI(apiService) ),),
+        BlocProvider(
+          create: (context) => TripPlannerBloc(
+            tripPlannerRepository: TripPlannerRepositoryImpl(
+              apiService: context.read<APIService>(),
+            ),
+          ),
+        ),
         ],
         child: MyApp(),
       ),

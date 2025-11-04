@@ -19,6 +19,7 @@ import 'package:tour_ease/view/profile/profile.dart';
 import 'package:tour_ease/view/questions/questionsPage.dart';
 import 'package:tour_ease/view/rideSharing/RidebookingScreen.dart';
 import 'package:tour_ease/view/tripPlanner/tripPlannerPage.dart';
+import 'package:tour_ease/view/tripPlanner/current_plans_page.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({Key? key}) : super(key: key);
@@ -39,7 +40,8 @@ class _MainPageState extends State<MainPage> {
   final List<Widget> _pages = [
     AccommodationPage(),
     RidebookingscreenTraveler(),
-    TripPlannerPage(),
+    // keep the Trip Planner index reserved for Current Plans
+    CurrentPlansPage(),
     MessagesPage(),
     QuestionsScreen(
       userID: UserHelper.getCurrentUserId() ?? '',
@@ -215,6 +217,8 @@ class _MainPageState extends State<MainPage> {
           animationCurve: Curves.easeInOut,
           animationDuration: const Duration(milliseconds: 300),
           onTap: (index) {
+           
+
             setState(() {
               _selectedIndex = index;
             });

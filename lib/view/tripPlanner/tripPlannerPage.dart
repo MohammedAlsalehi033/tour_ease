@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
-import 'package:tour_ease/view/tripPlanner/TripDetailsPage.dart';
+import 'package:tour_ease/controller/tripPlanner/tripPlannerBloc.dart';
+import 'package:tour_ease/model/tripPlanner/tripPlannerModels.dart';
+import 'package:tour_ease/view/tripPlanner/TripResultsPage.dart';
 
 class TripPlannerPage extends StatefulWidget {
   const TripPlannerPage({Key? key}) : super(key: key);
@@ -11,11 +14,11 @@ class TripPlannerPage extends StatefulWidget {
 }
 
 class _TripPlannerPageState extends State<TripPlannerPage> {
-  // Form controllers with default values
+  // Form controllers with default values (PKR currency) - Working test values
   final _destinationController = TextEditingController(text: "Lahore, Pakistan");
   final _pickupController = TextEditingController(text: "Islamabad, Pakistan");
-  final _budgetController = TextEditingController(text: "3000");
-  final _specialRequirementsController = TextEditingController(text: "Need hotel with gym access");
+  final _budgetController = TextEditingController(text: "500000");
+  final _specialRequirementsController = TextEditingController(text: "");
 
   // Selected date range with default values
   late DateTimeRange _selectedDateRange;
@@ -33,7 +36,7 @@ class _TripPlannerPageState extends State<TripPlannerPage> {
   };
 
   // Travel preferences with default
-  String _travelMode = 'Air';
+  String _travelMode = 'Any';
   final List<String> _travelModes = ['Any', 'Air', 'Train', 'Car', 'Public Transport'];
 
   int _travelersCount = 2;
@@ -41,11 +44,10 @@ class _TripPlannerPageState extends State<TripPlannerPage> {
   @override
   void initState() {
     super.initState();
-    // Set default date range (2 weeks from now, for 7 days)
-    final now = DateTime.now();
+    // Set default date range to match test data: Dec 1-5, 2025
     _selectedDateRange = DateTimeRange(
-      start: DateTime(now.year, now.month, now.day + 14),
-      end: DateTime(now.year, now.month, now.day + 21),
+      start: DateTime(2025, 12, 1, 8, 0),
+      end: DateTime(2025, 12, 5, 18, 0),
     );
   }
 
@@ -125,13 +127,38 @@ class _TripPlannerPageState extends State<TripPlannerPage> {
                                 firstDate: DateTime.now(),
                                 lastDate: DateTime.now().add(const Duration(days: 365)),
                                 builder: (context, child) {
+                                  final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+                                  
                                   return Theme(
                                     data: Theme.of(context).copyWith(
-                                      colorScheme: ColorScheme.light(
-                                        primary: colorScheme.primary,
-                                        onPrimary: colorScheme.onPrimary,
-                                        surface: colorScheme.surface,
+                                      colorScheme: isDarkMode 
+                                        ? ColorScheme.dark(
+                                            primary: colorScheme.primary,
+                                            onPrimary: colorScheme.onPrimary,
+                                            surface: colorScheme.surface,
+                                            onSurface: colorScheme.onSurface,
+                                            background: colorScheme.background,
+                                            onBackground: colorScheme.onSurface,
+                                          )
+                                        : ColorScheme.light(
+                                            primary: colorScheme.primary,
+                                            onPrimary: colorScheme.onPrimary,
+                                            surface: colorScheme.surface,
+                                            onSurface: colorScheme.onSurface,
+                                          ),
+                                      textTheme: Theme.of(context).textTheme.copyWith(
+                                        titleMedium: TextStyle(
+                                          color: colorScheme.onSurface,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        labelLarge: TextStyle(
+                                          color: colorScheme.onSurface,
+                                        ),
+                                        bodyMedium: TextStyle(
+                                          color: colorScheme.onSurface,
+                                        ),
                                       ),
+                                      dialogBackgroundColor: colorScheme.surface,
                                     ),
                                     child: child!,
                                   );
@@ -313,9 +340,9 @@ class _TripPlannerPageState extends State<TripPlannerPage> {
 
   void _resetForm() {
     setState(() {
-      _destinationController.text = "Paris, France";
-      _pickupController.text = "New York, USA";
-      _budgetController.text = "3000";
+      _destinationController.text = "Lahore, Pakistan";
+      _pickupController.text = "Islamabad, Pakistan";
+      _budgetController.text = "900000";
       _specialRequirementsController.text = "Need hotel with gym access";
 
       // Reset date range
@@ -340,25 +367,44 @@ class _TripPlannerPageState extends State<TripPlannerPage> {
     // Get selected activities
     final selectedActivities = _activities.entries
         .where((entry) => entry.value)
-        .map((entry) => entry.key)
+        .map((entry) => entry.key.toLowerCase())
         .toList();
 
-    // Create trip data map
-    final tripData = {
-      'Destination': _destinationController.text,
-      'Starting Point': _pickupController.text,
-      'Travel Dates': '${_selectedDateRange.start.toString().split(' ')[0]} to ${_selectedDateRange.end.toString().split(' ')[0]}',
-      'Duration': '${_selectedDateRange.duration.inDays} days',
-      'Budget': '${_budgetController.text} USD',
-      'Travelers': _travelersCount,
-      'Transport Mode': _travelMode,
-      'Activities': selectedActivities,
-      'Special Requirements': _specialRequirementsController.text,
-    };
+    // Parse budget
+    final budget = double.tryParse(_budgetController.text) ?? 0.0;
 
-    print(tripData);
+    if (budget <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a valid budget')),
+      );
+      return;
+    }
 
-Navigator.push(context, MaterialPageRoute(builder: (context) => TripDetailsPage(),));
+    // Create trip plan request
+    final request = TripPlanRequest(
+      startLocation: _pickupController.text,
+      endLocation: _destinationController.text,
+      startTime: _selectedDateRange.start,
+      endTime: _selectedDateRange.end,
+      interests: selectedActivities,
+      budget: budget,
+      numberOfTravelers: _travelersCount,
+      needsReturnTransport: true,
+      specialRequirements: _specialRequirementsController.text.isNotEmpty
+          ? _specialRequirementsController.text
+          : null,
+    );
+
+    // Dispatch event to BLoC
+    context.read<TripPlannerBloc>().add(GenerateTripPlan(request: request));
+
+    // Navigate to trip results page
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const TripResultsPage(),
+      ),
+    );
   }
 
   void _showTravelModeSelector(BuildContext context, ThemeData theme) {

@@ -65,6 +65,112 @@ class APIServiceNodeJS extends APIService {
     });
   }
 
+  /// Extract detailed error message from DioException
+  String _extractErrorMessage(DioException e, {String defaultMessage = 'Request failed'}) {
+    // Priority 1: Check response data for backend error messages
+    if (e.response?.data != null) {
+      try {
+        final data = e.response!.data;
+        
+        // Handle JSON response
+        if (data is Map<String, dynamic>) {
+          // Check for 'message' field (most common)
+          if (data.containsKey('message') && data['message'] != null) {
+            return data['message'].toString();
+          }
+          
+          // Check for 'error' field
+          if (data.containsKey('error') && data['error'] != null) {
+            final error = data['error'];
+            if (error is String) {
+              return error;
+            } else if (error is Map && error.containsKey('message')) {
+              return error['message'].toString();
+            }
+          }
+          
+          // Check for 'errors' array (validation errors)
+          if (data.containsKey('errors') && data['errors'] is List) {
+            final errors = data['errors'] as List;
+            if (errors.isNotEmpty) {
+              if (errors.first is Map && errors.first.containsKey('msg')) {
+                return errors.first['msg'].toString();
+              }
+              return errors.first.toString();
+            }
+          }
+          
+          // Check for 'detail' field
+          if (data.containsKey('detail')) {
+            return data['detail'].toString();
+          }
+        }
+        
+        // Handle string response
+        if (data is String && data.isNotEmpty) {
+          return data;
+        }
+      } catch (_) {
+        // Continue to fallback options
+      }
+    }
+    
+    // Priority 2: Check HTTP status code
+    if (e.response?.statusCode != null) {
+      final statusCode = e.response!.statusCode!;
+      switch (statusCode) {
+        case 400:
+          return 'Bad Request: ${e.response?.statusMessage ?? defaultMessage}';
+        case 401:
+          return 'Unauthorized: Please login again';
+        case 403:
+          return 'Forbidden: You don\'t have permission to access this resource';
+        case 404:
+          return 'Not Found: The requested resource was not found';
+        case 409:
+          return 'Conflict: ${e.response?.statusMessage ?? 'Resource already exists'}';
+        case 422:
+          return 'Validation Error: ${e.response?.statusMessage ?? 'Invalid input data'}';
+        case 429:
+          return 'Too Many Requests: Please try again later';
+        case 500:
+          return 'Server Error: Something went wrong on the server';
+        case 502:
+          return 'Bad Gateway: Server is temporarily unavailable';
+        case 503:
+          return 'Service Unavailable: Server is under maintenance';
+        default:
+          return 'HTTP $statusCode: ${e.response?.statusMessage ?? defaultMessage}';
+      }
+    }
+    
+    // Priority 3: Check DioException type
+    switch (e.type) {
+      case DioExceptionType.connectionTimeout:
+        return 'Connection timeout: Please check your internet connection';
+      case DioExceptionType.sendTimeout:
+        return 'Send timeout: Request took too long to send';
+      case DioExceptionType.receiveTimeout:
+        return 'Receive timeout: Server took too long to respond';
+      case DioExceptionType.badCertificate:
+        return 'Security Error: Invalid SSL certificate';
+      case DioExceptionType.connectionError:
+        return 'Connection Error: Unable to connect to server';
+      case DioExceptionType.cancel:
+        return 'Request cancelled';
+      default:
+        break;
+    }
+    
+    // Priority 4: Use Dio's error message
+    if (e.message != null && e.message!.isNotEmpty) {
+      return e.message!;
+    }
+    
+    // Fallback
+    return defaultMessage;
+  }
+
   @override
   Future<R> get<R>({
     required String path,
@@ -84,29 +190,23 @@ class APIServiceNodeJS extends APIService {
         return fromJson(response.data["data"]);
       } else {
         // Extract error message from API response
-        String errorMessage = 'Failed to load data: ${response.statusCode}';
+        String errorMessage = 'Failed to load data';
         if (response.data != null && response.data is Map) {
           final data = response.data as Map<String, dynamic>;
           if (data.containsKey('message')) {
             errorMessage = data['message'];
+          } else if (data.containsKey('error')) {
+            errorMessage = data['error'].toString();
           }
         }
 
         throw Exception(errorMessage);
       }
     } on DioException catch (e) {
-      // Extract error message from API response if available
-      String errorMessage = 'Failed to execute GET request';
-      if (e.response?.data != null && e.response!.data is Map) {
-        final data = e.response!.data as Map<String, dynamic>;
-        if (data.containsKey('message')) {
-          errorMessage = data['message'];
-        }
-      } else if (e.message != null) {
-        errorMessage = e.message!;
-      }
-      
+      final errorMessage = _extractErrorMessage(e, defaultMessage: 'Failed to fetch data');
       throw Exception(errorMessage);
+    } catch (e) {
+      throw Exception('Unexpected error: ${e.toString()}');
     }
   }
 
@@ -128,29 +228,23 @@ class APIServiceNodeJS extends APIService {
         return fromJson(response.data);
       } else {
         // Extract error message from API response
-        String errorMessage = 'Failed to post data: ${response.statusCode}';
+        String errorMessage = 'Failed to post data';
         if (response.data != null && response.data is Map) {
           final data = response.data as Map<String, dynamic>;
           if (data.containsKey('message')) {
             errorMessage = data['message'];
+          } else if (data.containsKey('error')) {
+            errorMessage = data['error'].toString();
           }
         }
 
         throw Exception(errorMessage);
       }
     } on DioException catch (e) {
-      // Extract error message from API response if available
-      String errorMessage = 'Failed to execute POST request';
-      if (e.response?.data != null && e.response!.data is Map) {
-        final data = e.response!.data as Map<String, dynamic>;
-        if (data.containsKey('message')) {
-          errorMessage = data['message'];
-        }
-      } else if (e.message != null) {
-        errorMessage = e.message!;
-      }
-      
+      final errorMessage = _extractErrorMessage(e, defaultMessage: 'Failed to send data');
       throw Exception(errorMessage);
+    } catch (e) {
+      throw Exception('Unexpected error: ${e.toString()}');
     }
   }
 
@@ -172,29 +266,23 @@ class APIServiceNodeJS extends APIService {
         return fromJson(response.data);
       } else {
         // Extract error message from API response
-        String errorMessage = 'Failed to put data: ${response.statusCode}';
+        String errorMessage = 'Failed to update data';
         if (response.data != null && response.data is Map) {
           final data = response.data as Map<String, dynamic>;
           if (data.containsKey('message')) {
             errorMessage = data['message'];
+          } else if (data.containsKey('error')) {
+            errorMessage = data['error'].toString();
           }
         }
 
         throw Exception(errorMessage);
       }
     } on DioException catch (e) {
-      // Extract error message from API response if available
-      String errorMessage = 'Failed to execute PUT request';
-      if (e.response?.data != null && e.response!.data is Map) {
-        final data = e.response!.data as Map<String, dynamic>;
-        if (data.containsKey('message')) {
-          errorMessage = data['message'];
-        }
-      } else if (e.message != null) {
-        errorMessage = e.message!;
-      }
-      
+      final errorMessage = _extractErrorMessage(e, defaultMessage: 'Failed to update data');
       throw Exception(errorMessage);
+    } catch (e) {
+      throw Exception('Unexpected error: ${e.toString()}');
     }
   }
 
@@ -219,29 +307,23 @@ class APIServiceNodeJS extends APIService {
         return fromJson(null);
       } else {
         // Extract error message from API response
-        String errorMessage = 'Failed to delete resource: ${response.statusCode}';
+        String errorMessage = 'Failed to delete resource';
         if (response.data != null && response.data is Map) {
           final data = response.data as Map<String, dynamic>;
           if (data.containsKey('message')) {
             errorMessage = data['message'];
+          } else if (data.containsKey('error')) {
+            errorMessage = data['error'].toString();
           }
         }
 
         throw Exception(errorMessage);
       }
     } on DioException catch (e) {
-      // Extract error message from API response if available
-      String errorMessage = 'Failed to execute DELETE request';
-      if (e.response?.data != null && e.response!.data is Map) {
-        final data = e.response!.data as Map<String, dynamic>;
-        if (data.containsKey('message')) {
-          errorMessage = data['message'];
-        }
-      } else if (e.message != null) {
-        errorMessage = e.message!;
-      }
-      
+      final errorMessage = _extractErrorMessage(e, defaultMessage: 'Failed to delete resource');
       throw Exception(errorMessage);
+    } catch (e) {
+      throw Exception('Unexpected error: ${e.toString()}');
     }
   }
 
@@ -265,29 +347,23 @@ class APIServiceNodeJS extends APIService {
         return fromJson(response.data);
       } else {
         // Extract error message from API response
-        String errorMessage = 'Failed to upload file: ${response.statusCode}';
+        String errorMessage = 'Failed to upload file';
         if (response.data != null && response.data is Map) {
           final data = response.data as Map<String, dynamic>;
           if (data.containsKey('message')) {
             errorMessage = data['message'];
+          } else if (data.containsKey('error')) {
+            errorMessage = data['error'].toString();
           }
         }
 
         throw Exception(errorMessage);
       }
     } on DioException catch (e) {
-      // Extract error message from API response if available
-      String errorMessage = 'Failed to execute multipart POST request';
-      if (e.response?.data != null && e.response!.data is Map) {
-        final data = e.response!.data as Map<String, dynamic>;
-        if (data.containsKey('message')) {
-          errorMessage = data['message'];
-        }
-      } else if (e.message != null) {
-        errorMessage = e.message!;
-      }
-      
+      final errorMessage = _extractErrorMessage(e, defaultMessage: 'Failed to upload file');
       throw Exception(errorMessage);
+    } catch (e) {
+      throw Exception('Unexpected error: ${e.toString()}');
     }
   }
 }
