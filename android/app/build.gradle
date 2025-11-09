@@ -45,8 +45,9 @@ android {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.tour_ease"
         // You can update the following values to match your application needs.
-        // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
-        minSdkVersion = flutter.minSdkVersion
+    // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
+    // Firebase plugins require a higher Android minSdkVersion. Bump to 23 to match plugin requirements.
+    minSdkVersion = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutterVersionCode.toInteger()
         versionName = flutterVersionName
