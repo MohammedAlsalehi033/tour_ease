@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tour_ease/view/tripPlanner/tripPlannerPage.dart';
-import 'package:tour_ease/Services/tripPlanner/saved_plans_service.dart';
-import 'package:tour_ease/model/tripPlanner/saved_plan_models.dart';
+import 'package:tour_ease/model/tripPlanner/tripPlannerModels.dart';
+import 'package:tour_ease/controller/tripPlanner/tripPlannerBloc.dart';
 import 'package:tour_ease/utils/currency_formatter.dart';
 import 'package:intl/intl.dart';
 
@@ -15,34 +16,14 @@ class CurrentPlansPage extends StatefulWidget {
 }
 
 class _CurrentPlansPageState extends State<CurrentPlansPage> {
-  List<SavedPlan> _savedPlans = [];
-  bool _isLoading = false;
-  String? _error;
-
   @override
   void initState() {
     super.initState();
-    _loadSavedPlans();
-  }
-
-  Future<void> _loadSavedPlans() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
+    // Load saved plans when the page is opened
+    // Defer the BLoC event until after the first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<TripPlannerBloc>().add(const GetSavedPlans());
     });
-
-    try {
-      final response = await SavedPlansService.getSavedPlans(limit: 20);
-      setState(() {
-        _savedPlans = response.data;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
-    }
   }
 
   String _formatDate(String isoDate) {
@@ -60,100 +41,105 @@ class _CurrentPlansPageState extends State<CurrentPlansPage> {
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      
       backgroundColor: colorScheme.background,
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.all(24.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SizedBox(height: 8.h),
-              Text(
-                'Current plans',
-                style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 8.h),
-              Text(
-                'Here you can access your saved or active trip plans. Create a new plan to start the trip planning flow.',
-                style: theme.textTheme.bodyLarge,
-              ),
-              SizedBox(height: 24.h),
+      body: BlocBuilder<TripPlannerBloc, TripPlannerState>(
+        builder: (context, state) {
+          final isLoading = state.isLoading;
+          final error = state.error;
+          final savedPlans = state.savedPlans ?? [];
 
-              // Placeholder: empty list
-              Expanded(
-                child: _isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : _error != null
-                        ? Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.error_outline, size: 64.sp, color: Colors.red),
-                                SizedBox(height: 12.h),
-                                Text('Error loading plans', style: theme.textTheme.titleMedium),
-                                SizedBox(height: 8.h),
-                                Text(_error!, style: theme.textTheme.bodySmall),
-                                SizedBox(height: 16.h),
-                                ElevatedButton(
-                                  onPressed: _loadSavedPlans,
-                                  child: const Text('Retry'),
-                                ),
-                              ],
-                            ),
-                          )
-                        : _savedPlans.isEmpty
+          return SafeArea(
+            child: Padding(
+              padding: EdgeInsets.all(24.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SizedBox(height: 8.h),
+                  Text(
+                    'Current plans',
+                    style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 8.h),
+                  Text(
+                    'Here you can access your saved or active trip plans. Create a new plan to start the trip planning flow.',
+                    style: theme.textTheme.bodyLarge,
+                  ),
+                  SizedBox(height: 24.h),
+
+                  // Placeholder: empty list
+                  Expanded(
+                    child: isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : error != null
                             ? Center(
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.map_outlined, size: 64.sp, color: colorScheme.onSurfaceVariant),
+                                    Icon(Icons.error_outline, size: 64.sp, color: Colors.red),
                                     SizedBox(height: 12.h),
-                                    Text('No plans yet', style: theme.textTheme.titleMedium),
+                                    Text('Error loading plans', style: theme.textTheme.titleMedium),
                                     SizedBox(height: 8.h),
-                                    Text('Tap below to create your first trip plan.', style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant)),
+                                    Text(error, style: theme.textTheme.bodySmall),
+                                    SizedBox(height: 16.h),
+                                    ElevatedButton(
+                                      onPressed: () => context.read<TripPlannerBloc>().add(const GetSavedPlans()),
+                                      child: const Text('Retry'),
+                                    ),
                                   ],
                                 ),
                               )
-                            : ListView.builder(
-                                itemCount: _savedPlans.length,
-                                padding: EdgeInsets.only(bottom: 16.h),
-                                itemBuilder: (context, index) {
-                                  final plan = _savedPlans[index];
-                                  return _buildPlanCard(plan, theme, colorScheme);
-                                },
-                              ),
+                            : savedPlans.isEmpty
+                                ? Center(
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.map_outlined, size: 64.sp, color: colorScheme.onSurfaceVariant),
+                                        SizedBox(height: 12.h),
+                                        Text('No plans yet', style: theme.textTheme.titleMedium),
+                                        SizedBox(height: 8.h),
+                                        Text('Tap below to create your first trip plan.', style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant)),
+                                      ],
+                                    ),
+                                  )
+                                : ListView.builder(
+                                    itemCount: savedPlans.length,
+                                    padding: EdgeInsets.only(bottom: 16.h),
+                                    itemBuilder: (context, index) {
+                                      final plan = savedPlans[index];
+                                      return _buildPlanCard(plan, theme, colorScheme);
+                                    },
+                                  ),
+                  ),
+
+                  // CTA buttons
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      // Navigate to Trip Planner flow (create new plan)
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (c) => const TripPlannerPage()),
+                      );
+                    },
+                    icon: const Icon(Icons.add_rounded),
+                    label: Text('Create new plan', style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold)),
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(vertical: 16.h),
+                      backgroundColor: colorScheme.primary,
+                    ),
+                  ),
+
+                  SizedBox(height: 12.h),
+                ],
               ),
-
-              // CTA buttons
-              ElevatedButton.icon(
-                onPressed: () {
-                  // Navigate to Trip Planner flow (create new plan)
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (c) => const TripPlannerPage()),
-                  );
-                },
-                icon: Icon(Icons.add_rounded),
-                label: Text('Create new plan', style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold)),
-                style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 16.h),
-                  backgroundColor: colorScheme.primary,
-                ),
-              ),
-
-              SizedBox(height: 12.h),
-
-             
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildPlanCard(SavedPlan plan, ThemeData theme, ColorScheme colorScheme) {
-    final totalCost = plan.planData?['tripSummary']?['estimatedTotalCost']?['total'] ?? 0.0;
+  Widget _buildPlanCard(SavedTripPlan plan, ThemeData theme, ColorScheme colorScheme) {
+    final totalCost = plan.totalCost;
     
     return Card(
       margin: EdgeInsets.only(bottom: 12.h),
@@ -195,34 +181,21 @@ class _CurrentPlansPageState extends State<CurrentPlansPage> {
                 ],
               ),
               SizedBox(height: 8.h),
-              Row(
-                children: [
-                  Icon(Icons.location_on_outlined, size: 16.sp, color: colorScheme.onSurfaceVariant),
-                  SizedBox(width: 4.w),
-                  Text(
-                    '${plan.startLocation} → ${plan.endLocation}',
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                ],
-              ),
-              SizedBox(height: 4.h),
+              if (plan.description != null && plan.description!.isNotEmpty) ...[
+                Text(
+                  plan.description!,
+                  style: theme.textTheme.bodyMedium,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                SizedBox(height: 8.h),
+              ],
               Row(
                 children: [
                   Icon(Icons.calendar_today_outlined, size: 16.sp, color: colorScheme.onSurfaceVariant),
                   SizedBox(width: 4.w),
                   Text(
-                    '${_formatDate(plan.startTime)} - ${_formatDate(plan.endTime)}',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                ],
-              ),
-              SizedBox(height: 4.h),
-              Row(
-                children: [
-                  Icon(Icons.people_outline, size: 16.sp, color: colorScheme.onSurfaceVariant),
-                  SizedBox(width: 4.w),
-                  Text(
-                    '${plan.numberOfTravelers} travelers',
+                    _formatDate(plan.createdAt.toIso8601String()),
                     style: theme.textTheme.bodySmall,
                   ),
                   const Spacer(),
@@ -235,11 +208,11 @@ class _CurrentPlansPageState extends State<CurrentPlansPage> {
                   ),
                 ],
               ),
-              if (plan.tags != null && plan.tags!.isNotEmpty) ...[
+              if (plan.tags.isNotEmpty) ...[
                 SizedBox(height: 8.h),
                 Wrap(
                   spacing: 8.w,
-                  children: plan.tags!.take(3).map((tag) => Chip(
+                  children: plan.tags.take(3).map((tag) => Chip(
                     label: Text(tag, style: theme.textTheme.bodySmall),
                     padding: EdgeInsets.symmetric(horizontal: 4.w),
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,

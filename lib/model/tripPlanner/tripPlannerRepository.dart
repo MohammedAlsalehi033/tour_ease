@@ -21,15 +21,22 @@ abstract class TripPlannerRepository {
   });
   Future<SavedTripPlan> saveTripPlan({
     required String planName,
-    String? description,
-    required int selectedOutboundId,
-    int? selectedReturnId,
+    required String startLocation,
+    required String endLocation,
+    required String startTime,
+    required String endTime,
+    required int numberOfTravelers,
+    required double budget,
+    List<String>? interests,
+    bool needsReturnTransport = true,
+    int? selectedOutboundTransportId,
+    int? selectedReturnTransportId,
     int? selectedAccommodationId,
-    List<Map<String, int>>? selectedRoomAllocations,
-    List<int>? selectedActivities,
-    required double totalCost,
+    List<Map<String, dynamic>>? selectedRoomAllocations,
+    int? seatsNeeded,
+    Map<String, dynamic>? planData,
+    String? notes,
     List<String>? tags,
-    required Map<String, dynamic> originalSearchParams,
   });
   Future<List<SavedTripPlan>> getSavedPlans({
     String? status,
@@ -134,30 +141,44 @@ class TripPlannerRepositoryImpl implements TripPlannerRepository {
   @override
   Future<SavedTripPlan> saveTripPlan({
     required String planName,
-    String? description,
-    required int selectedOutboundId,
-    int? selectedReturnId,
+    required String startLocation,
+    required String endLocation,
+    required String startTime,
+    required String endTime,
+    required int numberOfTravelers,
+    required double budget,
+    List<String>? interests,
+    bool needsReturnTransport = true,
+    int? selectedOutboundTransportId,
+    int? selectedReturnTransportId,
     int? selectedAccommodationId,
-    List<Map<String, int>>? selectedRoomAllocations,
-    List<int>? selectedActivities,
-    required double totalCost,
+    List<Map<String, dynamic>>? selectedRoomAllocations,
+    int? seatsNeeded,
+    Map<String, dynamic>? planData,
+    String? notes,
     List<String>? tags,
-    required Map<String, dynamic> originalSearchParams,
   }) async {
     try {
       final body = <String, dynamic>{
         'planName': planName,
-        'selectedOutboundId': selectedOutboundId,
-        'totalCost': totalCost,
-        'originalSearchParams': originalSearchParams,
+        'startLocation': startLocation,
+        'endLocation': endLocation,
+        'startTime': startTime,
+        'endTime': endTime,
+        'numberOfTravelers': numberOfTravelers,
+        'budget': budget,
+        'interests': interests ?? [],
+        'needsReturnTransport': needsReturnTransport,
+        'tags': tags ?? [],
       };
 
-      if (description != null) body['description'] = description;
-      if (selectedReturnId != null) body['selectedReturnId'] = selectedReturnId;
+      if (selectedOutboundTransportId != null) body['selectedOutboundTransportId'] = selectedOutboundTransportId;
+      if (selectedReturnTransportId != null) body['selectedReturnTransportId'] = selectedReturnTransportId;
       if (selectedAccommodationId != null) body['selectedAccommodationId'] = selectedAccommodationId;
       if (selectedRoomAllocations != null) body['selectedRoomAllocations'] = selectedRoomAllocations;
-      if (selectedActivities != null) body['selectedActivities'] = selectedActivities;
-      if (tags != null) body['tags'] = tags;
+      if (seatsNeeded != null) body['seatsNeeded'] = seatsNeeded;
+      if (planData != null) body['planData'] = planData;
+      if (notes != null) body['notes'] = notes;
 
       return await apiService.post<SavedTripPlan>(
         path: "/api/planner/saved",
@@ -187,8 +208,12 @@ class TripPlannerRepositoryImpl implements TripPlannerRepository {
         path: "/api/planner/saved",
         queryParams: queryParams,
         fromJson: (json) {
-          final data = json['savedPlans'] as List;
-          return data.map((plan) => SavedTripPlan.fromJson(plan)).toList();
+          // The APIService already extracts response.data["data"]
+          // so json here is already the array
+          if (json is List) {
+            return json.map((plan) => SavedTripPlan.fromJson(plan)).toList();
+          }
+          return [];
         },
       );
     } catch (e) {
