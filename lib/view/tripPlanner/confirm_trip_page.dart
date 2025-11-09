@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:tour_ease/model/tripPlanner/tripPlannerModels.dart';
-import 'package:tour_ease/model/tripPlanner/saved_plan_models.dart';
-import 'package:tour_ease/Services/tripPlanner/saved_plans_service.dart';
+import 'package:tour_ease/controller/tripPlanner/tripPlannerBloc.dart';
 import 'package:tour_ease/utils/currency_formatter.dart';
 
 class ConfirmTripPage extends StatefulWidget {
@@ -25,98 +25,79 @@ class ConfirmTripPage extends StatefulWidget {
 }
 
 class _ConfirmTripPageState extends State<ConfirmTripPage> {
-  bool _isSaving = false;
+  void _savePlan() {
+    // Get the original request from the BLoC state
+    final originalRequest = context.read<TripPlannerBloc>().state.originalRequest;
+    
+    // Calculate total cost
+    final outboundCost = widget.outbound?.totalCost ?? 0;
+    final returnCost = widget.returnTransport?.totalCost ?? 0;
+    final accommodationCost = widget.accommodation?.totalCost ?? 0;
+    final totalCost = outboundCost + returnCost + accommodationCost;
 
-  Future<void> _savePlan() async {
-    setState(() {
-      _isSaving = true;
-    });
+    // Build plan data from the trip plan
+    final planData = _buildPlanData();
 
-    try {
-      // Extract location from transport or accommodation if available
-      final startLoc = widget.outbound?.startLocationText ?? widget.accommodation?.location ?? 'Unknown';
-      final endLoc = widget.outbound?.endLocationText ?? widget.accommodation?.location ?? 'Unknown';
-      
-      final request = SavePlanRequest(
+    context.read<TripPlannerBloc>().add(
+      SaveTripPlan(
         planName: widget.tripPlan.optimalPlan?.planName ?? 'My Trip Plan',
-        startLocation: startLoc,
-        endLocation: endLoc,
-        startTime: widget.outbound?.departureTime.toIso8601String() ?? DateTime.now().toIso8601String(),
-        endTime: widget.returnTransport?.arrivalTime.toIso8601String() ?? DateTime.now().add(const Duration(days: 3)).toIso8601String(),
-        numberOfTravelers: 2, // TODO: get from trip request
-        budget: widget.tripPlan.metadata.requestedBudget,
+        startLocation: originalRequest?.startLocation ?? widget.outbound?.startLocationText ?? 'Unknown',
+        endLocation: originalRequest?.endLocation ?? widget.outbound?.endLocationText ?? 'Unknown',
+        startTime: originalRequest?.startTime.toIso8601String() ?? widget.outbound?.departureTime.toIso8601String() ?? DateTime.now().toIso8601String(),
+        endTime: originalRequest?.endTime.toIso8601String() ?? widget.returnTransport?.arrivalTime.toIso8601String() ?? DateTime.now().add(const Duration(days: 3)).toIso8601String(),
+        numberOfTravelers: originalRequest?.numberOfTravelers ?? 2,
+        budget: originalRequest?.budget ?? totalCost,
+        interests: originalRequest?.interests,
+        needsReturnTransport: originalRequest?.needsReturnTransport ?? widget.returnTransport != null,
         selectedOutboundTransportId: widget.outbound?.id != null ? int.tryParse(widget.outbound!.id) : null,
         selectedReturnTransportId: widget.returnTransport?.id != null ? int.tryParse(widget.returnTransport!.id) : null,
         selectedAccommodationId: widget.accommodation?.id != null ? int.tryParse(widget.accommodation!.id) : null,
-        seatsNeeded: 2, // TODO: get from trip request
-        planData: _buildPlanData(),
-        notes: '',
-        tags: [endLoc],
-      );
-
-      final response = await SavedPlansService.savePlan(request);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Plan saved successfully! ID: ${response.data.id}'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        // Optional: Navigate back or to saved plans page
-        Navigator.pop(context);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to save plan: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSaving = false;
-        });
-      }
-    }
+        selectedRoomAllocations: null, // TODO: get from accommodation selection
+        seatsNeeded: originalRequest?.numberOfTravelers ?? 2,
+        planData: planData,
+        notes: widget.tripPlan.optimalPlan?.description,
+        tags: [originalRequest?.endLocation ?? widget.outbound?.endLocationText ?? 'Unknown'],
+      ),
+    );
   }
 
   Map<String, dynamic> _buildPlanData() {
     return {
-      'itinerary': widget.tripPlan.itinerary.map((day) => {
-        'day': day.day,
-        'date': day.date,
-        'dayOfWeek': day.dayOfWeek,
-        'theme': day.theme,
-        'totalDuration': day.totalDuration,
-        'totalEstimatedCost': day.totalEstimatedCost,
-        'activities': day.activities.map((activity) => {
-          'time': activity.time,
-          'title': activity.title,
-          'description': activity.description,
-          'location': {
-            'name': activity.location.name,
-            'coordinates': {
-              'lat': activity.location.coordinates.lat,
-              'lng': activity.location.coordinates.lng,
-            }
-          },
-          'duration': activity.duration,
-          'estimatedCost': activity.estimatedCost,
-          'category': activity.category,
+      'tripPlan': {
+        'optimalPlan': widget.tripPlan.optimalPlan != null ? {
+          'planName': widget.tripPlan.optimalPlan!.planName,
+          'description': widget.tripPlan.optimalPlan!.description,
+        } : null,
+        'itinerary': widget.tripPlan.itinerary.map((day) => {
+          'day': day.day,
+          'date': day.date,
+          'dayOfWeek': day.dayOfWeek,
+          'theme': day.theme,
+          'totalDuration': day.totalDuration,
+          'totalEstimatedCost': day.totalEstimatedCost,
+          'activities': day.activities.map((activity) => {
+            'time': activity.time,
+            'title': activity.title,
+            'description': activity.description,
+            'location': {
+              'name': activity.location.name,
+              'coordinates': {
+                'lat': activity.location.coordinates.lat,
+                'lng': activity.location.coordinates.lng,
+              }
+            },
+            'duration': activity.duration,
+            'estimatedCost': activity.estimatedCost,
+            'category': activity.category,
+          }).toList(),
         }).toList(),
-      }).toList(),
-      'tripSummary': {
-        'totalDays': widget.tripPlan.itinerary.length,
-        'estimatedTotalCost': {
-          'transportation': (widget.outbound?.totalCost ?? 0) + (widget.returnTransport?.totalCost ?? 0),
-          'accommodation': widget.accommodation?.totalCost ?? 0,
-          'total': (widget.outbound?.totalCost ?? 0) + (widget.returnTransport?.totalCost ?? 0) + (widget.accommodation?.totalCost ?? 0),
-        }
-      }
+      },
+      'selectedOptions': {
+        'outbound': widget.outbound?.id,
+        'return': widget.returnTransport?.id,
+        'accommodation': widget.accommodation?.id,
+      },
+      'totalCost': (widget.outbound?.totalCost ?? 0) + (widget.returnTransport?.totalCost ?? 0) + (widget.accommodation?.totalCost ?? 0),
     };
   }
 
@@ -150,37 +131,56 @@ class _ConfirmTripPageState extends State<ConfirmTripPage> {
           child: Text(t, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
         );
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Confirm & Save'),
-        elevation: 0,
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.all(16.w),
-          child: Column(
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(widget.tripPlan.optimalPlan?.planName ?? 'Trip Plan', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
-                      SizedBox(height: 8.h),
-                      if ((widget.tripPlan.optimalPlan?.description ?? '').isNotEmpty) Text(widget.tripPlan.optimalPlan!.description!, style: theme.textTheme.bodyMedium),
-                      SizedBox(height: 16.h),
+    return BlocListener<TripPlannerBloc, TripPlannerState>(
+      listener: (context, state) {
+        if (state.savedPlan != null && !state.isLoading) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Plan saved successfully! ID: ${state.savedPlan!.id}'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pop(context);
+        } else if (state.error != null && !state.isLoading) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to save plan: ${state.error}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Confirm & Save'),
+          elevation: 0,
+        ),
+        body: SafeArea(
+          child: Padding(
+            padding: EdgeInsets.all(16.w),
+            child: Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(widget.tripPlan.optimalPlan?.planName ?? 'Trip Plan', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+                        SizedBox(height: 8.h),
+                        if ((widget.tripPlan.optimalPlan?.description ?? '').isNotEmpty) Text(widget.tripPlan.optimalPlan!.description!, style: theme.textTheme.bodyMedium),
+                        SizedBox(height: 16.h),
 
-                      sectionTitle('Outbound'),
-                      if (widget.outbound != null)
-                        Card(
-                          child: Padding(
-                            padding: EdgeInsets.all(12.w),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(widget.outbound!.vehicleType, style: theme.textTheme.titleMedium),
-                                SizedBox(height: 6.h),
-                                Text(fmtDate(widget.outbound!.departureTime)),
+                        sectionTitle('Outbound'),
+                        if (widget.outbound != null)
+                          Card(
+                            child: Padding(
+                              padding: EdgeInsets.all(12.w),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(widget.outbound!.vehicleType, style: theme.textTheme.titleMedium),
+                                  SizedBox(height: 6.h),
+                                  Text(fmtDate(widget.outbound!.departureTime)),
                                 SizedBox(height: 6.h),
                                 // Detailed origin/destination fields depend on model shape; show available info only
                                 Text('Cost: ${CurrencyFormatter.formatPKR(outboundCost)}', style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
@@ -246,37 +246,44 @@ class _ConfirmTripPageState extends State<ConfirmTripPage> {
                     ],
                   ),
                 ),
-              ),
+                ),
 
-              // Action Row
-              SizedBox(height: 12.h),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: _isSaving ? null : _savePlan,
-                      child: _isSaving
-                          ? SizedBox(
-                              height: 20.h,
-                              width: 20.w,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text('Save Plan'),
-                    ),
-                  ),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // Placeholder: booking logic to be implemented later
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Booking started (placeholder)')));
-                      },
-                      child: const Text('Book All'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+                // Action Row
+                SizedBox(height: 12.h),
+                BlocBuilder<TripPlannerBloc, TripPlannerState>(
+                  builder: (context, state) {
+                    final isSaving = state.isLoading;
+                    
+                    return Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: isSaving ? null : _savePlan,
+                            child: isSaving
+                                ? SizedBox(
+                                    height: 20.h,
+                                    width: 20.w,
+                                    child: const CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : const Text('Save Plan'),
+                          ),
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              // Placeholder: booking logic to be implemented later
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Booking started (placeholder)')));
+                            },
+                            child: const Text('Book All'),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ),
