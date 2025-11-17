@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:tour_ease/view/accommodationDetails.dart';
+import 'package:tour_ease/view/accommodation/accommodation_list_page.dart';
 
 class AccommodationCard extends StatelessWidget {
   final int index;
@@ -33,15 +33,20 @@ class AccommodationCard extends StatelessWidget {
                     height: 180.h,
                     fit: BoxFit.cover,
                     placeholder: (context, url) => Container(
-                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                      color:
+                          Theme.of(context).colorScheme.surfaceContainerHighest,
                       child: Center(
-                        child: Icon(Icons.image, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        child: Icon(Icons.image,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant),
                       ),
                     ),
                     errorWidget: (context, url, error) => Container(
                       color: Theme.of(context).colorScheme.surfaceVariant,
                       child: Center(
-                        child: Icon(Icons.broken_image, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        child: Icon(Icons.broken_image,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant),
                       ),
                     ),
                   ),
@@ -69,9 +74,13 @@ class AccommodationCard extends StatelessWidget {
                   top: 15.h,
                   right: 15.w,
                   child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surface.withOpacity(0.8),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .surface
+                          .withOpacity(0.8),
                       borderRadius: BorderRadius.circular(20.r),
                     ),
                     child: Row(
@@ -81,9 +90,10 @@ class AccommodationCard extends StatelessWidget {
                         SizedBox(width: 4.w),
                         Text(
                           '4.5',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                         ),
                       ],
                     ),
@@ -102,8 +112,8 @@ class AccommodationCard extends StatelessWidget {
                 Text(
                   'Private Room in San Francisco',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
                 SizedBox(height: 6.h),
                 // Location
@@ -133,49 +143,49 @@ class AccommodationCard extends StatelessWidget {
                       children: [
                         Text(
                           '\$289 night',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                         ),
                         SizedBox(height: 4.h),
                         Text(
                           '\$120 total',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                          ),
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface
+                                        .withOpacity(0.6),
+                                  ),
                         ),
                       ],
                     ),
-                    // Book Now Button
+                    // View Accommodations Button
                     ElevatedButton(
                       onPressed: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => HotelDetailsPage(
-                              index: index,
-                              imageUrl: 'https://picsum.photos/200/200?random=$index',
-                              title: 'Private Room in San Francisco',
-                              location: 'Location $index',
-                              description: 'Private Room & Balcony-Connected...',
-                              price: '\$289 night',
-                              totalPrice: '\$120 total',
-                            ),
+                            builder: (context) => const AccommodationListPage(),
                           ),
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 20.w, vertical: 12.h),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12.r),
                         ),
                         backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                        textStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        foregroundColor:
+                            Theme.of(context).colorScheme.onPrimary,
+                        textStyle:
+                            Theme.of(context).textTheme.labelLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                       ),
-                      child: Text('Book Now'),
+                      child: Text('View All'),
                     ),
                   ],
                 ),

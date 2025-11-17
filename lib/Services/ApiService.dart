@@ -1,12 +1,12 @@
-
 import 'package:dio/dio.dart';
-
-
 
 abstract class APIService {
   final String baseUrl;
   final String authToken;
-  APIService(this.baseUrl, this.authToken, );
+  APIService(
+    this.baseUrl,
+    this.authToken,
+  );
 
   Future<R> get<R>({
     required String path,
@@ -66,19 +66,20 @@ class APIServiceNodeJS extends APIService {
   }
 
   /// Extract detailed error message from DioException
-  String _extractErrorMessage(DioException e, {String defaultMessage = 'Request failed'}) {
+  String _extractErrorMessage(DioException e,
+      {String defaultMessage = 'Request failed'}) {
     // Priority 1: Check response data for backend error messages
     if (e.response?.data != null) {
       try {
         final data = e.response!.data;
-        
+
         // Handle JSON response
         if (data is Map<String, dynamic>) {
           // Check for 'message' field (most common)
           if (data.containsKey('message') && data['message'] != null) {
             return data['message'].toString();
           }
-          
+
           // Check for 'error' field
           if (data.containsKey('error') && data['error'] != null) {
             final error = data['error'];
@@ -88,7 +89,7 @@ class APIServiceNodeJS extends APIService {
               return error['message'].toString();
             }
           }
-          
+
           // Check for 'errors' array (validation errors)
           if (data.containsKey('errors') && data['errors'] is List) {
             final errors = data['errors'] as List;
@@ -99,13 +100,13 @@ class APIServiceNodeJS extends APIService {
               return errors.first.toString();
             }
           }
-          
+
           // Check for 'detail' field
           if (data.containsKey('detail')) {
             return data['detail'].toString();
           }
         }
-        
+
         // Handle string response
         if (data is String && data.isNotEmpty) {
           return data;
@@ -114,7 +115,7 @@ class APIServiceNodeJS extends APIService {
         // Continue to fallback options
       }
     }
-    
+
     // Priority 2: Check HTTP status code
     if (e.response?.statusCode != null) {
       final statusCode = e.response!.statusCode!;
@@ -143,7 +144,7 @@ class APIServiceNodeJS extends APIService {
           return 'HTTP $statusCode: ${e.response?.statusMessage ?? defaultMessage}';
       }
     }
-    
+
     // Priority 3: Check DioException type
     switch (e.type) {
       case DioExceptionType.connectionTimeout:
@@ -161,12 +162,12 @@ class APIServiceNodeJS extends APIService {
       default:
         break;
     }
-    
+
     // Priority 4: Use Dio's error message
     if (e.message != null && e.message!.isNotEmpty) {
       return e.message!;
     }
-    
+
     // Fallback
     return defaultMessage;
   }
@@ -179,12 +180,9 @@ class APIServiceNodeJS extends APIService {
     Map<String, String>? headers,
   }) async {
     try {
-      final response = await _dio.request(
-        path,
-        queryParameters: queryParams,
-        options: _getOptions(headers).copyWith(
-        method: "GET")
-      );
+      final response = await _dio.request(path,
+          queryParameters: queryParams,
+          options: _getOptions(headers).copyWith(method: "GET"));
 
       if (response.statusCode == 200) {
         return fromJson(response.data["data"]);
@@ -203,7 +201,8 @@ class APIServiceNodeJS extends APIService {
         throw Exception(errorMessage);
       }
     } on DioException catch (e) {
-      final errorMessage = _extractErrorMessage(e, defaultMessage: 'Failed to fetch data');
+      final errorMessage =
+          _extractErrorMessage(e, defaultMessage: 'Failed to fetch data');
       throw Exception(errorMessage);
     } catch (e) {
       throw Exception('Unexpected error: ${e.toString()}');
@@ -241,7 +240,8 @@ class APIServiceNodeJS extends APIService {
         throw Exception(errorMessage);
       }
     } on DioException catch (e) {
-      final errorMessage = _extractErrorMessage(e, defaultMessage: 'Failed to send data');
+      final errorMessage =
+          _extractErrorMessage(e, defaultMessage: 'Failed to send data');
       throw Exception(errorMessage);
     } catch (e) {
       throw Exception('Unexpected error: ${e.toString()}');
@@ -279,7 +279,46 @@ class APIServiceNodeJS extends APIService {
         throw Exception(errorMessage);
       }
     } on DioException catch (e) {
-      final errorMessage = _extractErrorMessage(e, defaultMessage: 'Failed to update data');
+      final errorMessage =
+          _extractErrorMessage(e, defaultMessage: 'Failed to update data');
+      throw Exception(errorMessage);
+    } catch (e) {
+      throw Exception('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  Future<R> patch<R>({
+    required String path,
+    required dynamic body,
+    required R Function(dynamic json) fromJson,
+    Map<String, String>? headers,
+  }) async {
+    try {
+      final response = await _dio.patch(
+        path,
+        data: body,
+        options: _getOptions(headers),
+      );
+
+      if (response.statusCode == 200) {
+        return fromJson(response.data);
+      } else {
+        // Extract error message from API response
+        String errorMessage = 'Failed to update data';
+        if (response.data != null && response.data is Map) {
+          final data = response.data as Map<String, dynamic>;
+          if (data.containsKey('message')) {
+            errorMessage = data['message'];
+          } else if (data.containsKey('error')) {
+            errorMessage = data['error'].toString();
+          }
+        }
+
+        throw Exception(errorMessage);
+      }
+    } on DioException catch (e) {
+      final errorMessage =
+          _extractErrorMessage(e, defaultMessage: 'Failed to update data');
       throw Exception(errorMessage);
     } catch (e) {
       throw Exception('Unexpected error: ${e.toString()}');
@@ -320,7 +359,8 @@ class APIServiceNodeJS extends APIService {
         throw Exception(errorMessage);
       }
     } on DioException catch (e) {
-      final errorMessage = _extractErrorMessage(e, defaultMessage: 'Failed to delete resource');
+      final errorMessage =
+          _extractErrorMessage(e, defaultMessage: 'Failed to delete resource');
       throw Exception(errorMessage);
     } catch (e) {
       throw Exception('Unexpected error: ${e.toString()}');
@@ -360,11 +400,11 @@ class APIServiceNodeJS extends APIService {
         throw Exception(errorMessage);
       }
     } on DioException catch (e) {
-      final errorMessage = _extractErrorMessage(e, defaultMessage: 'Failed to upload file');
+      final errorMessage =
+          _extractErrorMessage(e, defaultMessage: 'Failed to upload file');
       throw Exception(errorMessage);
     } catch (e) {
       throw Exception('Unexpected error: ${e.toString()}');
     }
   }
 }
-

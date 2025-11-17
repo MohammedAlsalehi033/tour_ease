@@ -1,0 +1,2 @@
+D:/University Stuff/FYP/code/tour_ease/android/app/.cxx/Debug/3c3d712n/armeabi-v7a/CMakeFiles/edit_cache.dir
+D:/University Stuff/FYP/code/tour_ease/android/app/.cxx/Debug/3c3d712n/armeabi-v7a/CMakeFiles/rebuild_cache.dir

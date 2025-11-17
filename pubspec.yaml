@@ -35,6 +35,10 @@ dependencies:
   cached_network_image: ^3.2.3
   carousel_slider: ^5.0.0
   google_fonts: ^4.0.4
+  # flutter_stripe 12.x requires Dart >=3.8.1. Current SDK is 3.7.2.
+  # If you want to upgrade Flutter/Dart to a newer SDK, remove this pin and update Flutter.
+  # For now pin to a version compatible with the project's Dart SDK.
+  flutter_stripe: ^9.6.0
 
 
   # The following adds the Cupertino Icons font to your application.

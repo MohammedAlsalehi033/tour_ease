@@ -105,9 +105,10 @@ class _AuthScreenState extends State<AuthScreen> {
                   String email = _textEditingControllerEmail.text;
                   String password = _textEditingControllerPassword.text;
                   if (email.isEmpty || password.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Please fill in all fields')),
-                    );
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Please fill in all fields')),
+                        );
                     return;
                   }
                   try{
@@ -117,7 +118,8 @@ class _AuthScreenState extends State<AuthScreen> {
                       MaterialPageRoute(builder: (context) => MainPage()),
                           (Route<dynamic> route) => false,
                     );
-                  }catch(e) {
+                  } catch (e) {
+                    if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Sign-in failed: $e')),
                     );

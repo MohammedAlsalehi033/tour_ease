@@ -475,7 +475,7 @@ class _RidebookingscreenTravelerState extends State<RidebookingscreenTraveler> {
                                         builder: (context) => ChatPage(
                                           currentUserId: UserModel().id,
                                           otherUserId: providerId,
-                                          apiBaseUrl: 'http://10.0.2.2:3000/api',
+                                          apiBaseUrl: 'https://api.tourease.me/api',
                                           otherUserName: driverName,
                                           otherUserAvatar: driverAvatar,
                                         ),
