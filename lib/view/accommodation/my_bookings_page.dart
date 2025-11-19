@@ -323,24 +323,8 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
       // Using deployed backend - Use existing /reviews endpoint with JWT auth
       final apiService = APIServiceNodeJS('https://api.tourease.me/api', jwtToken);
 
-      // Step 1: Create review for the booking
-      final bookingReviewResponse = await apiService.post<Map<String, dynamic>>(
-        path: '/reviews',
-        body: {
-          'reviewableType': 'ACCOMMODATION_BOOKING',
-          'reviewableId': bookingId,
-          'rating': rating.toInt(),
-          'comment': reviewText,
-        },
-        fromJson: (json) => json as Map<String, dynamic>,
-      );
-
-      if (bookingReviewResponse['success'] != true) {
-        throw Exception('Failed to submit booking review');
-      }
-
-      // Step 2: Create review for the accommodation
-      await apiService.post<Map<String, dynamic>>(
+      // Create review for the accommodation only (not for booking)
+      final reviewResponse = await apiService.post<Map<String, dynamic>>(
         path: '/reviews',
         body: {
           'reviewableType': 'ACCOMMODATION',
@@ -351,7 +335,11 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
         fromJson: (json) => json as Map<String, dynamic>,
       );
 
-      // Step 3: Update booking status to "complete"
+      if (reviewResponse['success'] != true) {
+        throw Exception('Failed to submit review');
+      }
+
+      // Update booking status to "complete" after review is submitted
       await apiService.patch<Map<String, dynamic>>(
         path: '/accommodation-bookings/$bookingId/status',
         body: {'status': 'complete'},
