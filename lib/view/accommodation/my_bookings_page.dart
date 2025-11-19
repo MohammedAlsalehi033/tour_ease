@@ -266,10 +266,9 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
                 // Close dialog first
                 Navigator.pop(context);
                 
-                // Submit review
+                // Submit review (accommodationId will be retrieved from booking on backend)
                 await _submitReview(
                   booking['id'],
-                  booking['room']?['accommodationId'],
                   rating,
                   reviewController.text,
                 );
@@ -284,7 +283,6 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
 
   Future<void> _submitReview(
     int bookingId,
-    int? accommodationId,
     double rating,
     String reviewText,
   ) async {
@@ -308,9 +306,8 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
       final response = await apiService.post<Map<String, dynamic>>(
         path: '/accommodation-bookings/$bookingId/review',
         body: {
-          'accommodationId': accommodationId,
           'rating': rating,
-          'comment': reviewText, // Changed from 'review' to 'comment'
+          'comment': reviewText,
         },
         fromJson: (json) => json as Map<String, dynamic>,
       );
