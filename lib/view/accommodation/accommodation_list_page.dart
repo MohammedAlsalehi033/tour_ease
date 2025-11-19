@@ -417,7 +417,7 @@ class _AccommodationListPageState extends State<AccommodationListPage> {
                     children: [
                       if (accommodation.minPrice != null)
                         Text(
-                          'From \$${accommodation.minPrice!.toStringAsFixed(0)}/night',
+                          'From PKR ${accommodation.minPrice!.toStringAsFixed(0)}/night',
                           style: Theme.of(context)
                               .textTheme
                               .titleMedium

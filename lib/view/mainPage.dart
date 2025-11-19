@@ -18,6 +18,7 @@ import 'package:tour_ease/Services/accommodation/accommodation_service.dart';
 import 'package:tour_ease/Services/ApiService.dart';
 import 'package:tour_ease/view/accommodation/accommodation_details_page.dart';
 import 'package:tour_ease/view/accommodation/room_booking_page.dart';
+import 'package:tour_ease/view/accommodation/my_bookings_page.dart';
 import 'package:tour_ease/model/accommodation/accommodation_model.dart';
 import 'package:tour_ease/view/NotifiactionScreen.dart';
 import 'package:tour_ease/view/chat/chatsPage.dart';
@@ -187,8 +188,11 @@ class _MainPageState extends State<MainPage> {
       extendBody: true,
       appBar: AppBar(
         title: Text(
-          UserModel().id,
-          style: Theme.of(context).textTheme.titleLarge,
+          'Hello ${UserModel().username.isNotEmpty ? UserModel().username : "User"}',
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.primary,
+              ),
         ),
         actions: [
           Themeswitch(),
@@ -541,28 +545,93 @@ class _AccommodationPageState extends State<AccommodationPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Filter Button
+            // Header Section
             Padding(
-              padding: EdgeInsets.all(16.w),
-              child: Row(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Text(
-                      'Accommodations & Rooms',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
+                  // Title and Filter Button Row
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Accommodations & Rooms',
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: _showFilterDialog,
+                        icon: Icon(Icons.filter_alt, size: 20.sp),
+                        label: Text('Filters'),
+                        style: ElevatedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 16.w, vertical: 10.h),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20.r),
                           ),
-                    ),
+                        ),
+                      ),
+                    ],
                   ),
-                  ElevatedButton.icon(
-                    onPressed: _showFilterDialog,
-                    icon: Icon(Icons.filter_alt, size: 20.sp),
-                    label: Text('Filters'),
-                    style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 16.w, vertical: 10.h),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20.r),
+                  SizedBox(height: 12.h),
+                  // My Bookings Button (Full Width with Icon)
+                  InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MyBookingsPage(),
+                        ),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(12.r),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Theme.of(context).colorScheme.primary,
+                            Theme.of(context).colorScheme.primary.withOpacity(0.8),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(12.r),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.bookmark_rounded,
+                            color: Colors.white,
+                            size: 20.sp,
+                          ),
+                          SizedBox(width: 10.w),
+                          Text(
+                            'View My Bookings',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Spacer(),
+                          Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            color: Colors.white,
+                            size: 14.sp,
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -864,7 +933,7 @@ class _AccommodationPageState extends State<AccommodationPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '\$${room.pricePerNight.toStringAsFixed(0)}',
+                              'PKR ${room.pricePerNight.toStringAsFixed(0)}',
                               style: Theme.of(context)
                                   .textTheme
                                   .titleLarge

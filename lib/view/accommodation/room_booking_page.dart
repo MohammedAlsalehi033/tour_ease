@@ -87,6 +87,41 @@ class _RoomBookingPageState extends State<RoomBookingPage> {
       return;
     }
 
+    // Show currency information dialog first
+    final shouldProceed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.info_outline, color: Theme.of(context).colorScheme.primary, size: 28.sp),
+            SizedBox(width: 10.w),
+            Text('Payment Information'),
+          ],
+        ),
+        content: Text(
+          'Total Amount: PKR ${totalPrice.toStringAsFixed(2)}\n\n'
+          'Note: The payment gateway will display the amount in USD for processing purposes, '
+          'but you will be charged the equivalent PKR amount shown above.',
+          style: TextStyle(fontSize: 14.sp),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+            ),
+            child: Text('Proceed to Payment'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldProceed != true) return;
+
     setState(() => _isProcessing = true);
 
     try {
@@ -129,7 +164,7 @@ class _RoomBookingPageState extends State<RoomBookingPage> {
               content: Text(
                 'Your payment was successful and your booking has been confirmed.\n\n'
                 'Booking ID: $bookingId\n'
-                'Total Paid: \$${totalPrice.toStringAsFixed(2)}',
+                'Total Paid: PKR ${totalPrice.toStringAsFixed(2)}',
               ),
               actions: [
                 TextButton(
@@ -501,7 +536,7 @@ class _RoomBookingPageState extends State<RoomBookingPage> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      '\$${widget.room.pricePerNight.toStringAsFixed(0)}',
+                      'PKR ${widget.room.pricePerNight.toStringAsFixed(0)}',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             color: Theme.of(context).colorScheme.primary,
                             fontWeight: FontWeight.bold,
@@ -610,7 +645,7 @@ class _RoomBookingPageState extends State<RoomBookingPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Price per night', style: TextStyle(fontSize: 12.sp)),
-                Text('\$${widget.room.pricePerNight.toStringAsFixed(0)}',
+                Text('PKR ${widget.room.pricePerNight.toStringAsFixed(0)}',
                     style: TextStyle(fontSize: 12.sp)),
               ],
             ),
@@ -633,7 +668,7 @@ class _RoomBookingPageState extends State<RoomBookingPage> {
                       ),
                 ),
                 Text(
-                  '\$${totalPrice.toStringAsFixed(2)}',
+                  'PKR ${totalPrice.toStringAsFixed(2)}',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         color: Theme.of(context).colorScheme.primary,
                         fontWeight: FontWeight.bold,
