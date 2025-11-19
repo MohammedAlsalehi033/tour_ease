@@ -153,8 +153,9 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
       // Using deployed backend
       final apiService = APIServiceNodeJS('https://api.tourease.me/api', user.id);
 
-      final response = await apiService.delete<Map<String, dynamic>>(
+      final response = await apiService.patch<Map<String, dynamic>>(
         path: '/accommodation-bookings/$bookingId/cancel-and-refund',
+        body: {}, // Empty body since we're just changing status
         fromJson: (json) => json as Map<String, dynamic>,
       );
 

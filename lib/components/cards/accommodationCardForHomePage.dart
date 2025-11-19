@@ -142,7 +142,7 @@ class AccommodationCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '\$289 night',
+                          'PKR 289 night',
                           style:
                               Theme.of(context).textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.bold,
@@ -150,7 +150,7 @@ class AccommodationCard extends StatelessWidget {
                         ),
                         SizedBox(height: 4.h),
                         Text(
-                          '\$120 total',
+                          'PKR 120 total',
                           style:
                               Theme.of(context).textTheme.bodyMedium?.copyWith(
                                     color: Theme.of(context)

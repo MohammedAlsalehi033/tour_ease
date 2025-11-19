@@ -99,6 +99,20 @@ class StripeService {
           style: ThemeMode.system,
           customFlow: false,
           allowsDelayedPaymentMethods: true,
+          appearance: PaymentSheetAppearance(
+            primaryButton: PaymentSheetPrimaryButtonAppearance(
+              colors: PaymentSheetPrimaryButtonTheme(
+                light: PaymentSheetPrimaryButtonThemeColors(
+                  background: null,
+                  text: null,
+                  border: null,
+                ),
+              ),
+            ),
+          ),
+          // Override the currency symbol in payment sheet
+          customerId: null,
+          customerEphemeralKeySecret: null,
         ),
       );
 
