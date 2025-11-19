@@ -203,7 +203,7 @@ class _AccommodationListPageState extends State<AccommodationListPage> {
 
           // Price Range Filter
           Text(
-            'Price Range: PKR ${_priceRange.start.toInt()} - PKR ${_priceRange.end.toInt()}',
+            'Price Range: \$${_priceRange.start.toInt()} - \$${_priceRange.end.toInt()}',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           RangeSlider(
@@ -212,8 +212,8 @@ class _AccommodationListPageState extends State<AccommodationListPage> {
             max: _maxKnownPrice,
             divisions: 20,
             labels: RangeLabels(
-              'PKR ${_priceRange.start.toInt()}',
-              'PKR ${_priceRange.end.toInt()}',
+              '\$${_priceRange.start.toInt()}',
+              '\$${_priceRange.end.toInt()}',
             ),
             onChanged: (values) {
               setState(() => _priceRange = values);
@@ -417,7 +417,7 @@ class _AccommodationListPageState extends State<AccommodationListPage> {
                     children: [
                       if (accommodation.minPrice != null)
                         Text(
-                          'From PKR ${accommodation.minPrice!.toStringAsFixed(0)}/night',
+                          'From \$${accommodation.minPrice!.toStringAsFixed(0)}/night',
                           style: Theme.of(context)
                               .textTheme
                               .titleMedium

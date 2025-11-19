@@ -320,7 +320,7 @@ class _AccommodationDetailsPageState extends State<AccommodationDetailsPage> {
                     ),
                     Spacer(),
                     Text(
-                      'PKR ${room.pricePerNight.toStringAsFixed(0)}',
+                      '\$${room.pricePerNight.toStringAsFixed(0)}',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             color: Theme.of(context).colorScheme.primary,
                             fontWeight: FontWeight.bold,
