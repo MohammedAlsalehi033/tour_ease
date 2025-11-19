@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import '../../model/userManagment/user.dart';
 import '../../Services/ApiService.dart';
+import '../../controller/userManagment/JWTController.dart';
 
 class MyBookingsPage extends StatefulWidget {
   const MyBookingsPage({Key? key}) : super(key: key);
@@ -313,9 +314,14 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
     );
 
     try {
-      final user = UserModel();
-      // Using deployed backend - Use existing /reviews endpoint
-      final apiService = APIServiceNodeJS('https://api.tourease.me/api', user.id);
+      // Get Firebase JWT token for authentication
+      final jwtToken = await getFirebaseIdToken();
+      if (jwtToken == null || jwtToken.isEmpty) {
+        throw Exception('Authentication failed. Please login again.');
+      }
+
+      // Using deployed backend - Use existing /reviews endpoint with JWT auth
+      final apiService = APIServiceNodeJS('https://api.tourease.me/api', jwtToken);
 
       // Step 1: Create review for the booking
       final bookingReviewResponse = await apiService.post<Map<String, dynamic>>(
