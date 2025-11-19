@@ -150,12 +150,12 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
 
     try {
       final user = UserModel();
-      // Using deployed backend
+      // Using deployed backend - Use existing /status endpoint
       final apiService = APIServiceNodeJS('https://api.tourease.me/api', user.id);
 
       final response = await apiService.patch<Map<String, dynamic>>(
-        path: '/accommodation-bookings/$bookingId/cancel-and-refund',
-        body: {}, // Empty body since we're just changing status
+        path: '/accommodation-bookings/$bookingId/status',
+        body: {'status': 'cancelled'}, // Use existing status update endpoint
         fromJson: (json) => json as Map<String, dynamic>,
       );
 
@@ -286,6 +286,20 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
     double rating,
     String reviewText,
   ) async {
+    // Get the booking details to find accommodation ID
+    final booking = _filteredBookings.firstWhere((b) => b['id'] == bookingId, orElse: () => {});
+    final accommodationId = booking['room']?['accommodation']?['id'];
+    
+    if (accommodationId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: Could not find accommodation for this booking'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     // Show loading dialog
     showDialog(
       context: context,
@@ -300,15 +314,41 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
 
     try {
       final user = UserModel();
-      // Using deployed backend
+      // Using deployed backend - Use existing /reviews endpoint
       final apiService = APIServiceNodeJS('https://api.tourease.me/api', user.id);
 
-      final response = await apiService.post<Map<String, dynamic>>(
-        path: '/accommodation-bookings/$bookingId/review',
+      // Step 1: Create review for the booking
+      final bookingReviewResponse = await apiService.post<Map<String, dynamic>>(
+        path: '/reviews',
         body: {
-          'rating': rating,
+          'reviewableType': 'ACCOMMODATION_BOOKING',
+          'reviewableId': bookingId,
+          'rating': rating.toInt(),
           'comment': reviewText,
         },
+        fromJson: (json) => json as Map<String, dynamic>,
+      );
+
+      if (bookingReviewResponse['success'] != true) {
+        throw Exception('Failed to submit booking review');
+      }
+
+      // Step 2: Create review for the accommodation
+      await apiService.post<Map<String, dynamic>>(
+        path: '/reviews',
+        body: {
+          'reviewableType': 'ACCOMMODATION',
+          'reviewableId': accommodationId,
+          'rating': rating.toInt(),
+          'comment': reviewText,
+        },
+        fromJson: (json) => json as Map<String, dynamic>,
+      );
+
+      // Step 3: Update booking status to "complete"
+      await apiService.patch<Map<String, dynamic>>(
+        path: '/accommodation-bookings/$bookingId/status',
+        body: {'status': 'complete'},
         fromJson: (json) => json as Map<String, dynamic>,
       );
 
@@ -317,18 +357,14 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
         Navigator.pop(context);
       }
 
-      if (response['success'] == true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Review submitted successfully! Booking marked as complete.'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 3),
-          ),
-        );
-        await _loadBookings(); // Reload to show updated status
-      } else {
-        throw Exception(response['message'] ?? 'Failed to submit review');
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Review submitted successfully! Booking marked as complete.'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      await _loadBookings(); // Reload to show updated status
     } catch (e) {
       // Close loading dialog if still open
       if (Navigator.canPop(context)) {
