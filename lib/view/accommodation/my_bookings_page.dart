@@ -140,8 +140,11 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => Center(
-        child: CircularProgressIndicator(),
+      builder: (BuildContext dialogContext) => WillPopScope(
+        onWillPop: () async => false,
+        child: Center(
+          child: CircularProgressIndicator(),
+        ),
       ),
     );
 
@@ -156,7 +159,9 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
       );
 
       // Close loading dialog
-      Navigator.pop(context);
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
 
       if (response['success'] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -172,7 +177,9 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
       }
     } catch (e) {
       // Close loading dialog if still open
-      Navigator.of(context, rootNavigator: true).pop();
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
       
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -258,24 +265,13 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
                 // Close dialog first
                 Navigator.pop(context);
                 
-                // Show loading
-                showDialog(
-                  context: context,
-                  barrierDismissible: false,
-                  builder: (context) => Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                );
-                
+                // Submit review
                 await _submitReview(
                   booking['id'],
                   booking['room']?['accommodationId'],
                   rating,
                   reviewController.text,
                 );
-                
-                // Close loading dialog
-                Navigator.of(context, rootNavigator: true).pop();
               },
               child: Text('Submit Review'),
             ),
@@ -291,6 +287,18 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
     double rating,
     String reviewText,
   ) async {
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) => WillPopScope(
+        onWillPop: () async => false,
+        child: Center(
+          child: CircularProgressIndicator(),
+        ),
+      ),
+    );
+
     try {
       final user = UserModel();
       // Using deployed backend
@@ -306,6 +314,11 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
         fromJson: (json) => json as Map<String, dynamic>,
       );
 
+      // Close loading dialog
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+
       if (response['success'] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -319,6 +332,11 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
         throw Exception(response['message'] ?? 'Failed to submit review');
       }
     } catch (e) {
+      // Close loading dialog if still open
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: ${e.toString()}'),
