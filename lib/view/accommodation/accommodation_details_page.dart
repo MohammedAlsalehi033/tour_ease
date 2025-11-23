@@ -6,6 +6,7 @@ import '../../Services/ApiService.dart';
 import '../../Services/accommodation/accommodation_service.dart';
 import '../../model/accommodation/accommodation_model.dart';
 import '../../model/userManagment/user.dart';
+import '../../controller/userManagment/JWTController.dart';
 import 'room_booking_page.dart';
 
 class AccommodationDetailsPage extends StatefulWidget {
@@ -464,13 +465,13 @@ class _AccommodationReviewsDialogState
     });
 
     try {
-      // No auth token needed - endpoint is now public
-      final apiService =
-          APIServiceNodeJS('https://api.tourease.me/api', '');
+      // Get Firebase JWT token for authentication
+      final token = await JWTController.getFirebaseIdToken();
+      final apiService = APIServiceNodeJS('https://api.tourease.me/api', token);
 
       print('[Reviews] Fetching reviews for accommodation ${widget.accommodationId}');
 
-      // Get reviews for this accommodation (PUBLIC endpoint, no auth required)
+      // Get reviews for this accommodation (requires JWT authentication)
       final response = await apiService.get<dynamic>(
         path: '/reviews/item/ACCOMMODATION/${widget.accommodationId}',
         queryParams: {'page': '1', 'limit': '50'},
