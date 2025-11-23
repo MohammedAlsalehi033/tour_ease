@@ -256,11 +256,13 @@ class _AccommodationDetailsPageState extends State<AccommodationDetailsPage> {
   }
 
   Future<void> _showReviewsDialog() async {
-    showDialog(
-      context: context,
-      builder: (context) => AccommodationReviewsDialog(
-        accommodationId: widget.accommodationId,
-        accommodationName: _accommodation!.name,
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AccommodationReviewsDialog(
+          accommodationId: widget.accommodationId,
+          accommodationName: _accommodation!.name,
+        ),
       ),
     );
   }
@@ -522,100 +524,111 @@ class _AccommodationReviewsDialogState
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16.r),
-      ),
-      child: Container(
-        padding: EdgeInsets.all(16.w),
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.8,
-          maxWidth: MediaQuery.of(context).size.width * 0.9,
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.white,
+        leading: IconButton(
+          icon: Icon(Icons.close, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
         ),
-        child: Column(
+        title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
-            Row(
-              children: [
-                Icon(Icons.rate_review, size: 24.w),
-                SizedBox(width: 8.w),
-                Expanded(
-                  child: Text(
-                    'Reviews',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: Icon(Icons.close),
-                ),
-              ],
+            Text(
+              'Reviews',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 20.sp,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             Text(
               widget.accommodationName,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[600],
-                  ),
-            ),
-            SizedBox(height: 16.h),
-            Divider(),
-
-            // Reviews List
-            Expanded(
-              child: _isLoading
-                  ? Center(child: CircularProgressIndicator())
-                  : _error.isNotEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.error_outline,
-                                  size: 48.w, color: Colors.red),
-                              SizedBox(height: 8.h),
-                              Text('Error loading reviews'),
-                              SizedBox(height: 8.h),
-                              TextButton(
-                                onPressed: _loadReviews,
-                                child: Text('Retry'),
-                              ),
-                            ],
-                          ),
-                        )
-                      : _reviews.isEmpty
-                          ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.reviews_outlined,
-                                      size: 48.w, color: Colors.grey),
-                                  SizedBox(height: 8.h),
-                                  Text('No reviews yet'),
-                                  SizedBox(height: 4.h),
-                                  Text(
-                                    'Be the first to review!',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
-                                        ?.copyWith(color: Colors.grey),
-                                  ),
-                                ],
-                              ),
-                            )
-                          : ListView.separated(
-                              itemCount: _reviews.length,
-                              separatorBuilder: (context, index) => Divider(),
-                              itemBuilder: (context, index) {
-                                final review = _reviews[index];
-                                return _buildReviewCard(review);
-                              },
-                            ),
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 14.sp,
+                fontWeight: FontWeight.normal,
+              ),
             ),
           ],
         ),
       ),
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator())
+          : _error.isNotEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.error_outline,
+                          size: 64.w, color: Colors.red),
+                      SizedBox(height: 16.h),
+                      Text(
+                        'Error loading reviews',
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      Text(
+                        _error,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 14.sp,
+                        ),
+                      ),
+                      SizedBox(height: 16.h),
+                      ElevatedButton.icon(
+                        onPressed: _loadReviews,
+                        icon: Icon(Icons.refresh),
+                        label: Text('Retry'),
+                      ),
+                    ],
+                  ),
+                )
+              : _reviews.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.rate_review_outlined,
+                            size: 80.w,
+                            color: Colors.grey[300],
+                          ),
+                          SizedBox(height: 16.h),
+                          Text(
+                            'No reviews yet',
+                            style: TextStyle(
+                              fontSize: 20.sp,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                          SizedBox(height: 8.h),
+                          Text(
+                            'Be the first to review this place!',
+                            style: TextStyle(
+                              color: Colors.grey[500],
+                              fontSize: 14.sp,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.separated(
+                      padding: EdgeInsets.all(16.w),
+                      itemCount: _reviews.length,
+                      separatorBuilder: (context, index) => Divider(height: 32.h),
+                      itemBuilder: (context, index) {
+                        final review = _reviews[index];
+                        return _buildReviewCard(review);
+                      },
+                    ),
     );
   }
 
@@ -627,18 +640,40 @@ class _AccommodationReviewsDialogState
         ? DateTime.parse(review['createdAt'])
         : null;
 
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8.h),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      padding: EdgeInsets.all(16.w),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: 20.r,
-                child: Text(
-                  reviewerName[0].toUpperCase(),
-                  style: TextStyle(fontWeight: FontWeight.bold),
+              Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF1976D2), Color(0xFF42A5F5)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: CircleAvatar(
+                  radius: 24.w,
+                  backgroundColor: Colors.transparent,
+                  child: Text(
+                    reviewerName.isNotEmpty
+                        ? reviewerName[0].toUpperCase()
+                        : 'A',
+                    style: TextStyle(
+                      fontSize: 20.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ),
               SizedBox(width: 12.w),
@@ -651,6 +686,7 @@ class _AccommodationReviewsDialogState
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16.sp,
+                        color: Colors.black87,
                       ),
                     ),
                     if (createdAt != null)
@@ -658,29 +694,29 @@ class _AccommodationReviewsDialogState
                         '${createdAt.day}/${createdAt.month}/${createdAt.year}',
                         style: TextStyle(
                           color: Colors.grey[600],
-                          fontSize: 12.sp,
+                          fontSize: 13.sp,
                         ),
                       ),
                   ],
                 ),
               ),
-              // Rating stars
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                 decoration: BoxDecoration(
-                  color: Colors.amber,
-                  borderRadius: BorderRadius.circular(8.r),
+                  color: _getRatingColor(rating),
+                  borderRadius: BorderRadius.circular(20.r),
                 ),
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.star, size: 16.w, color: Colors.white),
+                    Icon(Icons.star, color: Colors.white, size: 16.w),
                     SizedBox(width: 4.w),
                     Text(
                       rating.toString(),
                       style: TextStyle(
                         color: Colors.white,
-                        fontWeight: FontWeight.bold,
                         fontSize: 14.sp,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],
@@ -688,13 +724,32 @@ class _AccommodationReviewsDialogState
               ),
             ],
           ),
-          SizedBox(height: 8.h),
-          Text(
-            comment,
-            style: TextStyle(fontSize: 14.sp),
-          ),
+          if (comment.isNotEmpty) ...[
+            SizedBox(height: 16.h),
+            Container(
+              padding: EdgeInsets.all(12.w),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              child: Text(
+                comment,
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: Colors.black87,
+                  height: 1.5,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
+  }
+
+  Color _getRatingColor(int rating) {
+    if (rating >= 4) return Colors.green;
+    if (rating >= 3) return Colors.orange;
+    return Colors.red;
   }
 }
