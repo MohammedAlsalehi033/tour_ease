@@ -482,7 +482,16 @@ class _AccommodationReviewsDialogState
 
       // Handle different response formats
       if (response is Map<String, dynamic>) {
-        if (response['success'] == true) {
+        // Backend returns {reviews: [...], stats: {...}}
+        if (response.containsKey('reviews')) {
+          final reviewsList = response['reviews'];
+          setState(() {
+            _reviews = (reviewsList is List) ? reviewsList : [];
+            _isLoading = false;
+          });
+          print('[Reviews] Loaded ${_reviews.length} reviews');
+        } else if (response['success'] == true) {
+          // Fallback for success/data format
           final data = response['data'];
           setState(() {
             _reviews = (data is List) ? data : [];
