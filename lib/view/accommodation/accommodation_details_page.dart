@@ -230,9 +230,6 @@ class _AccommodationDetailsPageState extends State<AccommodationDetailsPage> {
   }
 
   Widget _buildReviewsButton() {
-    final reviewCount = _accommodation!.reviewCount ?? 0;
-    final averageRating = _accommodation!.averageRating ?? 0.0;
-
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
       child: ElevatedButton.icon(
@@ -240,11 +237,7 @@ class _AccommodationDetailsPageState extends State<AccommodationDetailsPage> {
           _showReviewsDialog();
         },
         icon: Icon(Icons.rate_review),
-        label: Text(
-          reviewCount > 0
-              ? 'View $reviewCount Review${reviewCount > 1 ? 's' : ''} (${averageRating.toStringAsFixed(1)} ⭐)'
-              : 'No Reviews Yet',
-        ),
+        label: Text('View Reviews'),
         style: ElevatedButton.styleFrom(
           minimumSize: Size(double.infinity, 48.h),
           shape: RoundedRectangleBorder(
