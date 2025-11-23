@@ -226,7 +226,7 @@ class _RoomBookingPageState extends State<RoomBookingPage> {
           'checkInDate': _checkInDate!.toIso8601String(),
           'checkOutDate': _checkOutDate!.toIso8601String(),
           'totalPrice': totalPrice,
-          'paymentId': paymentIntentId,
+          'transactionId': paymentIntentId, // Changed from paymentId to transactionId
         },
         fromJson: (json) => json as Map<String, dynamic>,
       );
