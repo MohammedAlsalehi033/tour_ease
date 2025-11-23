@@ -17,7 +17,8 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
   List<dynamic> _filteredBookings = [];
   bool _isLoading = true;
   String _error = '';
-  String _selectedFilter = 'all'; // all, confirmed, complete, checked out, cancelled, refunded
+  String _selectedFilter =
+      'all'; // all, confirmed, complete, checked out, cancelled, refunded
 
   @override
   void initState() {
@@ -38,7 +39,8 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
       }
 
       // Using deployed backend for fetching bookings
-      final apiService = APIServiceNodeJS('https://api.tourease.me/api', user.id);
+      final apiService =
+          APIServiceNodeJS('https://api.tourease.me/api', user.id);
 
       // The API returns either a Map with success/data or a List directly
       dynamic response;
@@ -53,7 +55,7 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
       }
 
       List<dynamic> bookingsList = [];
-      
+
       // Handle different response formats
       if (response is Map<String, dynamic>) {
         if (response['success'] == true && response['data'] != null) {
@@ -74,7 +76,8 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
         print('Sample booking data: ${bookingsList[0]}');
         print('Room data: ${bookingsList[0]['room']}');
         if (bookingsList[0]['room'] != null) {
-          print('Accommodation data: ${bookingsList[0]['room']['accommodation']}');
+          print(
+              'Accommodation data: ${bookingsList[0]['room']['accommodation']}');
         }
       }
 
@@ -109,7 +112,8 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
       builder: (context) => AlertDialog(
         title: Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 28.sp),
+            Icon(Icons.warning_amber_rounded,
+                color: Colors.orange, size: 28.sp),
             SizedBox(width: 10.w),
             Text('Cancel Booking'),
           ],
@@ -152,7 +156,8 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
     try {
       final user = UserModel();
       // Using deployed backend - Use existing /status endpoint
-      final apiService = APIServiceNodeJS('https://api.tourease.me/api', user.id);
+      final apiService =
+          APIServiceNodeJS('https://api.tourease.me/api', user.id);
 
       final response = await apiService.patch<Map<String, dynamic>>(
         path: '/accommodation-bookings/$bookingId/status',
@@ -182,7 +187,7 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
       if (Navigator.canPop(context)) {
         Navigator.pop(context);
       }
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: ${e.toString()}'),
@@ -211,7 +216,8 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
                   booking['room']?['accommodation']?['name'] ??
                       booking['room']?['accommodation']?['accommodationName'] ??
                       'Accommodation',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.sp),
+                  style:
+                      TextStyle(fontWeight: FontWeight.bold, fontSize: 16.sp),
                 ),
                 SizedBox(height: 16.h),
                 Text('Rating:', style: TextStyle(fontWeight: FontWeight.w600)),
@@ -263,10 +269,10 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
                   );
                   return;
                 }
-                
+
                 // Close dialog first
                 Navigator.pop(context);
-                
+
                 // Submit review (accommodationId will be retrieved from booking on backend)
                 await _submitReview(
                   booking['id'],
@@ -288,9 +294,10 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
     String reviewText,
   ) async {
     // Get the booking details to find accommodation ID
-    final booking = _filteredBookings.firstWhere((b) => b['id'] == bookingId, orElse: () => {});
+    final booking = _filteredBookings.firstWhere((b) => b['id'] == bookingId,
+        orElse: () => {});
     final accommodationId = booking['room']?['accommodation']?['id'];
-    
+
     if (accommodationId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -321,19 +328,30 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
       }
 
       // Using deployed backend - Use existing /reviews endpoint with JWT auth
-      final apiService = APIServiceNodeJS('https://api.tourease.me/api', jwtToken);
+      final apiService =
+          APIServiceNodeJS('https://api.tourease.me/api', jwtToken);
 
-      // Create review for the accommodation only (not for booking)
+      // DEBUG: Print what we're sending
+      print('=== SUBMITTING REVIEW ===');
+      print('bookingId: $bookingId');
+      print('accommodationId: $accommodationId');
+      print('rating: ${rating.toInt()}');
+      print('Request body: ${{'reviewableType': 'ACCOMMODATION_BOOKING', 'reviewableId': bookingId, 'rating': rating.toInt(), 'comment': reviewText}}');
+
+      // Create review for the accommodation booking (like transportation booking)
+      // Backend will automatically create 2 reviews: one for booking, one for accommodation
       final reviewResponse = await apiService.post<Map<String, dynamic>>(
         path: '/reviews',
         body: {
-          'reviewableType': 'ACCOMMODATION',
-          'reviewableId': accommodationId,
+          'reviewableType': 'ACCOMMODATION_BOOKING',
+          'reviewableId': bookingId, // Send booking ID as main reviewableId
           'rating': rating.toInt(),
           'comment': reviewText,
         },
         fromJson: (json) => json as Map<String, dynamic>,
       );
+
+      print('Review response: ${reviewResponse}');
 
       if (reviewResponse['success'] != true) {
         throw Exception('Failed to submit review');
@@ -353,7 +371,8 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Review submitted successfully! Booking marked as complete.'),
+          content: Text(
+              'Review submitted successfully! Booking marked as complete.'),
           backgroundColor: Colors.green,
           duration: Duration(seconds: 3),
         ),
@@ -364,7 +383,7 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
       if (Navigator.canPop(context)) {
         Navigator.pop(context);
       }
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: ${e.toString()}'),
@@ -383,7 +402,7 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
     final checkOutDate = booking['checkOutDate'] != null
         ? DateTime.parse(booking['checkOutDate'])
         : null;
-    
+
     double totalPrice = 0.0;
     try {
       if (booking['totalPrice'] is String) {
@@ -394,18 +413,18 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
     } catch (e) {
       totalPrice = 0.0;
     }
-    
-    final accommodationName =
-        booking['room']?['accommodation']?['name'] ?? 
-        booking['accommodation']?['name'] ?? 
-        booking['room']?['accommodation']?['accommodationName'] ?? 
-        booking['accommodation']?['accommodationName'] ?? 'Unknown Accommodation';
+
+    final accommodationName = booking['room']?['accommodation']?['name'] ??
+        booking['accommodation']?['name'] ??
+        booking['room']?['accommodation']?['accommodationName'] ??
+        booking['accommodation']?['accommodationName'] ??
+        'Unknown Accommodation';
     final roomType = booking['room']?['roomType'] ?? 'Room';
     final roomCapacity = booking['room']?['capacity'] ?? 'N/A';
-    final location =
-        booking['room']?['accommodation']?['location'] ?? 
-        booking['accommodation']?['location'] ?? 'Unknown location';
-    final description = booking['room']?['accommodation']?['description'] ?? 
+    final location = booking['room']?['accommodation']?['location'] ??
+        booking['accommodation']?['location'] ??
+        'Unknown location';
+    final description = booking['room']?['accommodation']?['description'] ??
         'No description available';
 
     showDialog(
@@ -457,26 +476,25 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
                 ],
               ),
               SizedBox(height: 16.h),
-              
               _buildDetailRow('Room Type', roomType),
               _buildDetailRow('Capacity', '$roomCapacity guests'),
               _buildDetailRow('Booking ID', '#${booking['id']}'),
-              
               SizedBox(height: 16.h),
               Divider(),
               SizedBox(height: 16.h),
-              
-              _buildDetailRow('Check-in', checkInDate != null 
-                  ? DateFormat('MMM dd, yyyy').format(checkInDate) 
-                  : 'N/A'),
-              _buildDetailRow('Check-out', checkOutDate != null 
-                  ? DateFormat('MMM dd, yyyy').format(checkOutDate) 
-                  : 'N/A'),
-              
+              _buildDetailRow(
+                  'Check-in',
+                  checkInDate != null
+                      ? DateFormat('MMM dd, yyyy').format(checkInDate)
+                      : 'N/A'),
+              _buildDetailRow(
+                  'Check-out',
+                  checkOutDate != null
+                      ? DateFormat('MMM dd, yyyy').format(checkOutDate)
+                      : 'N/A'),
               SizedBox(height: 16.h),
               Divider(),
               SizedBox(height: 16.h),
-              
               Text(
                 'Description',
                 style: TextStyle(
@@ -486,11 +504,9 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
               ),
               SizedBox(height: 8.h),
               Text(description),
-              
               SizedBox(height: 16.h),
               Divider(),
               SizedBox(height: 16.h),
-              
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -694,7 +710,7 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
     final checkOutDate = booking['checkOutDate'] != null
         ? DateTime.parse(booking['checkOutDate'])
         : null;
-    
+
     // Handle totalPrice as either String or number
     double totalPrice = 0.0;
     try {
@@ -707,16 +723,16 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
       print('Error parsing totalPrice: $e');
       totalPrice = 0.0;
     }
-    
-    final accommodationName =
-        booking['room']?['accommodation']?['name'] ?? 
-        booking['accommodation']?['name'] ?? 
-        booking['room']?['accommodation']?['accommodationName'] ?? 
-        booking['accommodation']?['accommodationName'] ?? 'Unknown Accommodation';
+
+    final accommodationName = booking['room']?['accommodation']?['name'] ??
+        booking['accommodation']?['name'] ??
+        booking['room']?['accommodation']?['accommodationName'] ??
+        booking['accommodation']?['accommodationName'] ??
+        'Unknown Accommodation';
     final roomType = booking['room']?['roomType'] ?? 'Room';
-    final location =
-        booking['room']?['accommodation']?['location'] ?? 
-        booking['accommodation']?['location'] ?? 'Unknown location';
+    final location = booking['room']?['accommodation']?['location'] ??
+        booking['accommodation']?['location'] ??
+        'Unknown location';
 
     Color statusColor;
     IconData statusIcon;
@@ -758,126 +774,38 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
         child: Padding(
           padding: EdgeInsets.all(16.w),
           child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header with status
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    accommodationName,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                ),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                  decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20.r),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(statusIcon, size: 16.sp, color: statusColor),
-                      SizedBox(width: 4.w),
-                      Text(
-                        status.toUpperCase(),
-                        style: TextStyle(
-                          color: statusColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12.sp,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 12.h),
-
-            // Room type and location
-            Row(
-              children: [
-                Icon(Icons.hotel, size: 16.sp, color: Colors.grey[600]),
-                SizedBox(width: 6.w),
-                Text(
-                  roomType,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ],
-            ),
-            SizedBox(height: 6.h),
-            Row(
-              children: [
-                Icon(Icons.location_on, size: 16.sp, color: Colors.grey[600]),
-                SizedBox(width: 6.w),
-                Expanded(
-                  child: Text(
-                    location,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 12.h),
-
-            // Dates
-            Container(
-              padding: EdgeInsets.all(12.w),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-              child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header with status
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Check-in',
-                          style: TextStyle(
-                            fontSize: 11.sp,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        SizedBox(height: 4.h),
-                        Text(
-                          checkInDate != null
-                              ? DateFormat('MMM dd, yyyy').format(checkInDate)
-                              : 'N/A',
-                          style: TextStyle(
-                            fontSize: 14.sp,
+                    child: Text(
+                      accommodationName,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
-                        ),
-                      ],
                     ),
                   ),
-                  Icon(Icons.arrow_forward, color: Colors.grey[400]),
-                  SizedBox(width: 8.w),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  Container(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                    decoration: BoxDecoration(
+                      color: statusColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20.r),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
+                        Icon(statusIcon, size: 16.sp, color: statusColor),
+                        SizedBox(width: 4.w),
                         Text(
-                          'Check-out',
+                          status.toUpperCase(),
                           style: TextStyle(
-                            fontSize: 11.sp,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        SizedBox(height: 4.h),
-                        Text(
-                          checkOutDate != null
-                              ? DateFormat('MMM dd, yyyy').format(checkOutDate)
-                              : 'N/A',
-                          style: TextStyle(
-                            fontSize: 14.sp,
+                            color: statusColor,
                             fontWeight: FontWeight.bold,
+                            fontSize: 12.sp,
                           ),
                         ),
                       ],
@@ -885,75 +813,168 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
                   ),
                 ],
               ),
-            ),
-            SizedBox(height: 12.h),
+              SizedBox(height: 12.h),
 
-            // Price and actions
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Total Amount',
-                        style: TextStyle(
-                          fontSize: 11.sp,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      SizedBox(height: 4.h),
-                      Text(
-                        'PKR ${totalPrice.toStringAsFixed(2)}',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              color: Theme.of(context).colorScheme.primary,
+              // Room type and location
+              Row(
+                children: [
+                  Icon(Icons.hotel, size: 16.sp, color: Colors.grey[600]),
+                  SizedBox(width: 6.w),
+                  Text(
+                    roomType,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+              SizedBox(height: 6.h),
+              Row(
+                children: [
+                  Icon(Icons.location_on, size: 16.sp, color: Colors.grey[600]),
+                  SizedBox(width: 6.w),
+                  Expanded(
+                    child: Text(
+                      location,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 12.h),
+
+              // Dates
+              Container(
+                padding: EdgeInsets.all(12.w),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Check-in',
+                            style: TextStyle(
+                              fontSize: 11.sp,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          SizedBox(height: 4.h),
+                          Text(
+                            checkInDate != null
+                                ? DateFormat('MMM dd, yyyy').format(checkInDate)
+                                : 'N/A',
+                            style: TextStyle(
+                              fontSize: 14.sp,
                               fontWeight: FontWeight.bold,
                             ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    Icon(Icons.arrow_forward, color: Colors.grey[400]),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Check-out',
+                            style: TextStyle(
+                              fontSize: 11.sp,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          SizedBox(height: 4.h),
+                          Text(
+                            checkOutDate != null
+                                ? DateFormat('MMM dd, yyyy')
+                                    .format(checkOutDate)
+                                : 'N/A',
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
+              ),
+              SizedBox(height: 12.h),
 
-                // Action buttons based on status
-                if (status == 'confirmed')
-                  ElevatedButton.icon(
-                    onPressed: () => _cancelBooking(booking['id']),
-                    icon: Icon(Icons.cancel_outlined, size: 18.sp),
-                    label: Text('Cancel'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 8.h,
-                      ),
+              // Price and actions
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Total Amount',
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        SizedBox(height: 4.h),
+                        Text(
+                          'PKR ${totalPrice.toStringAsFixed(2)}',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleLarge
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                      ],
                     ),
-                  )
-                else if (status == 'checked out')
-                  ElevatedButton.icon(
-                    onPressed: () => _showReviewDialog(booking),
-                    icon: Icon(Icons.rate_review, size: 18.sp),
-                    label: Text('Review'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 8.h,
-                      ),
-                    ),
-                  )
-                else
-                  Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    size: 16.sp,
-                    color: Colors.grey[400],
                   ),
-              ],
-            ),
-          ],
+
+                  // Action buttons based on status
+                  if (status == 'confirmed')
+                    ElevatedButton.icon(
+                      onPressed: () => _cancelBooking(booking['id']),
+                      icon: Icon(Icons.cancel_outlined, size: 18.sp),
+                      label: Text('Cancel'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 8.h,
+                        ),
+                      ),
+                    )
+                  else if (status == 'checked out')
+                    ElevatedButton.icon(
+                      onPressed: () => _showReviewDialog(booking),
+                      icon: Icon(Icons.rate_review, size: 18.sp),
+                      label: Text('Review'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 8.h,
+                        ),
+                      ),
+                    )
+                  else
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 16.sp,
+                      color: Colors.grey[400],
+                    ),
+                ],
+              ),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
