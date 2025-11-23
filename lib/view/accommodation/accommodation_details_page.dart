@@ -464,26 +464,45 @@ class _AccommodationReviewsDialogState
     });
 
     try {
-      final user = UserModel();
+      // No auth token needed - endpoint is now public
       final apiService =
-          APIServiceNodeJS('https://api.tourease.me/api', user.id);
+          APIServiceNodeJS('https://api.tourease.me/api', '');
 
-      // Get reviews for this accommodation
-      final response = await apiService.get<Map<String, dynamic>>(
-        path:
-            '/reviews/item/ACCOMMODATION/${widget.accommodationId}?page=1&limit=50',
-        fromJson: (json) => json as Map<String, dynamic>,
+      print('[Reviews] Fetching reviews for accommodation ${widget.accommodationId}');
+
+      // Get reviews for this accommodation (PUBLIC endpoint, no auth required)
+      final response = await apiService.get<dynamic>(
+        path: '/reviews/item/ACCOMMODATION/${widget.accommodationId}',
+        queryParams: {'page': '1', 'limit': '50'},
+        fromJson: (json) => json,
       );
 
-      if (response['success'] == true) {
+      print('[Reviews] Response received: $response');
+
+      // Handle different response formats
+      if (response is Map<String, dynamic>) {
+        if (response['success'] == true) {
+          final data = response['data'];
+          setState(() {
+            _reviews = (data is List) ? data : [];
+            _isLoading = false;
+          });
+          print('[Reviews] Loaded ${_reviews.length} reviews');
+        } else {
+          throw Exception(response['message'] ?? 'Failed to load reviews');
+        }
+      } else if (response is List) {
+        // Direct list response
         setState(() {
-          _reviews = response['data'] ?? [];
+          _reviews = response;
           _isLoading = false;
         });
+        print('[Reviews] Loaded ${_reviews.length} reviews (direct list)');
       } else {
-        throw Exception('Failed to load reviews');
+        throw Exception('Unexpected response format');
       }
     } catch (e) {
+      print('[Reviews] Error loading reviews: $e');
       setState(() {
         _error = e.toString();
         _isLoading = false;
