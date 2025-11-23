@@ -6,7 +6,7 @@ import '../../Services/ApiService.dart';
 import '../../Services/accommodation/accommodation_service.dart';
 import '../../model/accommodation/accommodation_model.dart';
 import '../../model/userManagment/user.dart';
-import '../../controller/userManagment/JWTController.dart';
+import '../../controller/userManagment/JWTController.dart' as jwt_controller;
 import 'room_booking_page.dart';
 
 class AccommodationDetailsPage extends StatefulWidget {
@@ -466,8 +466,8 @@ class _AccommodationReviewsDialogState
 
     try {
       // Get Firebase JWT token for authentication
-      final token = await JWTController.getFirebaseIdToken();
-      final apiService = APIServiceNodeJS('https://api.tourease.me/api', token);
+      final token = await jwt_controller.getFirebaseIdToken();
+      final apiService = APIServiceNodeJS('https://api.tourease.me/api', token ?? '');
 
       print('[Reviews] Fetching reviews for accommodation ${widget.accommodationId}');
 
