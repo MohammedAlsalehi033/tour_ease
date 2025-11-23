@@ -89,6 +89,7 @@ class _AccommodationDetailsPageState extends State<AccommodationDetailsPage> {
           _buildImageCarousel(),
           _buildBasicInfo(),
           _buildDescription(),
+          _buildReviewsButton(),
           // Amenities section removed - not in backend schema
           _buildRoomsList(),
         ],
@@ -223,6 +224,42 @@ class _AccommodationDetailsPageState extends State<AccommodationDetailsPage> {
           ),
           SizedBox(height: 24.h),
         ],
+      ),
+    );
+  }
+
+  Widget _buildReviewsButton() {
+    final reviewCount = _accommodation!.reviewCount ?? 0;
+    final averageRating = _accommodation!.averageRating ?? 0.0;
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+      child: ElevatedButton.icon(
+        onPressed: () {
+          _showReviewsDialog();
+        },
+        icon: Icon(Icons.rate_review),
+        label: Text(
+          reviewCount > 0
+              ? 'View $reviewCount Review${reviewCount > 1 ? 's' : ''} (${averageRating.toStringAsFixed(1)} ⭐)'
+              : 'No Reviews Yet',
+        ),
+        style: ElevatedButton.styleFrom(
+          minimumSize: Size(double.infinity, 48.h),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.r),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showReviewsDialog() async {
+    showDialog(
+      context: context,
+      builder: (context) => AccommodationReviewsDialog(
+        accommodationId: widget.accommodationId,
+        accommodationName: _accommodation!.name,
       ),
     );
   }
@@ -385,6 +422,247 @@ class _AccommodationDetailsPageState extends State<AccommodationDetailsPage> {
           ElevatedButton(
             onPressed: _loadAccommodationDetails,
             child: Text('Retry'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Dialog to show accommodation reviews
+class AccommodationReviewsDialog extends StatefulWidget {
+  final int accommodationId;
+  final String accommodationName;
+
+  const AccommodationReviewsDialog({
+    Key? key,
+    required this.accommodationId,
+    required this.accommodationName,
+  }) : super(key: key);
+
+  @override
+  _AccommodationReviewsDialogState createState() =>
+      _AccommodationReviewsDialogState();
+}
+
+class _AccommodationReviewsDialogState
+    extends State<AccommodationReviewsDialog> {
+  List<dynamic> _reviews = [];
+  bool _isLoading = true;
+  String _error = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReviews();
+  }
+
+  Future<void> _loadReviews() async {
+    setState(() {
+      _isLoading = true;
+      _error = '';
+    });
+
+    try {
+      final user = UserModel();
+      final apiService =
+          APIServiceNodeJS('https://api.tourease.me/api', user.id);
+
+      // Get reviews for this accommodation
+      final response = await apiService.get<Map<String, dynamic>>(
+        path:
+            '/reviews/item/ACCOMMODATION/${widget.accommodationId}?page=1&limit=50',
+        fromJson: (json) => json as Map<String, dynamic>,
+      );
+
+      if (response['success'] == true) {
+        setState(() {
+          _reviews = response['data'] ?? [];
+          _isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load reviews');
+      }
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16.r),
+      ),
+      child: Container(
+        padding: EdgeInsets.all(16.w),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.8,
+          maxWidth: MediaQuery.of(context).size.width * 0.9,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              children: [
+                Icon(Icons.rate_review, size: 24.w),
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: Text(
+                    'Reviews',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: Icon(Icons.close),
+                ),
+              ],
+            ),
+            Text(
+              widget.accommodationName,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.grey[600],
+                  ),
+            ),
+            SizedBox(height: 16.h),
+            Divider(),
+
+            // Reviews List
+            Expanded(
+              child: _isLoading
+                  ? Center(child: CircularProgressIndicator())
+                  : _error.isNotEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.error_outline,
+                                  size: 48.w, color: Colors.red),
+                              SizedBox(height: 8.h),
+                              Text('Error loading reviews'),
+                              SizedBox(height: 8.h),
+                              TextButton(
+                                onPressed: _loadReviews,
+                                child: Text('Retry'),
+                              ),
+                            ],
+                          ),
+                        )
+                      : _reviews.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.reviews_outlined,
+                                      size: 48.w, color: Colors.grey),
+                                  SizedBox(height: 8.h),
+                                  Text('No reviews yet'),
+                                  SizedBox(height: 4.h),
+                                  Text(
+                                    'Be the first to review!',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(color: Colors.grey),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : ListView.separated(
+                              itemCount: _reviews.length,
+                              separatorBuilder: (context, index) => Divider(),
+                              itemBuilder: (context, index) {
+                                final review = _reviews[index];
+                                return _buildReviewCard(review);
+                              },
+                            ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReviewCard(Map<String, dynamic> review) {
+    final rating = review['rating'] ?? 0;
+    final comment = review['comment'] ?? '';
+    final reviewerName = review['reviewer']?['username'] ?? 'Anonymous';
+    final createdAt = review['createdAt'] != null
+        ? DateTime.parse(review['createdAt'])
+        : null;
+
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 8.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 20.r,
+                child: Text(
+                  reviewerName[0].toUpperCase(),
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      reviewerName,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16.sp,
+                      ),
+                    ),
+                    if (createdAt != null)
+                      Text(
+                        '${createdAt.day}/${createdAt.month}/${createdAt.year}',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 12.sp,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              // Rating stars
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                decoration: BoxDecoration(
+                  color: Colors.amber,
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.star, size: 16.w, color: Colors.white),
+                    SizedBox(width: 4.w),
+                    Text(
+                      rating.toString(),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14.sp,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            comment,
+            style: TextStyle(fontSize: 14.sp),
           ),
         ],
       ),
