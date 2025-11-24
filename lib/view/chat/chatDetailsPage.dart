@@ -141,7 +141,8 @@ class _ChatPageState extends State<ChatPage> {
 
     // MAJOR FIX: Parse the message's actual timestamp, don't use DateTime.now()
     // Use tryParse for safety against malformed date strings.
-    final timestamp = DateTime.tryParse(message.createdAt) ?? DateTime.now();
+    // Convert UTC to local time
+    final timestamp = DateTime.tryParse(message.createdAt)?.toLocal() ?? DateTime.now();
     final now = DateTime.now();
     String formattedTime;
 

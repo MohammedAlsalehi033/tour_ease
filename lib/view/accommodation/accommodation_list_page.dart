@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:intl/intl.dart';
 import '../../Services/ApiService.dart';
 import '../../Services/accommodation/accommodation_service.dart';
 import '../../model/accommodation/accommodation_model.dart';
@@ -26,6 +27,9 @@ class _AccommodationListPageState extends State<AccommodationListPage> {
   RangeValues _priceRange = RangeValues(0, 10000);
   double _maxKnownPrice = 10000;
   int? _selectedCapacity;
+  DateTime? _checkInDate;
+  DateTime? _checkOutDate;
+  int? _numberOfGuests;
 
   @override
   void initState() {
@@ -40,6 +44,49 @@ class _AccommodationListPageState extends State<AccommodationListPage> {
       APIServiceNodeJS('https://api.tourease.me/api', user.id),
     );
     await _loadAccommodations();
+  }
+
+  Future<void> _loadAvailableRooms() async {
+    if (_checkInDate == null || _checkOutDate == null) {
+      _showError('Please select check-in and check-out dates');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      // Search for available rooms based on dates
+      final availableRooms = await _accommodationService.searchAvailableRooms(
+        checkInDate: _checkInDate!,
+        checkOutDate: _checkOutDate!,
+        location: _locationController.text.isNotEmpty ? _locationController.text : null,
+        minPrice: _priceRange.start,
+        maxPrice: _priceRange.end,
+        capacity: _numberOfGuests,
+      );
+
+      // Extract unique accommodation IDs from available rooms
+      final availableAccommodationIds = availableRooms
+          .map((room) => room.accommodationId)
+          .toSet();
+
+      // Filter accommodations that have available rooms
+      final filteredList = _accommodations.where((accommodation) {
+        return availableAccommodationIds.contains(accommodation.id);
+      }).toList();
+
+      setState(() {
+        _filteredAccommodations = filteredList;
+        _isLoading = false;
+        _showFilters = false;
+      });
+
+      if (filteredList.isEmpty) {
+        _showError('No available rooms found for the selected dates');
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      _showError('Failed to search available rooms: $e');
+    }
   }
 
   Future<void> _loadAccommodations() async {
@@ -73,36 +120,43 @@ class _AccommodationListPageState extends State<AccommodationListPage> {
     }
   }
 
-  void _applyFilters() {
-    setState(() {
-      _filteredAccommodations = _accommodations.where((accommodation) {
-        // Location filter
-        if (_locationController.text.isNotEmpty) {
-          final location = _locationController.text.toLowerCase();
-          if (!accommodation.location.toLowerCase().contains(location)) {
+  void _applyFilters() async {
+    if (_checkInDate != null && _checkOutDate != null) {
+      // Use date-based search for available rooms
+      await _loadAvailableRooms();
+    } else {
+      // Use basic filtering without date checks
+      setState(() {
+        _filteredAccommodations = _accommodations.where((accommodation) {
+          // Location filter
+          if (_locationController.text.isNotEmpty) {
+            final location = _locationController.text.toLowerCase();
+            if (!accommodation.location.toLowerCase().contains(location)) {
+              return false;
+            }
+          }
+
+          // Price filter
+          final minPrice = accommodation.minPrice ?? 0;
+          final maxPrice = accommodation.maxPrice ?? double.infinity;
+          if (maxPrice < _priceRange.start || minPrice > _priceRange.end) {
             return false;
           }
-        }
 
-        // Price filter
-        final minPrice = accommodation.minPrice ?? 0;
-        final maxPrice = accommodation.maxPrice ?? double.infinity;
-        if (maxPrice < _priceRange.start || minPrice > _priceRange.end) {
-          return false;
-        }
-
-        // Capacity filter
-        if (_selectedCapacity != null) {
-          final maxCapacity = accommodation.maxCapacity ?? 0;
-          if (maxCapacity < _selectedCapacity!) {
-            return false;
+          // Capacity filter (using numberOfGuests or selectedCapacity)
+          final requiredCapacity = _numberOfGuests ?? _selectedCapacity;
+          if (requiredCapacity != null) {
+            final maxCapacity = accommodation.maxCapacity ?? 0;
+            if (maxCapacity < requiredCapacity) {
+              return false;
+            }
           }
-        }
 
-        return true;
-      }).toList();
-      _showFilters = false;
-    });
+          return true;
+        }).toList();
+        _showFilters = false;
+      });
+    }
   }
 
   void _clearFilters() {
@@ -110,6 +164,9 @@ class _AccommodationListPageState extends State<AccommodationListPage> {
       _locationController.clear();
       _priceRange = RangeValues(0, _maxKnownPrice);
       _selectedCapacity = null;
+      _checkInDate = null;
+      _checkOutDate = null;
+      _numberOfGuests = null;
       _filteredAccommodations = _accommodations;
       _showFilters = false;
     });
@@ -140,7 +197,10 @@ class _AccommodationListPageState extends State<AccommodationListPage> {
           if (_locationController.text.isNotEmpty ||
               _priceRange.start != 0 ||
               _priceRange.end != _maxKnownPrice ||
-              _selectedCapacity != null)
+              _selectedCapacity != null ||
+              _checkInDate != null ||
+              _checkOutDate != null ||
+              _numberOfGuests != null)
             IconButton(
               icon: Icon(Icons.clear_all),
               onPressed: _clearFilters,
@@ -203,7 +263,7 @@ class _AccommodationListPageState extends State<AccommodationListPage> {
 
           // Price Range Filter
           Text(
-            'Price Range: \$${_priceRange.start.toInt()} - \$${_priceRange.end.toInt()}',
+            'Price Range: PKR ${_priceRange.start.toInt()} - PKR ${_priceRange.end.toInt()}',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           RangeSlider(
@@ -212,8 +272,8 @@ class _AccommodationListPageState extends State<AccommodationListPage> {
             max: _maxKnownPrice,
             divisions: 20,
             labels: RangeLabels(
-              '\$${_priceRange.start.toInt()}',
-              '\$${_priceRange.end.toInt()}',
+              'PKR ${_priceRange.start.toInt()}',
+              'PKR ${_priceRange.end.toInt()}',
             ),
             onChanged: (values) {
               setState(() => _priceRange = values);
@@ -221,11 +281,82 @@ class _AccommodationListPageState extends State<AccommodationListPage> {
           ),
           SizedBox(height: 16.h),
 
-          // Capacity Filter
+          // Check-In Date
+          InkWell(
+            onTap: () async {
+              final date = await showDatePicker(
+                context: context,
+                initialDate: _checkInDate ?? DateTime.now(),
+                firstDate: DateTime.now(),
+                lastDate: DateTime.now().add(Duration(days: 365)),
+              );
+              if (date != null) {
+                setState(() => _checkInDate = date);
+              }
+            },
+            child: InputDecorator(
+              decoration: InputDecoration(
+                labelText: 'Check-In Date',
+                prefixIcon: Icon(Icons.calendar_today),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+              ),
+              child: Text(
+                _checkInDate != null
+                    ? DateFormat('MMM dd, yyyy').format(_checkInDate!)
+                    : 'Select date',
+                style: TextStyle(
+                  color: _checkInDate != null ? null : Colors.grey,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: 16.h),
+
+          // Check-Out Date
+          InkWell(
+            onTap: () async {
+              final date = await showDatePicker(
+                context: context,
+                initialDate: _checkOutDate ??
+                    (_checkInDate?.add(Duration(days: 1)) ?? DateTime.now().add(Duration(days: 1))),
+                firstDate: _checkInDate ?? DateTime.now(),
+                lastDate: DateTime.now().add(Duration(days: 365)),
+              );
+              if (date != null) {
+                setState(() => _checkOutDate = date);
+              }
+            },
+            child: InputDecorator(
+              decoration: InputDecoration(
+                labelText: 'Check-Out Date',
+                prefixIcon: Icon(Icons.event),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+              ),
+              child: Text(
+                _checkOutDate != null
+                    ? DateFormat('MMM dd, yyyy').format(_checkOutDate!)
+                    : 'Select date',
+                style: TextStyle(
+                  color: _checkOutDate != null ? null : Colors.grey,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: 16.h),
+
+          // Number of Guests Filter
           DropdownButtonFormField<int>(
-            value: _selectedCapacity,
+            value: _numberOfGuests,
             decoration: InputDecoration(
-              labelText: 'Minimum Capacity',
+              labelText: 'Number of Guests',
               prefixIcon: Icon(Icons.people),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12.r),
@@ -236,11 +367,11 @@ class _AccommodationListPageState extends State<AccommodationListPage> {
             items: [1, 2, 3, 4, 5, 6, 8, 10].map((capacity) {
               return DropdownMenuItem(
                 value: capacity,
-                child: Text('$capacity ${capacity == 1 ? "person" : "people"}'),
+                child: Text('$capacity ${capacity == 1 ? "guest" : "guests"}'),
               );
             }).toList(),
             onChanged: (value) {
-              setState(() => _selectedCapacity = value);
+              setState(() => _numberOfGuests = value);
             },
           ),
           SizedBox(height: 16.h),
