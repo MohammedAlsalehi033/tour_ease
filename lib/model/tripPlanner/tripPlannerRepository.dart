@@ -2,63 +2,35 @@ import 'package:tour_ease/Services/ApiService.dart';
 import 'package:tour_ease/model/tripPlanner/tripPlannerModels.dart';
 
 abstract class TripPlannerRepository {
-  Future<TripPlanResponse> generatePlan(TripPlanRequest request);
-  Future<TripPlanResponse> refinePlan({
+  Future<TripPlannerResponse> generatePlan(TripSearchParams request);
+  Future<TripPlannerResponse> refinePlan({
     required Map<String, dynamic> originalRequest,
     required Map<String, dynamic> currentResults,
     required String userMessage,
   });
-  Future<Map<String, dynamic>> confirmBooking({
-    required String optionId,
-    int? outboundTransportId,
-    int? returnTransportId,
-    required int seatsNeeded,
-    int? accommodationId,
-    List<Map<String, int>>? selectedRoomAllocations,
-    required DateTime checkInDate,
-    required DateTime checkOutDate,
-    String? specialRequests,
-  });
-  Future<SavedTripPlan> saveTripPlan({
-    required String planName,
-    required String startLocation,
-    required String endLocation,
-    required String startTime,
-    required String endTime,
-    required int numberOfTravelers,
-    required double budget,
-    List<String>? interests,
-    bool needsReturnTransport = true,
-    int? selectedOutboundTransportId,
-    int? selectedReturnTransportId,
-    int? selectedAccommodationId,
-    List<Map<String, dynamic>>? selectedRoomAllocations,
-    int? seatsNeeded,
-    Map<String, dynamic>? planData,
-    String? notes,
-    List<String>? tags,
-  });
-  Future<List<SavedTripPlan>> getSavedPlans({
+  Future<BookingConfirmation> confirmBooking(BookingRequest request);
+  Future<SavedPlan> savePlan(SavePlanRequest request);
+  Future<List<SavedPlan>> getSavedPlans({
     String? status,
     String? tag,
     String? sortBy,
     String? order,
   });
-  Future<SavedTripPlan> getSavedPlanById(int id);
-  Future<SavedTripPlan> updateSavedPlan({
+  Future<SavedPlan> getSavedPlanById(int id);
+  Future<SavedPlan> updateSavedPlan({
     required int id,
     String? planName,
     String? description,
     int? selectedOutboundId,
     int? selectedReturnId,
     int? selectedAccommodationId,
-    List<Map<String, int>>? selectedRoomAllocations,
+    List<RoomSelection>? selectedRoomAllocations,
     List<int>? selectedActivities,
     double? totalCost,
     List<String>? tags,
   });
   Future<void> deleteSavedPlan(int id);
-  Future<Map<String, dynamic>> bookSavedPlan(int id);
+  Future<BookingConfirmation> bookSavedPlan(int id);
 }
 
 class TripPlannerRepositoryImpl implements TripPlannerRepository {
@@ -67,12 +39,12 @@ class TripPlannerRepositoryImpl implements TripPlannerRepository {
   TripPlannerRepositoryImpl({required this.apiService});
 
   @override
-  Future<TripPlanResponse> generatePlan(TripPlanRequest request) async {
+  Future<TripPlannerResponse> generatePlan(TripSearchParams request) async {
     try {
-      return await apiService.post<TripPlanResponse>(
+      return await apiService.post<TripPlannerResponse>(
         path: "/api/planner/generate",
         body: request.toJson(),
-        fromJson: (json) => TripPlanResponse.fromJson(json),
+        fromJson: (json) => TripPlannerResponse.fromJson(json),
       );
     } catch (e) {
       throw Exception('Failed to generate trip plan: $e');
@@ -80,7 +52,7 @@ class TripPlannerRepositoryImpl implements TripPlannerRepository {
   }
 
   @override
-  Future<TripPlanResponse> refinePlan({
+  Future<TripPlannerResponse> refinePlan({
     required Map<String, dynamic> originalRequest,
     required Map<String, dynamic> currentResults,
     required String userMessage,
@@ -96,42 +68,19 @@ class TripPlannerRepositoryImpl implements TripPlannerRepository {
         fromJson: (json) => json,
       );
       
-      return TripPlanResponse.fromJson(response['data']['refinedPlans']);
+      return TripPlannerResponse.fromJson(response['data']['refinedPlans']);
     } catch (e) {
       throw Exception('Failed to refine trip plan: $e');
     }
   }
 
   @override
-  Future<Map<String, dynamic>> confirmBooking({
-    required String optionId,
-    int? outboundTransportId,
-    int? returnTransportId,
-    required int seatsNeeded,
-    int? accommodationId,
-    List<Map<String, int>>? selectedRoomAllocations,
-    required DateTime checkInDate,
-    required DateTime checkOutDate,
-    String? specialRequests,
-  }) async {
+  Future<BookingConfirmation> confirmBooking(BookingRequest request) async {
     try {
-      final body = <String, dynamic>{
-        'optionId': optionId,
-        'seatsNeeded': seatsNeeded,
-        'checkInDate': checkInDate.toIso8601String(),
-        'checkOutDate': checkOutDate.toIso8601String(),
-      };
-
-      if (outboundTransportId != null) body['outboundTransportId'] = outboundTransportId;
-      if (returnTransportId != null) body['returnTransportId'] = returnTransportId;
-      if (accommodationId != null) body['accommodationId'] = accommodationId;
-      if (selectedRoomAllocations != null) body['selectedRoomAllocations'] = selectedRoomAllocations;
-      if (specialRequests != null) body['specialRequests'] = specialRequests;
-
-      return await apiService.post<Map<String, dynamic>>(
+      return await apiService.post<BookingConfirmation>(
         path: "/api/planner/confirm",
-        body: body,
-        fromJson: (json) => json,
+        body: request.toJson(),
+        fromJson: (json) => BookingConfirmation.fromJson(json),
       );
     } catch (e) {
       throw Exception('Failed to confirm booking: $e');
@@ -139,51 +88,12 @@ class TripPlannerRepositoryImpl implements TripPlannerRepository {
   }
 
   @override
-  Future<SavedTripPlan> saveTripPlan({
-    required String planName,
-    required String startLocation,
-    required String endLocation,
-    required String startTime,
-    required String endTime,
-    required int numberOfTravelers,
-    required double budget,
-    List<String>? interests,
-    bool needsReturnTransport = true,
-    int? selectedOutboundTransportId,
-    int? selectedReturnTransportId,
-    int? selectedAccommodationId,
-    List<Map<String, dynamic>>? selectedRoomAllocations,
-    int? seatsNeeded,
-    Map<String, dynamic>? planData,
-    String? notes,
-    List<String>? tags,
-  }) async {
+  Future<SavedPlan> savePlan(SavePlanRequest request) async {
     try {
-      final body = <String, dynamic>{
-        'planName': planName,
-        'startLocation': startLocation,
-        'endLocation': endLocation,
-        'startTime': startTime,
-        'endTime': endTime,
-        'numberOfTravelers': numberOfTravelers,
-        'budget': budget,
-        'interests': interests ?? [],
-        'needsReturnTransport': needsReturnTransport,
-        'tags': tags ?? [],
-      };
-
-      if (selectedOutboundTransportId != null) body['selectedOutboundTransportId'] = selectedOutboundTransportId;
-      if (selectedReturnTransportId != null) body['selectedReturnTransportId'] = selectedReturnTransportId;
-      if (selectedAccommodationId != null) body['selectedAccommodationId'] = selectedAccommodationId;
-      if (selectedRoomAllocations != null) body['selectedRoomAllocations'] = selectedRoomAllocations;
-      if (seatsNeeded != null) body['seatsNeeded'] = seatsNeeded;
-      if (planData != null) body['planData'] = planData;
-      if (notes != null) body['notes'] = notes;
-
-      return await apiService.post<SavedTripPlan>(
+      return await apiService.post<SavedPlan>(
         path: "/api/planner/saved",
-        body: body,
-        fromJson: (json) => SavedTripPlan.fromJson(json['data']),
+        body: request.toJson(),
+        fromJson: (json) => SavedPlan.fromJson(json),
       );
     } catch (e) {
       throw Exception('Failed to save trip plan: $e');
@@ -191,7 +101,7 @@ class TripPlannerRepositoryImpl implements TripPlannerRepository {
   }
 
   @override
-  Future<List<SavedTripPlan>> getSavedPlans({
+  Future<List<SavedPlan>> getSavedPlans({
     String? status,
     String? tag,
     String? sortBy,
@@ -204,14 +114,12 @@ class TripPlannerRepositoryImpl implements TripPlannerRepository {
       if (sortBy != null) queryParams['sortBy'] = sortBy;
       if (order != null) queryParams['order'] = order;
 
-      return await apiService.get<List<SavedTripPlan>>(
+      return await apiService.get<List<SavedPlan>>(
         path: "/api/planner/saved",
         queryParams: queryParams,
         fromJson: (json) {
-          // The APIService already extracts response.data["data"]
-          // so json here is already the array
           if (json is List) {
-            return json.map((plan) => SavedTripPlan.fromJson(plan)).toList();
+            return json.map((plan) => SavedPlan.fromJson(plan)).toList();
           }
           return [];
         },
@@ -222,11 +130,11 @@ class TripPlannerRepositoryImpl implements TripPlannerRepository {
   }
 
   @override
-  Future<SavedTripPlan> getSavedPlanById(int id) async {
+  Future<SavedPlan> getSavedPlanById(int id) async {
     try {
-      return await apiService.get<SavedTripPlan>(
+      return await apiService.get<SavedPlan>(
         path: "/api/planner/saved/$id",
-        fromJson: (json) => SavedTripPlan.fromJson(json),
+        fromJson: (json) => SavedPlan.fromJson(json),
       );
     } catch (e) {
       throw Exception('Failed to get saved plan: $e');
@@ -234,14 +142,14 @@ class TripPlannerRepositoryImpl implements TripPlannerRepository {
   }
 
   @override
-  Future<SavedTripPlan> updateSavedPlan({
+  Future<SavedPlan> updateSavedPlan({
     required int id,
     String? planName,
     String? description,
     int? selectedOutboundId,
     int? selectedReturnId,
     int? selectedAccommodationId,
-    List<Map<String, int>>? selectedRoomAllocations,
+    List<RoomSelection>? selectedRoomAllocations,
     List<int>? selectedActivities,
     double? totalCost,
     List<String>? tags,
@@ -253,15 +161,15 @@ class TripPlannerRepositoryImpl implements TripPlannerRepository {
       if (selectedOutboundId != null) body['selectedOutboundId'] = selectedOutboundId;
       if (selectedReturnId != null) body['selectedReturnId'] = selectedReturnId;
       if (selectedAccommodationId != null) body['selectedAccommodationId'] = selectedAccommodationId;
-      if (selectedRoomAllocations != null) body['selectedRoomAllocations'] = selectedRoomAllocations;
+      if (selectedRoomAllocations != null) body['selectedRoomAllocations'] = selectedRoomAllocations.map((e) => e.toJson()).toList();
       if (selectedActivities != null) body['selectedActivities'] = selectedActivities;
       if (totalCost != null) body['totalCost'] = totalCost;
       if (tags != null) body['tags'] = tags;
 
-      return await apiService.put<SavedTripPlan>(
+      return await apiService.put<SavedPlan>(
         path: "/api/planner/saved/$id",
         body: body,
-        fromJson: (json) => SavedTripPlan.fromJson(json['data']),
+        fromJson: (json) => SavedPlan.fromJson(json),
       );
     } catch (e) {
       throw Exception('Failed to update saved plan: $e');
@@ -281,12 +189,12 @@ class TripPlannerRepositoryImpl implements TripPlannerRepository {
   }
 
   @override
-  Future<Map<String, dynamic>> bookSavedPlan(int id) async {
+  Future<BookingConfirmation> bookSavedPlan(int id) async {
     try {
-      return await apiService.post<Map<String, dynamic>>(
+      return await apiService.post<BookingConfirmation>(
         path: "/api/planner/saved/$id/book",
         body: {},
-        fromJson: (json) => json,
+        fromJson: (json) => BookingConfirmation.fromJson(json),
       );
     } catch (e) {
       throw Exception('Failed to book saved plan: $e');

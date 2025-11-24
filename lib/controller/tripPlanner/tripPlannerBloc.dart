@@ -8,7 +8,7 @@ abstract class TripPlannerEvent {
 }
 
 class GenerateTripPlan extends TripPlannerEvent {
-  final TripPlanRequest request;
+  final TripSearchParams request;
 
   const GenerateTripPlan({required this.request});
 }
@@ -26,67 +26,15 @@ class RefineTripPlan extends TripPlannerEvent {
 }
 
 class ConfirmBooking extends TripPlannerEvent {
-  final String optionId;
-  final int? outboundTransportId;
-  final int? returnTransportId;
-  final int seatsNeeded;
-  final int? accommodationId;
-  final List<Map<String, int>>? selectedRoomAllocations;
-  final DateTime checkInDate;
-  final DateTime checkOutDate;
-  final String? specialRequests;
+  final BookingRequest request;
 
-  const ConfirmBooking({
-    required this.optionId,
-    this.outboundTransportId,
-    this.returnTransportId,
-    required this.seatsNeeded,
-    this.accommodationId,
-    this.selectedRoomAllocations,
-    required this.checkInDate,
-    required this.checkOutDate,
-    this.specialRequests,
-  });
+  const ConfirmBooking({required this.request});
 }
 
 class SaveTripPlan extends TripPlannerEvent {
-  final String planName;
-  final String startLocation;
-  final String endLocation;
-  final String startTime;
-  final String endTime;
-  final int numberOfTravelers;
-  final double budget;
-  final List<String>? interests;
-  final bool needsReturnTransport;
-  final int? selectedOutboundTransportId;
-  final int? selectedReturnTransportId;
-  final int? selectedAccommodationId;
-  final List<Map<String, dynamic>>? selectedRoomAllocations;
-  final int? seatsNeeded;
-  final Map<String, dynamic>? planData;
-  final String? notes;
-  final List<String>? tags;
+  final SavePlanRequest request;
 
-  const SaveTripPlan({
-    required this.planName,
-    required this.startLocation,
-    required this.endLocation,
-    required this.startTime,
-    required this.endTime,
-    required this.numberOfTravelers,
-    required this.budget,
-    this.interests,
-    this.needsReturnTransport = true,
-    this.selectedOutboundTransportId,
-    this.selectedReturnTransportId,
-    this.selectedAccommodationId,
-    this.selectedRoomAllocations,
-    this.seatsNeeded,
-    this.planData,
-    this.notes,
-    this.tags,
-  });
+  const SaveTripPlan({required this.request});
 }
 
 class GetSavedPlans extends TripPlannerEvent {
@@ -113,13 +61,13 @@ class ClearTripPlan extends TripPlannerEvent {}
 
 // STATE
 class TripPlannerState {
-  final TripPlanResponse? tripPlan;
-  final TripPlanRequest? originalRequest;
+  final TripPlannerResponse? tripPlan;
+  final TripSearchParams? originalRequest;
   final bool isLoading;
   final String? error;
-  final Map<String, dynamic>? bookingConfirmation;
-  final SavedTripPlan? savedPlan;
-  final List<SavedTripPlan>? savedPlans;
+  final BookingConfirmation? bookingConfirmation;
+  final SavedPlan? savedPlan;
+  final List<SavedPlan>? savedPlans;
 
   const TripPlannerState({
     this.tripPlan,
@@ -132,13 +80,13 @@ class TripPlannerState {
   });
 
   TripPlannerState copyWith({
-    TripPlanResponse? tripPlan,
-    TripPlanRequest? originalRequest,
+    TripPlannerResponse? tripPlan,
+    TripSearchParams? originalRequest,
     bool? isLoading,
     String? error,
-    Map<String, dynamic>? bookingConfirmation,
-    SavedTripPlan? savedPlan,
-    List<SavedTripPlan>? savedPlans,
+    BookingConfirmation? bookingConfirmation,
+    SavedPlan? savedPlan,
+    List<SavedPlan>? savedPlans,
   }) {
     return TripPlannerState(
       tripPlan: tripPlan ?? this.tripPlan,
@@ -237,17 +185,7 @@ class TripPlannerBloc extends Bloc<TripPlannerEvent, TripPlannerState> {
     emit(state.copyWith(isLoading: true, error: null));
 
     try {
-      final bookingResult = await tripPlannerRepository.confirmBooking(
-        optionId: event.optionId,
-        outboundTransportId: event.outboundTransportId,
-        returnTransportId: event.returnTransportId,
-        seatsNeeded: event.seatsNeeded,
-        accommodationId: event.accommodationId,
-        selectedRoomAllocations: event.selectedRoomAllocations,
-        checkInDate: event.checkInDate,
-        checkOutDate: event.checkOutDate,
-        specialRequests: event.specialRequests,
-      );
+      final bookingResult = await tripPlannerRepository.confirmBooking(event.request);
 
       emit(state.copyWith(
         bookingConfirmation: bookingResult,
@@ -276,25 +214,7 @@ class TripPlannerBloc extends Bloc<TripPlannerEvent, TripPlannerState> {
     emit(state.copyWith(isLoading: true, error: null));
 
     try {
-      final savedPlan = await tripPlannerRepository.saveTripPlan(
-        planName: event.planName,
-        startLocation: event.startLocation,
-        endLocation: event.endLocation,
-        startTime: event.startTime,
-        endTime: event.endTime,
-        numberOfTravelers: event.numberOfTravelers,
-        budget: event.budget,
-        interests: event.interests,
-        needsReturnTransport: event.needsReturnTransport,
-        selectedOutboundTransportId: event.selectedOutboundTransportId,
-        selectedReturnTransportId: event.selectedReturnTransportId,
-        selectedAccommodationId: event.selectedAccommodationId,
-        selectedRoomAllocations: event.selectedRoomAllocations,
-        seatsNeeded: event.seatsNeeded,
-        planData: event.planData,
-        notes: event.notes,
-        tags: event.tags,
-      );
+      final savedPlan = await tripPlannerRepository.savePlan(event.request);
 
       emit(state.copyWith(
         savedPlan: savedPlan,

@@ -381,7 +381,7 @@ class _TripPlannerPageState extends State<TripPlannerPage> {
     }
 
     // Create trip plan request
-    final request = TripPlanRequest(
+    final request = TripSearchParams(
       startLocation: _pickupController.text,
       endLocation: _destinationController.text,
       startTime: _selectedDateRange.start,
@@ -390,9 +390,6 @@ class _TripPlannerPageState extends State<TripPlannerPage> {
       budget: budget,
       numberOfTravelers: _travelersCount,
       needsReturnTransport: true,
-      specialRequirements: _specialRequirementsController.text.isNotEmpty
-          ? _specialRequirementsController.text
-          : null,
     );
 
     // Dispatch event to BLoC

@@ -5,12 +5,16 @@ import 'package:intl/intl.dart';
 import 'package:tour_ease/model/tripPlanner/tripPlannerModels.dart';
 import 'package:tour_ease/controller/tripPlanner/tripPlannerBloc.dart';
 import 'package:tour_ease/utils/currency_formatter.dart';
+import 'package:tour_ease/Services/stripe_service.dart';
+import 'package:tour_ease/model/userManagment/user.dart';
+import 'package:tour_ease/utils/trip_plan_formatter.dart';
 
 class ConfirmTripPage extends StatefulWidget {
-  final TripPlanResponse tripPlan;
-  final TransportationOption? outbound;
-  final TransportationOption? returnTransport;
+  final TripPlannerResponse tripPlan;
+  final TransportOption? outbound;
+  final TransportOption? returnTransport;
   final AccommodationOption? accommodation;
+  final List<RoomSelection>? selectedRoomAllocations;
 
   const ConfirmTripPage({
     Key? key,
@@ -18,6 +22,7 @@ class ConfirmTripPage extends StatefulWidget {
     this.outbound,
     this.returnTransport,
     this.accommodation,
+    this.selectedRoomAllocations,
   }) : super(key: key);
 
   @override
@@ -25,80 +30,213 @@ class ConfirmTripPage extends StatefulWidget {
 }
 
 class _ConfirmTripPageState extends State<ConfirmTripPage> {
+  bool _isProcessingPayment = false;
+
   void _savePlan() {
+    // Validate required selections
+    if (widget.outbound == null || widget.accommodation == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select both transport and accommodation'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
     // Get the original request from the BLoC state
     final originalRequest = context.read<TripPlannerBloc>().state.originalRequest;
     
+    if (originalRequest == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error: Original search parameters not found'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Use TripPlanFormatter to create properly formatted SavePlanRequest
+    final saveRequest = TripPlanFormatter.createSavePlanRequest(
+      planName: widget.tripPlan.optimalPlan?.planName ?? 'My Trip Plan',
+      description: widget.tripPlan.optimalPlan?.description,
+      selectedOutbound: widget.outbound!,
+      selectedReturn: widget.returnTransport ?? widget.outbound!, // Fallback if no return
+      selectedAccommodation: widget.accommodation!,
+      selectedRoomAllocations: widget.selectedRoomAllocations,
+      selectedActivities: [], // Add activities if needed
+      tags: [], // Add tags if needed
+      originalSearchParams: originalRequest,
+      fullTripResults: widget.tripPlan,
+    );
+
+    // Validate the request before saving
+    if (!TripPlanFormatter.validateSavePlanRequest(saveRequest)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error: Invalid plan data'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Dispatch save event to BLoC
+    context.read<TripPlannerBloc>().add(
+      SaveTripPlan(request: saveRequest),
+    );
+
+    // Show loading/success feedback
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Saving plan...'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  Future<void> _bookTrip() async {
+    if (widget.outbound == null || widget.accommodation == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select both transport and accommodation')),
+      );
+      return;
+    }
+
     // Calculate total cost
     final outboundCost = widget.outbound?.totalCost ?? 0;
     final returnCost = widget.returnTransport?.totalCost ?? 0;
     final accommodationCost = widget.accommodation?.totalCost ?? 0;
     final totalCost = outboundCost + returnCost + accommodationCost;
 
-    // Build plan data from the trip plan
-    final planData = _buildPlanData();
+    setState(() {
+      _isProcessingPayment = true;
+    });
 
-    context.read<TripPlannerBloc>().add(
-      SaveTripPlan(
-        planName: widget.tripPlan.optimalPlan?.planName ?? 'My Trip Plan',
-        startLocation: originalRequest?.startLocation ?? widget.outbound?.startLocationText ?? 'Unknown',
-        endLocation: originalRequest?.endLocation ?? widget.outbound?.endLocationText ?? 'Unknown',
-        startTime: originalRequest?.startTime.toIso8601String() ?? widget.outbound?.departureTime.toIso8601String() ?? DateTime.now().toIso8601String(),
-        endTime: originalRequest?.endTime.toIso8601String() ?? widget.returnTransport?.arrivalTime.toIso8601String() ?? DateTime.now().add(const Duration(days: 3)).toIso8601String(),
-        numberOfTravelers: originalRequest?.numberOfTravelers ?? 2,
-        budget: originalRequest?.budget ?? totalCost,
-        interests: originalRequest?.interests,
-        needsReturnTransport: originalRequest?.needsReturnTransport ?? widget.returnTransport != null,
-        selectedOutboundTransportId: widget.outbound?.id != null ? int.tryParse(widget.outbound!.id) : null,
-        selectedReturnTransportId: widget.returnTransport?.id != null ? int.tryParse(widget.returnTransport!.id) : null,
-        selectedAccommodationId: widget.accommodation?.id != null ? int.tryParse(widget.accommodation!.id) : null,
-        selectedRoomAllocations: null, // TODO: get from accommodation selection
-        seatsNeeded: originalRequest?.numberOfTravelers ?? 2,
-        planData: planData,
-        notes: widget.tripPlan.optimalPlan?.description,
-        tags: [originalRequest?.endLocation ?? widget.outbound?.endLocationText ?? 'Unknown'],
-      ),
-    );
-  }
+    try {
+      // Get user info
+      final user = UserModel();
+      if (user.id.isEmpty || user.email.isEmpty) {
+        throw Exception('User not logged in');
+      }
 
-  Map<String, dynamic> _buildPlanData() {
-    return {
-      'tripPlan': {
-        'optimalPlan': widget.tripPlan.optimalPlan != null ? {
-          'planName': widget.tripPlan.optimalPlan!.planName,
-          'description': widget.tripPlan.optimalPlan!.description,
-        } : null,
-        'itinerary': widget.tripPlan.itinerary.map((day) => {
-          'day': day.day,
-          'date': day.date,
-          'dayOfWeek': day.dayOfWeek,
-          'theme': day.theme,
-          'totalDuration': day.totalDuration,
-          'totalEstimatedCost': day.totalEstimatedCost,
-          'activities': day.activities.map((activity) => {
-            'time': activity.time,
-            'title': activity.title,
-            'description': activity.description,
-            'location': {
-              'name': activity.location.name,
-              'coordinates': {
-                'lat': activity.location.coordinates.lat,
-                'lng': activity.location.coordinates.lng,
-              }
-            },
-            'duration': activity.duration,
-            'estimatedCost': activity.estimatedCost,
-            'category': activity.category,
-          }).toList(),
-        }).toList(),
-      },
-      'selectedOptions': {
-        'outbound': widget.outbound?.id,
-        'return': widget.returnTransport?.id,
-        'accommodation': widget.accommodation?.id,
-      },
-      'totalCost': (widget.outbound?.totalCost ?? 0) + (widget.returnTransport?.totalCost ?? 0) + (widget.accommodation?.totalCost ?? 0),
-    };
+      // Step 1: Process Stripe payment first
+      final paymentResult = await StripeService.instance.makePayment(
+        amount: totalCost,
+        currency: 'usd',
+        bookingId: 0, // Temporary ID for payment tracking
+        customerEmail: user.email,
+        user: user,
+      );
+
+      if (paymentResult['success'] != true) {
+        // Payment failed or cancelled
+        setState(() {
+          _isProcessingPayment = false;
+        });
+
+        if (paymentResult['cancelled'] == true) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Payment cancelled')),
+            );
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Payment failed: ${paymentResult['error'] ?? 'Unknown error'}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+        return;
+      }
+
+      // Step 2: Payment successful, now create the booking
+      final paymentIntentId = paymentResult['paymentIntentId'];
+      
+      // Get booking details from the trip data
+      final originalRequest = context.read<TripPlannerBloc>().state.originalRequest;
+      final seatsNeeded = originalRequest?.numberOfTravelers ?? widget.accommodation?.totalGuests ?? 1;
+      final checkInDate = widget.accommodation?.checkInDate ?? originalRequest?.startTime ?? DateTime.now();
+      final checkOutDate = widget.accommodation?.checkOutDate ?? originalRequest?.endTime ?? DateTime.now().add(const Duration(days: 3));
+      
+      final bookingRequest = BookingRequest(
+        outboundTransportId: widget.outbound!.id,
+        returnTransportId: widget.returnTransport?.id,
+        seatsNeeded: seatsNeeded,
+        accommodationId: widget.accommodation!.id,
+        selectedRoomAllocations: widget.selectedRoomAllocations ?? [],
+        checkInDate: checkInDate,
+        checkOutDate: checkOutDate,
+        paymentMethod: 'stripe',
+        stripePaymentIntentId: paymentIntentId,
+        specialRequests: null,
+      );
+
+      // Create booking via BLoC
+      context.read<TripPlannerBloc>().add(
+        ConfirmBooking(request: bookingRequest),
+      );
+
+      // Wait for booking confirmation
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      setState(() {
+        _isProcessingPayment = false;
+      });
+
+      // Show success dialog
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            title: const Text('Booking Confirmed!'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.check_circle,
+                  color: Colors.green,
+                  size: 60,
+                ),
+                SizedBox(height: 16.h),
+                const Text('Your trip has been successfully booked.'),
+                SizedBox(height: 8.h),
+                Text('Payment ID: $paymentIntentId'),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close dialog
+                  Navigator.of(context).pop(); // Go back to results
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isProcessingPayment = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Booking failed: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -167,7 +305,7 @@ class _ConfirmTripPageState extends State<ConfirmTripPage> {
                       children: [
                         Text(widget.tripPlan.optimalPlan?.planName ?? 'Trip Plan', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
                         SizedBox(height: 8.h),
-                        if ((widget.tripPlan.optimalPlan?.description ?? '').isNotEmpty) Text(widget.tripPlan.optimalPlan!.description!, style: theme.textTheme.bodyMedium),
+                        if ((widget.tripPlan.optimalPlan?.description ?? '').isNotEmpty) Text(widget.tripPlan.optimalPlan!.description, style: theme.textTheme.bodyMedium),
                         SizedBox(height: 16.h),
 
                         sectionTitle('Outbound'),
@@ -271,11 +409,17 @@ class _ConfirmTripPageState extends State<ConfirmTripPage> {
                         SizedBox(width: 12.w),
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: () {
-                              // Placeholder: booking logic to be implemented later
-                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Booking started (placeholder)')));
-                            },
-                            child: const Text('Book All'),
+                            onPressed: (isSaving || _isProcessingPayment) ? null : _bookTrip,
+                            child: _isProcessingPayment
+                                ? SizedBox(
+                                    height: 20.h,
+                                    width: 20.w,
+                                    child: const CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text('Book All'),
                           ),
                         ),
                       ],

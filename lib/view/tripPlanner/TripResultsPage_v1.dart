@@ -16,9 +16,10 @@ class TripResultsPage extends StatefulWidget {
 }
 
 class _TripResultsPageState extends State<TripResultsPage> {
-  TransportationOption? selectedOutbound;
-  TransportationOption? selectedReturn;
+  TransportOption? selectedOutbound;
+  TransportOption? selectedReturn;
   AccommodationOption? selectedAccommodation;
+  List<RoomSelection> selectedRoomAllocations = [];
   bool showBestOption = true;
 
   @override
@@ -185,7 +186,7 @@ class _TripResultsPageState extends State<TripResultsPage> {
                                           ),
                                           SizedBox(height: 4.h),
                                           Text(
-                                            'Est. ${CurrencyFormatter.formatPKR(tripPlan.tripSummary!.estimatedTotalCost.total)} • Remaining ${CurrencyFormatter.formatPKR(tripPlan.tripSummary!.remainingBudget)}',
+                                            'Est. ${CurrencyFormatter.formatPKR(tripPlan.tripSummary!.estimatedTotalCost)} • Remaining ${CurrencyFormatter.formatPKR(tripPlan.tripSummary!.remainingBudget)}',
                                             style: theme.textTheme.bodySmall?.copyWith(
                                               color: colorScheme.onPrimaryContainer.withOpacity(0.9),
                                             ),
@@ -294,9 +295,9 @@ class _TripResultsPageState extends State<TripResultsPage> {
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,
                         padding: EdgeInsets.symmetric(horizontal: 20.w),
-                        itemCount: tripPlan.outboundTransportation.length,
+                        itemCount: tripPlan.availableOptions.outboundTransportation.length,
                         itemBuilder: (context, index) {
-                          final transport = tripPlan.outboundTransportation[index];
+                          final transport = tripPlan.availableOptions.outboundTransportation[index];
                           final isSelected = selectedOutbound?.id == transport.id;
                           return _buildModernTransportCard(
                             transport,
@@ -351,9 +352,9 @@ class _TripResultsPageState extends State<TripResultsPage> {
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,
                         padding: EdgeInsets.symmetric(horizontal: 20.w),
-                        itemCount: tripPlan.returnTransportation.length,
+                        itemCount: tripPlan.availableOptions.returnTransportation.length,
                         itemBuilder: (context, index) {
-                          final transport = tripPlan.returnTransportation[index];
+                          final transport = tripPlan.availableOptions.returnTransportation[index];
                           final isSelected = selectedReturn?.id == transport.id;
                           return _buildModernTransportCard(
                             transport,
@@ -421,9 +422,9 @@ class _TripResultsPageState extends State<TripResultsPage> {
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     padding: EdgeInsets.symmetric(horizontal: 20.w),
-                    itemCount: tripPlan.accommodations.length,
+                    itemCount: tripPlan.availableOptions.accommodations.length,
                     itemBuilder: (context, index) {
-                      final accommodation = tripPlan.accommodations[index];
+                      final accommodation = tripPlan.availableOptions.accommodations[index];
                       final isSelected = selectedAccommodation?.id == accommodation.id;
                       return _buildModernAccommodationCard(
                         accommodation,
@@ -439,7 +440,7 @@ class _TripResultsPageState extends State<TripResultsPage> {
               SizedBox(height: 48.h).toSliver(),
 
               // Section: Daily Activities & Itinerary
-              if (tripPlan.itinerary.isNotEmpty) ...[
+              if (tripPlan.itinerary != null && tripPlan.itinerary!.isNotEmpty) ...[
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 16.h),
@@ -492,15 +493,15 @@ class _TripResultsPageState extends State<TripResultsPage> {
                         ListView.builder(
                           scrollDirection: Axis.horizontal,
                           padding: EdgeInsets.symmetric(horizontal: 20.w),
-                          itemCount: tripPlan.itinerary.length,
+                          itemCount: tripPlan.itinerary?.length ?? 0,
                           itemBuilder: (context, index) {
-                            final day = tripPlan.itinerary[index];
+                            final day = tripPlan.itinerary![index];
                             return _buildDayItineraryCard(day, theme);
                           },
                         ),
                         
                         // Scroll indicator - Right arrow
-                        if (tripPlan.itinerary.length > 1)
+                        if ((tripPlan.itinerary?.length ?? 0) > 1)
                           Positioned(
                             right: 8.w,
                             top: 0,
@@ -568,6 +569,7 @@ class _TripResultsPageState extends State<TripResultsPage> {
                       outbound: selectedOutbound,
                       returnTransport: selectedReturn,
                       accommodation: selectedAccommodation,
+                      selectedRoomAllocations: selectedRoomAllocations,
                     ),
                   ),
                 );
@@ -596,7 +598,7 @@ class _TripResultsPageState extends State<TripResultsPage> {
     );
   }
 
-  Widget _buildBestOptionCard(TripPlanResponse tripPlan, ThemeData theme) {
+  Widget _buildBestOptionCard(TripPlannerResponse tripPlan, ThemeData theme) {
     final colorScheme = theme.colorScheme;
     
     if (tripPlan.optimalPlan == null) return const SizedBox();
@@ -631,6 +633,8 @@ class _TripResultsPageState extends State<TripResultsPage> {
               selectedOutbound = plan.outboundTransport;
               selectedReturn = plan.returnTransport;
               selectedAccommodation = plan.accommodation;
+              // Clear room selections when selecting best option
+              selectedRoomAllocations.clear();
             });
                   
                   // Scroll to confirm button and navigate to confirm page
@@ -643,6 +647,7 @@ class _TripResultsPageState extends State<TripResultsPage> {
                           outbound: plan.outboundTransport,
                           returnTransport: plan.returnTransport,
                           accommodation: plan.accommodation,
+                          selectedRoomAllocations: selectedRoomAllocations,
                         ),
                       ),
                     );
@@ -790,7 +795,7 @@ class _TripResultsPageState extends State<TripResultsPage> {
   }
 
   Widget _buildModernTransportCard(
-    TransportationOption transport,
+    TransportOption transport,
     ThemeData theme,
     bool isSelected,
     VoidCallback onTap,
@@ -1073,8 +1078,7 @@ class _TripResultsPageState extends State<TripResultsPage> {
     
     return GestureDetector(
       onTap: () {
-        onTap();
-        _showAccommodationDetails(accommodation, theme);
+        _showAccommodationDetailsWithRoomSelection(accommodation, theme, onTap);
       },
       child: Container(
         width: 380.w,
@@ -1111,28 +1115,51 @@ class _TripResultsPageState extends State<TripResultsPage> {
                   child: SizedBox(
                     height: 220.h,
                     width: double.infinity,
-                    child: accommodation.mediaUrls.isNotEmpty
+                    child: (accommodation.images?.isNotEmpty ?? false)
                         ? PageView.builder(
-                            itemCount: accommodation.mediaUrls.length.clamp(0, 5),
+                            itemCount: (accommodation.images?.length ?? 0).clamp(0, 5),
                             itemBuilder: (context, index) => Image.network(
-                              accommodation.mediaUrls[index],
+                              accommodation.images![index],
                               fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) => Container(
-                                color: colorScheme.surfaceContainerHighest,
-                                child: Icon(
-                                  Icons.hotel_rounded,
-                                  size: 70.sp,
-                                  color: colorScheme.onSurfaceVariant.withOpacity(0.3),
-                                ),
-                              ),
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Container(
+                                  color: colorScheme.surfaceContainerHighest,
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      value: loadingProgress.expectedTotalBytes != null
+                                          ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                          : null,
+                                    ),
+                                  ),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) {
+                                print('Image load error for ${accommodation.name}: $error');
+                                return Container(
+                                  color: colorScheme.surfaceContainerHighest,
+                                  child: Icon(
+                                    Icons.hotel_rounded,
+                                    size: 70.sp,
+                                    color: colorScheme.onSurfaceVariant.withOpacity(0.3),
+                                  ),
+                                );
+                              },
                             ),
                           )
                         : Container(
                             color: colorScheme.surfaceContainerHighest,
-                            child: Icon(
-                              Icons.hotel_rounded,
-                              size: 70.sp,
-                              color: colorScheme.onSurfaceVariant.withOpacity(0.3),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.hotel_rounded,
+                                  size: 70.sp,
+                                  color: colorScheme.onSurfaceVariant.withOpacity(0.3),
+                                ),
+                                if (accommodation.images == null)
+                                  Text('No images available', style: theme.textTheme.bodySmall),
+                              ],
                             ),
                           ),
                   ),
@@ -1268,7 +1295,7 @@ class _TripResultsPageState extends State<TripResultsPage> {
                         SizedBox(width: 6.w),
                         Expanded(
                           child: Text(
-                            '${DateFormat('MMM dd').format(accommodation.checkInDate)} — ${DateFormat('MMM dd').format(accommodation.checkOutDate)}',
+                            '${accommodation.checkInDate != null ? DateFormat('MMM dd').format(accommodation.checkInDate!) : 'N/A'} — ${accommodation.checkOutDate != null ? DateFormat('MMM dd').format(accommodation.checkOutDate!) : 'N/A'}',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: colorScheme.onSurfaceVariant,
                             ),
@@ -1311,11 +1338,11 @@ class _TripResultsPageState extends State<TripResultsPage> {
                     SizedBox(height: 16.h),
                     
                     // Amenities preview
-                    if (accommodation.amenities.isNotEmpty) ...[
+                    if (accommodation.amenities?.isNotEmpty ?? false) ...[
                       Wrap(
                         spacing: 8.w,
                         runSpacing: 8.h,
-                        children: accommodation.amenities.take(3).map((amenity) =>
+                        children: accommodation.amenities!.take(3).map((amenity) =>
                           Container(
                             padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
                             decoration: BoxDecoration(
@@ -1446,7 +1473,7 @@ class _TripResultsPageState extends State<TripResultsPage> {
     );
   }
 
-  void _showConfirmationDialog(BuildContext context, TripPlanResponse tripPlan) {
+  void _showConfirmationDialog(BuildContext context, TripPlannerResponse tripPlan) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     
@@ -1734,7 +1761,7 @@ class _TripResultsPageState extends State<TripResultsPage> {
   }
 
   // Show detailed transport information
-  void _showTransportDetails(TransportationOption transport, ThemeData theme) {
+  void _showTransportDetails(TransportOption transport, ThemeData theme) {
     final colorScheme = theme.colorScheme;
     
     showModalBottomSheet(
@@ -1812,7 +1839,7 @@ class _TripResultsPageState extends State<TripResultsPage> {
                       'Journey Details',
                       [
                         _buildDetailRow('Departure', _formatDateTime(transport.departureTime.toIso8601String())),
-                        _buildDetailRow('Arrival', _formatDateTime(transport.arrivalTime.toIso8601String())),
+                        _buildDetailRow('Arrival', _formatDateTime(transport.arrivalTime?.toIso8601String() ?? 'N/A')),
                         _buildDetailRow('Available Seats', '${transport.seatsAvailable}'),
                         _buildDetailRow('Price per Seat', CurrencyFormatter.formatPKR(transport.pricePerSeat)),
                         _buildDetailRow('Total Cost', CurrencyFormatter.formatPKR(transport.totalCost)),
@@ -1853,7 +1880,7 @@ class _TripResultsPageState extends State<TripResultsPage> {
                       ),
                     ],
                     
-                    if (transport.amenities.isNotEmpty) ...[
+                    if (transport.amenities?.isNotEmpty ?? false) ...[
                       SizedBox(height: 20.h),
                       Text(
                         'Amenities',
@@ -1865,7 +1892,7 @@ class _TripResultsPageState extends State<TripResultsPage> {
                       Wrap(
                         spacing: 12.w,
                         runSpacing: 12.h,
-                        children: transport.amenities.map((amenity) => 
+                        children: transport.amenities!.map((amenity) => 
                           Container(
                             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
                             decoration: BoxDecoration(
@@ -1904,8 +1931,13 @@ class _TripResultsPageState extends State<TripResultsPage> {
     );
   }
 
+  // Show detailed accommodation information with room selection
+  void _showAccommodationDetailsWithRoomSelection(AccommodationOption accommodation, ThemeData theme, VoidCallback onSelect) {
+    _showAccommodationDetails(accommodation, theme, onSelect);
+  }
+
   // Show detailed accommodation information
-  void _showAccommodationDetails(AccommodationOption accommodation, ThemeData theme) {
+  void _showAccommodationDetails(AccommodationOption accommodation, ThemeData theme, [VoidCallback? onSelect]) {
     final colorScheme = theme.colorScheme;
     
     showModalBottomSheet(
@@ -1940,13 +1972,13 @@ class _TripResultsPageState extends State<TripResultsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Images
-                    if (accommodation.mediaUrls.isNotEmpty)
+                    if (accommodation.mediaUrls?.isNotEmpty ?? false)
                       SizedBox(
                         height: 300.h,
                         child: PageView.builder(
-                          itemCount: accommodation.mediaUrls.length,
+                          itemCount: accommodation.mediaUrls?.length ?? 0,
                           itemBuilder: (context, index) => Image.network(
-                            accommodation.mediaUrls[index],
+                            accommodation.mediaUrls![index],
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) => Container(
                               color: colorScheme.surfaceContainerHighest,
@@ -2026,10 +2058,10 @@ class _TripResultsPageState extends State<TripResultsPage> {
                           _buildInfoSection(
                             'Booking Details',
                             [
-                              _buildDetailRow('Check-in', DateFormat('MMM dd, yyyy').format(accommodation.checkInDate)),
-                              _buildDetailRow('Check-out', DateFormat('MMM dd, yyyy').format(accommodation.checkOutDate)),
+                              _buildDetailRow('Check-in', accommodation.checkInDate != null ? DateFormat('MMM dd, yyyy').format(accommodation.checkInDate!) : 'N/A'),
+                              _buildDetailRow('Check-out', accommodation.checkOutDate != null ? DateFormat('MMM dd, yyyy').format(accommodation.checkOutDate!) : 'N/A'),
                               _buildDetailRow('Nights', '${accommodation.numberOfNights}'),
-                              _buildDetailRow('Guests', '${accommodation.totalGuests}'),
+                              _buildDetailRow('Guests', '${accommodation.totalGuests ?? 'N/A'}'),
                               _buildDetailRow('Total Cost', CurrencyFormatter.formatPKR(accommodation.totalCost)),
                             ],
                             theme,
@@ -2037,8 +2069,25 @@ class _TripResultsPageState extends State<TripResultsPage> {
                           
                           SizedBox(height: 20.h),
                           
+                          // Room Selection Section
+                          if (accommodation.availableRooms?.isNotEmpty ?? false) ...[
+                            Text(
+                              'Select Rooms',
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 12.h),
+                            ...accommodation.availableRooms!.map((room) => _buildRoomSelectionCard(
+                              room,
+                              accommodation,
+                              theme,
+                            )),
+                            SizedBox(height: 20.h),
+                          ],
+                          
                           Text(
-                            'Room Allocations',
+                            'Allocated Rooms',
                             style: theme.textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
@@ -2066,12 +2115,12 @@ class _TripResultsPageState extends State<TripResultsPage> {
                                 _buildDetailRow('Capacity', '${room.capacity} guests'),
                                 _buildDetailRow('Price/Night', CurrencyFormatter.formatPKR(room.pricePerNight)),
                                 _buildDetailRow('Total', CurrencyFormatter.formatPKR(room.totalCost)),
-                                if (room.amenities.isNotEmpty) ...[
+                                if (room.amenities?.isNotEmpty ?? false) ...[
                                   SizedBox(height: 8.h),
                                   Wrap(
                                     spacing: 6.w,
                                     runSpacing: 6.h,
-                                    children: room.amenities.map((amenity) => 
+                                    children: room.amenities!.map((amenity) => 
                                       Text('• $amenity', style: theme.textTheme.bodySmall)
                                     ).toList(),
                                   ),
@@ -2080,7 +2129,7 @@ class _TripResultsPageState extends State<TripResultsPage> {
                             ),
                           )),
                           
-                          if (accommodation.amenities.isNotEmpty) ...[
+                          if (accommodation.amenities?.isNotEmpty ?? false) ...[
                             SizedBox(height: 20.h),
                             Text(
                               'Hotel Amenities',
@@ -2092,7 +2141,7 @@ class _TripResultsPageState extends State<TripResultsPage> {
                             Wrap(
                               spacing: 12.w,
                               runSpacing: 12.h,
-                              children: accommodation.amenities.map((amenity) => 
+                              children: accommodation.amenities!.map((amenity) => 
                                 Container(
                                   padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
                                   decoration: BoxDecoration(
@@ -2161,6 +2210,138 @@ class _TripResultsPageState extends State<TripResultsPage> {
     );
   }
 
+  Widget _buildRoomSelectionCard(RoomInfo room, AccommodationOption accommodation, ThemeData theme) {
+    final colorScheme = theme.colorScheme;
+    
+    // Check if this room is already selected
+    final existingSelection = selectedRoomAllocations.firstWhere(
+      (s) => s.roomId == room.roomId,
+      orElse: () => RoomSelection(roomId: room.roomId, numberOfRooms: 0),
+    );
+    final isSelected = existingSelection.numberOfRooms > 0;
+    
+    return Container(
+      margin: EdgeInsets.only(bottom: 12.h),
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: isSelected ? colorScheme.primaryContainer.withOpacity(0.3) : colorScheme.surfaceContainerHighest.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(
+          color: isSelected ? colorScheme.primary : colorScheme.outline.withOpacity(0.2),
+          width: isSelected ? 2 : 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  room.roomType,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary,
+                  borderRadius: BorderRadius.circular(20.r),
+                ),
+                child: Text(
+                  CurrencyFormatter.formatPKR(room.pricePerNight),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onPrimary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            'Capacity: ${room.capacity} guests',
+            style: theme.textTheme.bodyMedium,
+          ),
+          if (room.amenities?.isNotEmpty ?? false) ...[
+            SizedBox(height: 8.h),
+            Wrap(
+              spacing: 4.w,
+              runSpacing: 4.h,
+              children: room.amenities!.take(3).map((amenity) => 
+                Chip(
+                  label: Text(amenity, style: theme.textTheme.bodySmall),
+                  padding: EdgeInsets.zero,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                )
+              ).toList(),
+            ),
+          ],
+          SizedBox(height: 12.h),
+          Row(
+            children: [
+              Text(
+                'Number of rooms:',
+                style: theme.textTheme.bodyMedium,
+              ),
+              const Spacer(),
+              IconButton(
+                onPressed: existingSelection.numberOfRooms > 0
+                    ? () {
+                        setState(() {
+                          final index = selectedRoomAllocations.indexWhere((s) => s.roomId == room.roomId);
+                          if (index != -1) {
+                            if (selectedRoomAllocations[index].numberOfRooms > 1) {
+                              selectedRoomAllocations[index] = RoomSelection(
+                                roomId: room.roomId,
+                                numberOfRooms: selectedRoomAllocations[index].numberOfRooms - 1,
+                              );
+                            } else {
+                              selectedRoomAllocations.removeAt(index);
+                            }
+                          }
+                        });
+                      }
+                    : null,
+                icon: const Icon(Icons.remove_circle_outline),
+                iconSize: 28.sp,
+              ),
+              Text(
+                '${existingSelection.numberOfRooms}',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              IconButton(
+                onPressed: () {
+                  setState(() {
+                    final index = selectedRoomAllocations.indexWhere((s) => s.roomId == room.roomId);
+                    if (index != -1) {
+                      selectedRoomAllocations[index] = RoomSelection(
+                        roomId: room.roomId,
+                        numberOfRooms: selectedRoomAllocations[index].numberOfRooms + 1,
+                      );
+                    } else {
+                      selectedRoomAllocations.add(RoomSelection(
+                        roomId: room.roomId,
+                        numberOfRooms: 1,
+                      ));
+                    }
+                  });
+                },
+                icon: const Icon(Icons.add_circle_outline),
+                iconSize: 28.sp,
+                color: colorScheme.primary,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   IconData _getAmenityIcon(String amenity) {
     final lower = amenity.toLowerCase();
     if (lower.contains('wifi') || lower.contains('wi-fi')) return Icons.wifi_rounded;
@@ -2176,7 +2357,7 @@ class _TripResultsPageState extends State<TripResultsPage> {
   }
 
   // Build day itinerary card
-  Widget _buildDayItineraryCard(DayItinerary day, ThemeData theme) {
+  Widget _buildDayItineraryCard(ItineraryDay day, ThemeData theme) {
     final colorScheme = theme.colorScheme;
     
     return Container(
@@ -2248,22 +2429,36 @@ class _TripResultsPageState extends State<TripResultsPage> {
                   ),
                 ),
                 SizedBox(height: 8.h),
-                Row(
+                Wrap(
+                  spacing: 16.w,
+                  runSpacing: 6.h,
                   children: [
-                    Icon(Icons.access_time_rounded, size: 16.sp, color: colorScheme.onSurfaceVariant),
-                    SizedBox(width: 4.w),
-                    Text(
-                      '${day.totalDuration ~/ 60}h ${day.totalDuration % 60}m',
-                      style: theme.textTheme.bodyMedium,
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.access_time_rounded, size: 16.sp, color: colorScheme.onSurfaceVariant),
+                        SizedBox(width: 4.w),
+                        Text(
+                          day.totalDuration != null ? '${day.totalDuration! ~/ 60}h ${day.totalDuration! % 60}m' : 'N/A',
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      ],
                     ),
-                    SizedBox(width: 16.w),
-                    Icon(Icons.payments_rounded, size: 16.sp, color: colorScheme.onSurfaceVariant),
-                    SizedBox(width: 4.w),
-                    Text(
-                      CurrencyFormatter.formatPKR(day.totalEstimatedCost),
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.payments_rounded, size: 16.sp, color: colorScheme.onSurfaceVariant),
+                        SizedBox(width: 4.w),
+                        Flexible(
+                          child: Text(
+                            CurrencyFormatter.formatPKR(day.totalEstimatedCost),
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -2331,15 +2526,46 @@ class _TripResultsPageState extends State<TripResultsPage> {
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Container(
-                                      padding: EdgeInsets.all(8.w),
-                                      decoration: BoxDecoration(
-                                        color: _getCategoryColor(activity.category).withOpacity(0.12),
-                                        borderRadius: BorderRadius.circular(8.r),
+                                    // Activity photo preview (if available)
+                                    if (activity.placeDetails != null && 
+                                        activity.placeDetails!.photos != null && 
+                                        activity.placeDetails!.photos!.isNotEmpty)
+                                      Container(
+                                        width: 60.w,
+                                        height: 60.w,
+                                        margin: EdgeInsets.only(right: 10.w),
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(8.r),
+                                          border: Border.all(color: colorScheme.outline.withOpacity(0.2)),
+                                        ),
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(8.r),
+                                          child: Image.network(
+                                            activity.placeDetails!.photos!.first,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (context, error, stackTrace) {
+                                              return Container(
+                                                color: _getCategoryColor(activity.category).withOpacity(0.12),
+                                                child: Icon(
+                                                  _getCategoryIcon(activity.category),
+                                                  color: _getCategoryColor(activity.category),
+                                                  size: 24.sp,
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                      )
+                                    else
+                                      Container(
+                                        padding: EdgeInsets.all(8.w),
+                                        margin: EdgeInsets.only(right: 10.w),
+                                        decoration: BoxDecoration(
+                                          color: _getCategoryColor(activity.category).withOpacity(0.12),
+                                          borderRadius: BorderRadius.circular(8.r),
+                                        ),
+                                        child: Icon(_getCategoryIcon(activity.category), color: _getCategoryColor(activity.category), size: 18.sp),
                                       ),
-                                      child: Icon(_getCategoryIcon(activity.category), color: _getCategoryColor(activity.category), size: 18.sp),
-                                    ),
-                                    SizedBox(width: 10.w),
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2349,11 +2575,21 @@ class _TripResultsPageState extends State<TripResultsPage> {
                                           Row(
                                             children: [
                                               Icon(Icons.location_on_outlined, size: 14.sp, color: colorScheme.onSurfaceVariant),
-                                              SizedBox(width: 6.w),
-                                              Expanded(child: Text(activity.location.name, style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                                              SizedBox(width: 8.w),
-                                              Text(CurrencyFormatter.formatPKR(activity.estimatedCost), style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
+                                              SizedBox(width: 4.w),
+                                              Expanded(
+                                                child: Text(
+                                                  activity.location?.name ?? 'Location', 
+                                                  style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant), 
+                                                  maxLines: 1, 
+                                                  overflow: TextOverflow.ellipsis
+                                                ),
+                                              ),
                                             ],
+                                          ),
+                                          SizedBox(height: 4.h),
+                                          Text(
+                                            CurrencyFormatter.formatPKR(activity.estimatedCost), 
+                                            style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)
                                           ),
                                         ],
                                       ),
@@ -2398,27 +2634,49 @@ class _TripResultsPageState extends State<TripResultsPage> {
             child: Row(
               children: [
                 Expanded(
-                  child: Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.access_time_rounded, size: 16.sp, color: colorScheme.onSurfaceVariant),
-                      SizedBox(width: 6.w),
-                      Text('${day.totalDuration ~/ 60}h ${day.totalDuration % 60}m', style: theme.textTheme.bodyMedium),
-                      SizedBox(width: 12.w),
-                      Icon(Icons.payments_rounded, size: 16.sp, color: colorScheme.onSurfaceVariant),
-                      SizedBox(width: 6.w),
-                      Text(CurrencyFormatter.formatPKR(day.totalEstimatedCost), style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+                      Row(
+                        children: [
+                          Icon(Icons.access_time_rounded, size: 16.sp, color: colorScheme.onSurfaceVariant),
+                          SizedBox(width: 6.w),
+                          Text(
+                            day.totalDuration != null ? '${day.totalDuration! ~/ 60}h ${day.totalDuration! % 60}m' : 'N/A', 
+                            style: theme.textTheme.bodyMedium
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 4.h),
+                      Row(
+                        children: [
+                          Icon(Icons.payments_rounded, size: 16.sp, color: colorScheme.onSurfaceVariant),
+                          SizedBox(width: 6.w),
+                          Flexible(
+                            child: Text(
+                              CurrencyFormatter.formatPKR(day.totalEstimatedCost), 
+                              style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
                 SizedBox(width: 8.w),
                 OutlinedButton(
                   onPressed: () => _showDayDetails(day, theme),
-                  style: OutlinedButton.styleFrom(side: BorderSide(color: colorScheme.primary)),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: colorScheme.primary),
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                  ),
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('View details'),
-                      SizedBox(width: 6.w),
-                      Icon(Icons.arrow_forward_rounded, size: 16.sp),
+                      Text('Details', style: TextStyle(fontSize: 13.sp)),
+                      SizedBox(width: 4.w),
+                      Icon(Icons.arrow_forward_rounded, size: 14.sp),
                     ],
                   ),
                 ),
@@ -2432,7 +2690,7 @@ class _TripResultsPageState extends State<TripResultsPage> {
 
   // keep helper for backward compatibility with older UI variants
   // ignore: unused_element
-  Widget _buildActivityPreview(ItineraryActivity activity, ThemeData theme) {
+  Widget _buildActivityPreview(ActivityItem activity, ThemeData theme) {
     final colorScheme = theme.colorScheme;
     
     return Container(
@@ -2484,7 +2742,7 @@ class _TripResultsPageState extends State<TripResultsPage> {
               ),
             ],
           ),
-          if (activity.location.name.isNotEmpty) ...[
+          if (activity.location != null && (activity.location!.name.isNotEmpty)) ...[
             SizedBox(height: 6.h),
             Row(
               children: [
@@ -2492,7 +2750,7 @@ class _TripResultsPageState extends State<TripResultsPage> {
                 SizedBox(width: 4.w),
                 Expanded(
                   child: Text(
-                    activity.location.name,
+                    activity.location!.name,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurfaceVariant,
                     ),
@@ -2515,7 +2773,7 @@ class _TripResultsPageState extends State<TripResultsPage> {
   }
 
   // ignore: unused_element
-  Widget _buildActivityTile(ItineraryActivity activity, ThemeData theme) {
+  Widget _buildActivityTile(ActivityItem activity, ThemeData theme) {
     final colorScheme = theme.colorScheme;
     return GestureDetector(
       onTap: () => _showActivityDetail(activity, theme),
@@ -2576,7 +2834,7 @@ class _TripResultsPageState extends State<TripResultsPage> {
                 Icon(Icons.location_on_outlined, size: 14.sp, color: colorScheme.onSurfaceVariant),
                 SizedBox(width: 6.w),
                 Expanded(
-                  child: Text(activity.location.name, style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  child: Text(activity.location?.name ?? 'Location', style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant), maxLines: 1, overflow: TextOverflow.ellipsis),
                 ),
                 SizedBox(width: 8.w),
                 Text(CurrencyFormatter.formatPKR(activity.estimatedCost), style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
@@ -2588,7 +2846,7 @@ class _TripResultsPageState extends State<TripResultsPage> {
     );
   }
 
-  void _showActivityDetail(ItineraryActivity activity, ThemeData theme) {
+  void _showActivityDetail(ActivityItem activity, ThemeData theme) {
     final colorScheme = theme.colorScheme;
     showModalBottomSheet(
       context: context,
@@ -2637,7 +2895,7 @@ class _TripResultsPageState extends State<TripResultsPage> {
                 ],
                 Row(
                   children: [
-                    _buildInfoChip(Icons.access_time_rounded, '${activity.duration} min', theme),
+                    _buildInfoChip(Icons.access_time_rounded, activity.duration != null ? '${activity.duration} min' : 'N/A', theme),
                     SizedBox(width: 8.w),
                     _buildInfoChip(Icons.payments_rounded, CurrencyFormatter.formatPKR(activity.estimatedCost), theme),
                   ],
@@ -2675,12 +2933,13 @@ class _TripResultsPageState extends State<TripResultsPage> {
               ],
             ),
           ),
+          
         ),
       ),
     );
   }
 
-  void _showDayDetails(DayItinerary day, ThemeData theme) {
+  void _showDayDetails(ItineraryDay day, ThemeData theme) {
     final colorScheme = theme.colorScheme;
     
     showModalBottomSheet(
@@ -2774,7 +3033,7 @@ class _TripResultsPageState extends State<TripResultsPage> {
     );
   }
 
-  Widget _buildActivityDetailCard(ItineraryActivity activity, ThemeData theme) {
+  Widget _buildActivityDetailCard(ActivityItem activity, ThemeData theme) {
     final colorScheme = theme.colorScheme;
     
     return Container(
@@ -2859,7 +3118,7 @@ class _TripResultsPageState extends State<TripResultsPage> {
               SizedBox(width: 4.w),
               Expanded(
                 child: Text(
-                  activity.location.name,
+                  activity.location?.name ?? 'Location',
                   style: theme.textTheme.bodyMedium,
                 ),
               ),
@@ -2870,7 +3129,7 @@ class _TripResultsPageState extends State<TripResultsPage> {
           
           Row(
             children: [
-              _buildInfoChip(Icons.access_time_rounded, '${activity.duration} min', theme),
+              _buildInfoChip(Icons.access_time_rounded, activity.duration != null ? '${activity.duration} min' : 'N/A', theme),
               SizedBox(width: 8.w),
               _buildInfoChip(Icons.payments_rounded, CurrencyFormatter.formatPKR(activity.estimatedCost), theme),
             ],
