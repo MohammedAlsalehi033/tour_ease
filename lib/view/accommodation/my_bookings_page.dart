@@ -336,15 +336,18 @@ class _MyBookingsPageState extends State<MyBookingsPage> {
       print('bookingId: $bookingId');
       print('accommodationId: $accommodationId');
       print('rating: ${rating.toInt()}');
-      print('Request body: ${{'reviewableType': 'ACCOMMODATION_BOOKING', 'reviewableId': bookingId, 'rating': rating.toInt(), 'comment': reviewText}}');
+      print('Request body: ${{'reviewableType': 'ACCOMMODATION', 'reviewableId': accommodationId, 'accommodationBookingId': bookingId, 'rating': rating.toInt(), 'comment': reviewText}}');
 
-      // Create review for the accommodation booking (like transportation booking)
-      // Backend will automatically create 2 reviews: one for booking, one for accommodation
+      // Create DUAL review for accommodation (like transportation booking)
+      // Backend will automatically create 2 reviews:
+      // 1. ACCOMMODATION review (with booking association)
+      // 2. ACCOMMODATION_BOOKING review (for the booking itself)
       final reviewResponse = await apiService.post<Map<String, dynamic>>(
         path: '/reviews',
         body: {
-          'reviewableType': 'ACCOMMODATION_BOOKING',
-          'reviewableId': bookingId, // Send booking ID as main reviewableId
+          'reviewableType': 'ACCOMMODATION', // Must be ACCOMMODATION for dual review
+          'reviewableId': accommodationId, // Accommodation ID
+          'accommodationBookingId': bookingId, // Triggers dual review creation
           'rating': rating.toInt(),
           'comment': reviewText,
         },

@@ -308,8 +308,11 @@ class _AccommodationPageState extends State<AccommodationPage> {
   // Filter controllers
   final TextEditingController _locationController = TextEditingController();
   double _minPrice = 0;
-  double _maxPrice = 10000;
+  double _maxPrice = 100000;
   double? _minRating;
+  DateTime? _checkInDate;
+  DateTime? _checkOutDate;
+  int? _numberOfGuests;
 
   @override
   void initState() {
@@ -324,6 +327,8 @@ class _AccommodationPageState extends State<AccommodationPage> {
   }
 
   Future<void> _loadData() async {
+    if (!mounted) return;
+    
     setState(() {
       _isLoading = true;
       _error = '';
@@ -336,53 +341,122 @@ class _AccommodationPageState extends State<AccommodationPage> {
           APIServiceNodeJS('https://api.tourease.me/api', user.id);
       final accommodationService = AccommodationService(apiService);
 
-      final accommodations = await accommodationService.getAllAccommodations(
-        page: 1,
-        pageSize: 50, // Get more accommodations to have enough rooms
-        location: _locationController.text.isNotEmpty
-            ? _locationController.text
-            : null,
-        // Don't filter by price at API level, we'll filter rooms instead
-      );
-
-      // Extract all rooms from all accommodations
       List<Map<String, dynamic>> allRooms = [];
-      for (var accommodation in accommodations) {
-        if (accommodation.rooms != null && accommodation.rooms!.isNotEmpty) {
-          for (var room in accommodation.rooms!) {
-            // Create room map with accommodation info
-            allRooms.add({
-              'room': room,
-              'accommodation': accommodation,
-            });
+
+      // If dates are selected, use the available rooms search API
+      if (_checkInDate != null && _checkOutDate != null) {
+        final availableRooms = await accommodationService.searchAvailableRooms(
+          checkInDate: _checkInDate!,
+          checkOutDate: _checkOutDate!,
+          location: _locationController.text.isNotEmpty
+              ? _locationController.text
+              : null,
+          minPrice: _minPrice > 0 ? _minPrice : null,
+          maxPrice: _maxPrice < 100000 ? _maxPrice : null,
+          capacity: _numberOfGuests,
+        );
+
+        if (!mounted) return;
+
+        // Get unique accommodation IDs
+        final accommodationIds =
+            availableRooms.map((room) => room.accommodationId).toSet();
+
+        // Fetch full accommodation details for these IDs
+        final accommodations = await accommodationService.getAllAccommodations(
+          page: 1,
+          pageSize: 100,
+        );
+
+        if (!mounted) return;
+
+        // Create room-accommodation map
+        for (var room in availableRooms) {
+          final accommodation = accommodations.firstWhere(
+            (acc) => acc.id == room.accommodationId,
+            orElse: () => accommodations.first,
+          );
+
+          // Apply rating filter if set
+          if (_minRating != null) {
+            final rating = accommodation.averageRating ?? 0.0;
+            if (rating < _minRating!) continue;
+          }
+
+          allRooms.add({
+            'room': room,
+            'accommodation': accommodation,
+          });
+        }
+
+        if (!mounted) return;
+
+        setState(() {
+          _accommodations = accommodations
+              .where((acc) => accommodationIds.contains(acc.id))
+              .toList();
+          _allRooms = allRooms;
+          _isLoading = false;
+        });
+      } else {
+        // No dates selected - use regular filtering
+        final accommodations = await accommodationService.getAllAccommodations(
+          page: 1,
+          pageSize: 50,
+          location: _locationController.text.isNotEmpty
+              ? _locationController.text
+              : null,
+        );
+
+        // Extract all rooms from all accommodations
+        for (var accommodation in accommodations) {
+          if (accommodation.rooms != null && accommodation.rooms!.isNotEmpty) {
+            for (var room in accommodation.rooms!) {
+              allRooms.add({
+                'room': room,
+                'accommodation': accommodation,
+              });
+            }
           }
         }
-      }
 
-      // Apply price filter on rooms
-      if (_minPrice > 0 || _maxPrice < 10000) {
-        allRooms = allRooms.where((item) {
-          final room = item['room'] as Room;
-          final price = room.pricePerNight;
-          return price >= _minPrice && price <= _maxPrice;
-        }).toList();
-      }
+        // Apply price filter on rooms
+        if (_minPrice > 0 || _maxPrice < 100000) {
+          allRooms = allRooms.where((item) {
+            final room = item['room'] as Room;
+            final price = room.pricePerNight;
+            return price >= _minPrice && price <= _maxPrice;
+          }).toList();
+        }
 
-      // Apply rating filter if set
-      if (_minRating != null) {
-        allRooms = allRooms.where((item) {
-          final accommodation = item['accommodation'] as Accommodation;
-          final rating = accommodation.averageRating ?? 0.0;
-          return rating >= _minRating!;
-        }).toList();
-      }
+        // Apply capacity filter
+        if (_numberOfGuests != null) {
+          allRooms = allRooms.where((item) {
+            final room = item['room'] as Room;
+            return room.capacity == _numberOfGuests!;
+          }).toList();
+        }
 
-      setState(() {
-        _accommodations = accommodations;
-        _allRooms = allRooms;
-        _isLoading = false;
-      });
+        // Apply rating filter if set
+        if (_minRating != null) {
+          allRooms = allRooms.where((item) {
+            final accommodation = item['accommodation'] as Accommodation;
+            final rating = accommodation.averageRating ?? 0.0;
+            return rating >= _minRating!;
+          }).toList();
+        }
+
+        if (!mounted) return;
+
+        setState(() {
+          _accommodations = accommodations;
+          _allRooms = allRooms;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
+      if (!mounted) return;
+      
       setState(() {
         _error = e.toString();
         _isLoading = false;
@@ -405,10 +479,11 @@ class _AccommodationPageState extends State<AccommodationPage> {
             right: 16.w,
             top: 16.h,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -423,8 +498,11 @@ class _AccommodationPageState extends State<AccommodationPage> {
                       setModalState(() {
                         _locationController.clear();
                         _minPrice = 0;
-                        _maxPrice = 10000;
+                        _maxPrice = 100000;
                         _minRating = null;
+                        _checkInDate = null;
+                        _checkOutDate = null;
+                        _numberOfGuests = null;
                       });
                     },
                     child: Text('Clear All'),
@@ -448,11 +526,11 @@ class _AccommodationPageState extends State<AccommodationPage> {
 
               // Price Range
               Text(
-                  'Price Range: \$${_minPrice.toInt()} - \$${_maxPrice.toInt()}'),
+                  'Price Range: \PKR${_minPrice.toInt()} - \PKR${_maxPrice.toInt()}'),
               RangeSlider(
                 values: RangeValues(_minPrice, _maxPrice),
                 min: 0,
-                max: 10000,
+                max: 100000,
                 divisions: 100,
                 labels: RangeLabels(
                   '\$${_minPrice.toInt()}',
@@ -488,6 +566,100 @@ class _AccommodationPageState extends State<AccommodationPage> {
                   setModalState(() => _minRating = value);
                 },
               ),
+              SizedBox(height: 16.h),
+
+              // Check-In Date
+              InkWell(
+                onTap: () async {
+                  final date = await showDatePicker(
+                    context: context,
+                    initialDate: _checkInDate ?? DateTime.now(),
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime.now().add(Duration(days: 365)),
+                  );
+                  if (date != null) {
+                    setModalState(() => _checkInDate = date);
+                  }
+                },
+                child: InputDecorator(
+                  decoration: InputDecoration(
+                    labelText: 'Check-In Date',
+                    prefixIcon: Icon(Icons.calendar_today),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                  ),
+                  child: Text(
+                    _checkInDate != null
+                        ? '${_checkInDate!.day}/${_checkInDate!.month}/${_checkInDate!.year}'
+                        : 'Select date',
+                    style: TextStyle(
+                      color: _checkInDate != null ? null : Colors.grey,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: 16.h),
+
+              // Check-Out Date
+              InkWell(
+                onTap: () async {
+                  final date = await showDatePicker(
+                    context: context,
+                    initialDate: _checkOutDate ??
+                        (_checkInDate?.add(Duration(days: 1)) ?? DateTime.now().add(Duration(days: 1))),
+                    firstDate: _checkInDate ?? DateTime.now(),
+                    lastDate: DateTime.now().add(Duration(days: 365)),
+                  );
+                  if (date != null) {
+                    setModalState(() => _checkOutDate = date);
+                  }
+                },
+                child: InputDecorator(
+                  decoration: InputDecoration(
+                    labelText: 'Check-Out Date',
+                    prefixIcon: Icon(Icons.event),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                  ),
+                  child: Text(
+                    _checkOutDate != null
+                        ? '${_checkOutDate!.day}/${_checkOutDate!.month}/${_checkOutDate!.year}'
+                        : 'Select date',
+                    style: TextStyle(
+                      color: _checkOutDate != null ? null : Colors.grey,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: 16.h),
+
+              // Number of Guests
+              DropdownButtonFormField<int?>(
+                value: _numberOfGuests,
+                decoration: InputDecoration(
+                  labelText: 'Number of Guests',
+                  prefixIcon: Icon(Icons.people),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                ),
+                items: [
+                  DropdownMenuItem(value: null, child: Text('Any')),
+                  DropdownMenuItem(value: 1, child: Text('1 guest')),
+                  DropdownMenuItem(value: 2, child: Text('2 guests')),
+                  DropdownMenuItem(value: 3, child: Text('3 guests')),
+                  DropdownMenuItem(value: 4, child: Text('4 guests')),
+                  DropdownMenuItem(value: 5, child: Text('5 guests')),
+                  DropdownMenuItem(value: 6, child: Text('6 guests')),
+                  DropdownMenuItem(value: 8, child: Text('8 guests')),
+                  DropdownMenuItem(value: 10, child: Text('10 guests')),
+                ],
+                onChanged: (value) {
+                  setModalState(() => _numberOfGuests = value);
+                },
+              ),
               SizedBox(height: 24.h),
 
               // Apply Button
@@ -509,6 +681,7 @@ class _AccommodationPageState extends State<AccommodationPage> {
               ),
               SizedBox(height: 16.h),
             ],
+          ),
           ),
         ),
       ),
@@ -557,7 +730,10 @@ class _AccommodationPageState extends State<AccommodationPage> {
                       Expanded(
                         child: Text(
                           'Accommodations & Rooms',
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
                         ),
@@ -589,12 +765,16 @@ class _AccommodationPageState extends State<AccommodationPage> {
                     },
                     borderRadius: BorderRadius.circular(12.r),
                     child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 16.w, vertical: 10.h),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
                             Theme.of(context).colorScheme.primary,
-                            Theme.of(context).colorScheme.primary.withOpacity(0.8),
+                            Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withOpacity(0.8),
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
@@ -602,7 +782,10 @@ class _AccommodationPageState extends State<AccommodationPage> {
                         borderRadius: BorderRadius.circular(12.r),
                         boxShadow: [
                           BoxShadow(
-                            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withOpacity(0.3),
                             blurRadius: 8,
                             offset: Offset(0, 4),
                           ),
@@ -929,26 +1112,30 @@ class _AccommodationPageState extends State<AccommodationPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'PKR ${room.pricePerNight.toStringAsFixed(0)}',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleLarge
-                                  ?.copyWith(
-                                    color:
-                                        Theme.of(context).colorScheme.primary,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                            ),
-                            Text(
-                              'per night',
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                          ],
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'PKR ${room.pricePerNight.toStringAsFixed(0)}',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                'per night',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
                         ),
+                        SizedBox(width: 8.w),
                         ElevatedButton(
                           onPressed: () {
                             Navigator.push(
@@ -965,6 +1152,7 @@ class _AccommodationPageState extends State<AccommodationPage> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8.r),
                             ),
+                            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
                           ),
                           child: Text('Book Now'),
                         ),

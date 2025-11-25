@@ -94,6 +94,57 @@ class AccommodationService {
     );
   }
 
+  /// Search available rooms with date and capacity filters
+  /// Uses production API with booking conflict detection
+  Future<List<Room>> searchAvailableRooms({
+    required DateTime checkInDate,
+    required DateTime checkOutDate,
+    String? location,
+    double? minPrice,
+    double? maxPrice,
+    int? capacity,
+  }) async {
+    final queryParams = <String, dynamic>{
+      'checkInDate': checkInDate.toIso8601String(),
+      'checkOutDate': checkOutDate.toIso8601String(),
+    };
+
+    if (location != null && location.isNotEmpty) {
+      queryParams['location'] = location;
+    }
+    if (minPrice != null) {
+      queryParams['minPrice'] = minPrice;
+    }
+    if (maxPrice != null) {
+      queryParams['maxPrice'] = maxPrice;
+    }
+    if (capacity != null) {
+      queryParams['capacity'] = capacity;
+    }
+
+    try {
+      print('🔍 Calling searchAvailableRooms (PRODUCTION) with dates: ${checkInDate.toIso8601String()} to ${checkOutDate.toIso8601String()}');
+      
+      final List<Room> result = await _apiService.get<List<Room>>(
+        path: '/rooms/search/available',
+        queryParams: queryParams,
+        fromJson: (json) {
+          if (json is List) {
+            print('✅ Got ${json.length} available rooms from production API');
+            return json.map((item) => Room.fromJson(item)).toList();
+          }
+          print('⚠️ API returned non-list response');
+          return <Room>[];
+        },
+      );
+      
+      return result;
+    } catch (e) {
+      print('❌ Error in searchAvailableRooms: $e');
+      rethrow;
+    }
+  }
+
   /// Create a booking
   Future<AccommodationBooking> createBooking({
     required String travelerId,

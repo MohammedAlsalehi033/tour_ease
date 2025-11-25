@@ -215,7 +215,8 @@ class _MessagesPageState extends State<MessagesPage> {
   // Helper method to format timestamp (unchanged)
   String _formatTimestamp(String timestamp) {
     try {
-      final DateTime dateTime = DateTime.parse(timestamp);
+      // Convert UTC to local time
+      final DateTime dateTime = DateTime.parse(timestamp).toLocal();
       final DateTime now = DateTime.now();
       final Duration difference = now.difference(dateTime);
 
