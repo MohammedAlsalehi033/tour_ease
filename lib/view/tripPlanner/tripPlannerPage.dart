@@ -32,7 +32,6 @@ class _TripPlannerPageState extends State<TripPlannerPage> {
     'Shopping': false,
     'Nightlife': false,
     'Relaxation': false,
-    'Beach': false,
   };
 
   // Travel preferences with default
@@ -392,16 +391,67 @@ class _TripPlannerPageState extends State<TripPlannerPage> {
       needsReturnTransport: true,
     );
 
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return BlocListener<TripPlannerBloc, TripPlannerState>(
+          listener: (context, state) {
+            if (!state.isLoading) {
+              // Close the loading dialog
+              Navigator.of(dialogContext).pop();
+              
+              if (state.error != null) {
+                // Show error message
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error: ${state.error}'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              } else if (state.tripPlan != null) {
+                // Navigate to results page
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const TripResultsPage(),
+                  ),
+                );
+              }
+            }
+          },
+          child: PopScope(
+            canPop: false,
+            child: AlertDialog(
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(),
+                  SizedBox(height: 24.h),
+                  Text(
+                    'Creating your perfect trip...',
+                    style: Theme.of(context).textTheme.titleMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 8.h),
+                  Text(
+                    'This may take a few moments',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
     // Dispatch event to BLoC
     context.read<TripPlannerBloc>().add(GenerateTripPlan(request: request));
-
-    // Navigate to trip results page
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const TripResultsPage(),
-      ),
-    );
   }
 
   void _showTravelModeSelector(BuildContext context, ThemeData theme) {

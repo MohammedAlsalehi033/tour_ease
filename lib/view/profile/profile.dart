@@ -6,9 +6,6 @@ import 'package:tour_ease/model/userManagment/user.dart';
 import 'package:tour_ease/view/auth.dart';
 import 'package:tour_ease/view/profile/rideHistory.dart';
 import 'package:tour_ease/view/profile/updateProfilePicture.dart';
-import 'package:tour_ease/view/profile/notificationsSettings.dart';
-import 'package:tour_ease/view/profile/privacySettings.dart';
-import 'package:tour_ease/view/profile/helpSupport.dart';
 
 class ProfilePage extends StatefulWidget {
 
@@ -133,55 +130,13 @@ class _ProfilePageState extends State<ProfilePage> {
         SizedBox(height: 16.h),
         _buildSettingItem(
           context,
-          icon: Icons.notifications,
-          title: 'Notifications',
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const NotificationsSettingsPage(),
-              ),
-            );
-          },
-        ),
-        _buildSettingItem(
-          context,
           icon: Icons.car_repair,
           title: 'Ride History',
           onTap: () {
-Navigator.push(context, MaterialPageRoute(builder: (context) => RideHistory(),));
-          },
-        ),
-        _buildSettingItem(
-          context,
-          icon: Icons.lock,
-          title: 'Privacy',
-          onTap: () {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const PrivacySettingsPage(),
-              ),
-            );
-          },
-        ),
-        _buildSettingItem(
-          context,
-          icon: Icons.color_lens,
-          title: 'Theme',
-          onTap: () {
-            _showThemeDialog(context);
-          },
-        ),
-        _buildSettingItem(
-          context,
-          icon: Icons.help,
-          title: 'Help & Support',
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const HelpSupportPage(),
+                builder: (context) => const RideHistory(),
               ),
             );
           },
@@ -226,68 +181,6 @@ Navigator.push(context, MaterialPageRoute(builder: (context) => RideHistory(),))
           ),
         ),
         child: Text('Logout'),
-      ),
-    );
-  }
-
-  void _showThemeDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Choose Theme'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.light_mode),
-              title: const Text('Light Theme'),
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: Implement theme switching
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Light theme selected'),
-                    backgroundColor: Colors.blue,
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.dark_mode),
-              title: const Text('Dark Theme'),
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: Implement theme switching
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Dark theme selected'),
-                    backgroundColor: Colors.blue,
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.auto_mode),
-              title: const Text('System Default'),
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: Implement theme switching
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('System theme selected'),
-                    backgroundColor: Colors.blue,
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-        ],
       ),
     );
   }
