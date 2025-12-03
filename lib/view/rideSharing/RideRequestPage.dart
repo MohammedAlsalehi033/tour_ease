@@ -663,13 +663,14 @@ class _RideRequestPageState extends State<RideRequestPage> {
                                 'Submit Request',
                                 style: textTheme.labelLarge?.copyWith(
                                   fontWeight: FontWeight.bold,
+                                  color: Colors.white,
                                   letterSpacing: 0.5,
                                 ),
                               ),
                               style: ElevatedButton.styleFrom(
                                 elevation: 2,
                                 backgroundColor: colorScheme.primary,
-                                foregroundColor: colorScheme.onPrimary,
+                                foregroundColor: Colors.white,
                                 padding: EdgeInsets.symmetric(vertical: 16.h),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12.r),
@@ -713,49 +714,54 @@ class _RideRequestPageState extends State<RideRequestPage> {
     required VoidCallback onTap,
     required ThemeData theme,
   }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12.r),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceVariant,
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(
-            color: theme.colorScheme.outline.withOpacity(0.3),
-            width: 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 4,
-              offset: Offset(0, 2),
-            ),
-          ],
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceVariant,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(
+          color: theme.colorScheme.outline.withOpacity(0.3),
+          width: 1.5,
         ),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              size: 20.sp,
-              color: theme.colorScheme.primary,
-            ),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: Text(
-                title,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.onSurface,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12.r),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 20.sp,
+                  color: theme.colorScheme.primary,
                 ),
-              ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right,
+                  size: 18.sp,
+                  color: theme.colorScheme.primary,
+                ),
+              ],
             ),
-            Icon(
-              Icons.chevron_right,
-              size: 18.sp,
-              color: theme.colorScheme.primary,
-            ),
-          ],
+          ),
         ),
       ),
     );

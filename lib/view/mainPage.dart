@@ -187,6 +187,7 @@ class _MainPageState extends State<MainPage> {
     return Scaffold(
       extendBody: true,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Text(
           'Hello ${UserModel().username.isNotEmpty ? UserModel().username : "User"}',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
@@ -223,25 +224,39 @@ class _MainPageState extends State<MainPage> {
           items: [
             Icon(Icons.home,
                 size: iconsSizeBottomBar,
-                color: Theme.of(context).colorScheme.onPrimary),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Theme.of(context).colorScheme.onSurface
+                    : Theme.of(context).colorScheme.onPrimary),
             Icon(Icons.directions_car,
                 size: iconsSizeBottomBar,
-                color: Theme.of(context).colorScheme.onPrimary),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Theme.of(context).colorScheme.onSurface
+                    : Theme.of(context).colorScheme.onPrimary),
             Icon(Icons.card_travel,
                 size: iconsSizeBottomBar,
-                color: Theme.of(context).colorScheme.onPrimary),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Theme.of(context).colorScheme.onSurface
+                    : Theme.of(context).colorScheme.onPrimary),
             Icon(Icons.message,
                 size: iconsSizeBottomBar,
-                color: Theme.of(context).colorScheme.onPrimary),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Theme.of(context).colorScheme.onSurface
+                    : Theme.of(context).colorScheme.onPrimary),
             Icon(Icons.question_answer,
                 size: iconsSizeBottomBar,
-                color: Theme.of(context).colorScheme.onPrimary),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Theme.of(context).colorScheme.onSurface
+                    : Theme.of(context).colorScheme.onPrimary),
             Icon(Icons.person,
                 size: iconsSizeBottomBar,
-                color: Theme.of(context).colorScheme.onPrimary),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Theme.of(context).colorScheme.onSurface
+                    : Theme.of(context).colorScheme.onPrimary),
           ],
-          color: Theme.of(context).colorScheme.primary,
-          buttonBackgroundColor: Theme.of(context).colorScheme.secondary,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Theme.of(context).colorScheme.surface
+              : Theme.of(context).colorScheme.primary,
+          buttonBackgroundColor: Theme.of(context).colorScheme.primary,
           backgroundColor: Colors.transparent,
           animationCurve: Curves.easeInOut,
           animationDuration: const Duration(milliseconds: 300),

@@ -392,6 +392,7 @@ class _RideFilterPageState extends State<RideFilterPage> {
                           label: Text(
                             'Show results',
                             style: textTheme.labelLarge?.copyWith(
+                              color: Colors.white,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 0.5,
                             ),
@@ -399,7 +400,7 @@ class _RideFilterPageState extends State<RideFilterPage> {
                           style: ElevatedButton.styleFrom(
                             elevation: 2,
                             backgroundColor: colorScheme.primary,
-                            foregroundColor: colorScheme.onPrimary,
+                            foregroundColor: Colors.white,
                             padding: EdgeInsets.symmetric(vertical: 16.h),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12.r),

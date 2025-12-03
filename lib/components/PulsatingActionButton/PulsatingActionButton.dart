@@ -3,14 +3,14 @@ import 'dart:async';
 
 class PulsatingActionButton extends StatefulWidget {
   final VoidCallback onPressed;
-  final Color color;
+  final Color? color;
   final Color textColor;
   final Duration animationInterval;
 
   const PulsatingActionButton({
     Key? key,
     required this.onPressed,
-    this.color = Colors.blue,
+    this.color,
     this.textColor = Colors.white,
     this.animationInterval = const Duration(seconds: 3),
   }) : super(key: key);
@@ -19,7 +19,8 @@ class PulsatingActionButton extends StatefulWidget {
   _PulsatingActionButtonState createState() => _PulsatingActionButtonState();
 }
 
-class _PulsatingActionButtonState extends State<PulsatingActionButton> with SingleTickerProviderStateMixin {
+class _PulsatingActionButtonState extends State<PulsatingActionButton>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _widthAnimation;
@@ -63,7 +64,8 @@ class _PulsatingActionButtonState extends State<PulsatingActionButton> with Sing
     });
 
     await _animationController.forward();
-    await Future.delayed(const Duration(milliseconds: 1500)); // Show expanded state for 1.5 seconds
+    await Future.delayed(const Duration(
+        milliseconds: 1500)); // Show expanded state for 1.5 seconds
 
     if (!mounted) return;
 
@@ -83,6 +85,8 @@ class _PulsatingActionButtonState extends State<PulsatingActionButton> with Sing
 
   @override
   Widget build(BuildContext context) {
+    final effectiveColor = widget.color ?? Theme.of(context).primaryColor;
+
     return AnimatedBuilder(
       animation: _animationController,
       builder: (context, child) {
@@ -94,11 +98,11 @@ class _PulsatingActionButtonState extends State<PulsatingActionButton> with Sing
               height: 56.0,
               width: _widthAnimation.value,
               decoration: BoxDecoration(
-                color: widget.color,
+                color: effectiveColor,
                 borderRadius: BorderRadius.circular(30.0),
                 boxShadow: [
                   BoxShadow(
-                    color: widget.color.withOpacity(0.4),
+                    color: effectiveColor.withOpacity(0.4),
                     blurRadius: 8.0,
                     spreadRadius: 2.0,
                     offset: Offset(0, 4),
@@ -108,24 +112,24 @@ class _PulsatingActionButtonState extends State<PulsatingActionButton> with Sing
               child: Center(
                 child: _isExpanded
                     ? Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.add, color: widget.textColor),
-                    SizedBox(width: 8.0),
-                    AnimatedOpacity(
-                      opacity: _animationController.value,
-                      duration: Duration(milliseconds: 200),
-                      child: Text(
-                        'Make a Ride Request',
-                        style: TextStyle(
-                          color: widget.textColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14.0,
-                        ),
-                      ),
-                    ),
-                  ],
-                )
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.add, color: widget.textColor),
+                          SizedBox(width: 8.0),
+                          AnimatedOpacity(
+                            opacity: _animationController.value,
+                            duration: Duration(milliseconds: 200),
+                            child: Text(
+                              'Make a Ride Request',
+                              style: TextStyle(
+                                color: widget.textColor,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14.0,
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
                     : Icon(Icons.add, color: widget.textColor),
               ),
             ),

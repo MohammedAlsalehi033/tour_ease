@@ -24,7 +24,8 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
     // Fallback: try to get from searchResultsData
     final searchData = widget.plan.searchResultsData;
     if (searchData != null && widget.plan.selectedOutboundTransportId != null) {
-      final availableOptions = searchData['availableOptions'] as Map<String, dynamic>?;
+      final availableOptions =
+          searchData['availableOptions'] as Map<String, dynamic>?;
       final transport = availableOptions?['transport'] as List?;
       if (transport != null) {
         try {
@@ -39,7 +40,7 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
     }
     return null;
   }
-  
+
   TransportOption? get returnTransport {
     if (widget.plan.returnTransport != null) {
       return widget.plan.returnTransport;
@@ -47,7 +48,8 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
     // Fallback: try to get from searchResultsData
     final searchData = widget.plan.searchResultsData;
     if (searchData != null && widget.plan.selectedReturnTransportId != null) {
-      final availableOptions = searchData['availableOptions'] as Map<String, dynamic>?;
+      final availableOptions =
+          searchData['availableOptions'] as Map<String, dynamic>?;
       final transport = availableOptions?['transport'] as List?;
       if (transport != null) {
         try {
@@ -62,7 +64,7 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
     }
     return null;
   }
-  
+
   AccommodationOption? get accommodation {
     if (widget.plan.accommodation != null) {
       return widget.plan.accommodation;
@@ -70,13 +72,15 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
     // Fallback: try to get from searchResultsData
     final searchData = widget.plan.searchResultsData;
     if (searchData != null && widget.plan.selectedAccommodationId != null) {
-      final availableOptions = searchData['availableOptions'] as Map<String, dynamic>?;
+      final availableOptions =
+          searchData['availableOptions'] as Map<String, dynamic>?;
       final accommodations = availableOptions?['accommodation'] as List?;
       if (accommodations != null) {
         try {
           final selected = accommodations.firstWhere(
-            (a) => a['accommodationId'] == widget.plan.selectedAccommodationId ||
-                   a['id'] == widget.plan.selectedAccommodationId,
+            (a) =>
+                a['accommodationId'] == widget.plan.selectedAccommodationId ||
+                a['id'] == widget.plan.selectedAccommodationId,
           );
           return AccommodationOption.fromJson(selected);
         } catch (e) {
@@ -86,19 +90,21 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
     }
     return null;
   }
-  
+
   List<RoomAllocation> get roomAllocations {
     // First try from model
-    if (widget.plan.roomAllocations != null && widget.plan.roomAllocations!.isNotEmpty) {
+    if (widget.plan.roomAllocations != null &&
+        widget.plan.roomAllocations!.isNotEmpty) {
       return widget.plan.roomAllocations!;
     }
     // Try from accommodation
-    if (accommodation?.roomAllocations != null && accommodation!.roomAllocations.isNotEmpty) {
+    if (accommodation?.roomAllocations != null &&
+        accommodation!.roomAllocations.isNotEmpty) {
       return accommodation!.roomAllocations;
     }
     return [];
   }
-  
+
   Map<String, dynamic>? get bookingDetails => widget.plan.bookings;
   List<ItineraryDay> get itinerary => _parseItinerary();
 
@@ -110,14 +116,21 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
     print('Status: ${widget.plan.status}');
     print('Total Cost: ${widget.plan.totalCost}');
     print('\n--- Direct from Model ---');
-    print('Model Outbound Transport: ${widget.plan.outboundTransport != null ? 'Available' : 'NULL'}');
-    print('Model Return Transport: ${widget.plan.returnTransport != null ? 'Available' : 'NULL'}');
-    print('Model Accommodation: ${widget.plan.accommodation != null ? 'Available' : 'NULL'}');
-    print('Model Room Allocations: ${widget.plan.roomAllocations?.length ?? 0}');
+    print(
+        'Model Outbound Transport: ${widget.plan.outboundTransport != null ? 'Available' : 'NULL'}');
+    print(
+        'Model Return Transport: ${widget.plan.returnTransport != null ? 'Available' : 'NULL'}');
+    print(
+        'Model Accommodation: ${widget.plan.accommodation != null ? 'Available' : 'NULL'}');
+    print(
+        'Model Room Allocations: ${widget.plan.roomAllocations?.length ?? 0}');
     print('\n--- Via Getters (with fallback) ---');
-    print('Getter Outbound Transport: ${outboundTransport != null ? 'Available (${outboundTransport!.providerName} - ${outboundTransport!.vehicleType})' : 'NULL'}');
-    print('Getter Return Transport: ${returnTransport != null ? 'Available (${returnTransport!.providerName} - ${returnTransport!.vehicleType})' : 'NULL'}');
-    print('Getter Accommodation: ${accommodation != null ? 'Available (${accommodation!.name})' : 'NULL'}');
+    print(
+        'Getter Outbound Transport: ${outboundTransport != null ? 'Available (${outboundTransport!.providerName} - ${outboundTransport!.vehicleType})' : 'NULL'}');
+    print(
+        'Getter Return Transport: ${returnTransport != null ? 'Available (${returnTransport!.providerName} - ${returnTransport!.vehicleType})' : 'NULL'}');
+    print(
+        'Getter Accommodation: ${accommodation != null ? 'Available (${accommodation!.name})' : 'NULL'}');
     print('Getter Room Allocations: ${roomAllocations.length}');
     print('\n--- Selection IDs ---');
     print('Selected Outbound ID: ${widget.plan.selectedOutboundTransportId}');
@@ -126,10 +139,13 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
     print('\n--- SearchResultsData Available ---');
     print('Has searchResultsData: ${widget.plan.searchResultsData != null}');
     if (widget.plan.searchResultsData != null) {
-      final availableOptions = widget.plan.searchResultsData!['availableOptions'] as Map<String, dynamic>?;
+      final availableOptions = widget
+          .plan.searchResultsData!['availableOptions'] as Map<String, dynamic>?;
       if (availableOptions != null) {
-        print('  - Transport options: ${(availableOptions['transport'] as List?)?.length ?? 0}');
-        print('  - Accommodation options: ${(availableOptions['accommodation'] as List?)?.length ?? 0}');
+        print(
+            '  - Transport options: ${(availableOptions['transport'] as List?)?.length ?? 0}');
+        print(
+            '  - Accommodation options: ${(availableOptions['accommodation'] as List?)?.length ?? 0}');
       }
     }
     print('================================');
@@ -139,7 +155,7 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
     // Try to get itinerary from planData or searchResultsData
     final planData = widget.plan.planData;
     final searchData = widget.plan.searchResultsData;
-    
+
     final itineraryData = planData?['itinerary'] ?? searchData?['itinerary'];
     if (itineraryData != null && itineraryData is List) {
       return itineraryData.map((day) => ItineraryDay.fromJson(day)).toList();
@@ -164,102 +180,107 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
     final days = _getDaysDifference();
 
     return Scaffold(
-      backgroundColor: colorScheme.surfaceContainerLowest,
+      backgroundColor: colorScheme.surface,
       body: CustomScrollView(
         slivers: [
-          // Modern App Bar (same style as TripResultsPage)
+          // Minimal App Bar
           SliverAppBar.large(
-            expandedHeight: 200.h,
+            expandedHeight: 160.h,
             pinned: true,
-            backgroundColor: colorScheme.primaryContainer,
-            foregroundColor: colorScheme.onPrimaryContainer,
-            flexibleSpace: FlexibleSpaceBar(
-              title: null,
-              collapseMode: CollapseMode.parallax,
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      colorScheme.primaryContainer,
-                      colorScheme.secondaryContainer,
-                    ],
-                  ),
+            backgroundColor: colorScheme.surface,
+            foregroundColor: colorScheme.onSurface,
+            actions: [
+              IconButton(
+                onPressed: () => _showDeleteConfirmation(context),
+                icon: Icon(Icons.delete_outline_rounded, color: colorScheme.error),
+                tooltip: 'Delete Plan',
+              ),
+              if (widget.plan.status == 'draft')
+                IconButton(
+                  onPressed: () => _showBookingOptions(context),
+                  icon: Icon(Icons.payment_rounded, color: colorScheme.primary),
+                  tooltip: 'Book Plan',
+                )
+              else
+                IconButton(
+                  onPressed: () => _showPlanActions(context),
+                  icon: Icon(Icons.more_vert_rounded),
+                  tooltip: 'More Actions',
                 ),
-                child: SafeArea(
-                  child: Padding(
-                    padding: EdgeInsets.all(24.w),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Status Badge
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                          decoration: BoxDecoration(
-                            color: _getStatusColor(widget.plan.status),
-                            borderRadius: BorderRadius.circular(20.r),
-                            boxShadow: [
-                              BoxShadow(
-                                color: _getStatusColor(widget.plan.status).withOpacity(0.3),
-                                blurRadius: 8,
-                                offset: Offset(0, 4.h),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(_getStatusIcon(widget.plan.status), color: Colors.white, size: 16.sp),
-                              SizedBox(width: 6.w),
-                              Text(
-                                widget.plan.status.toUpperCase(),
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 1.2,
-                                ),
-                              ),
-                            ],
+              SizedBox(width: 8.w),
+            ],
+            flexibleSpace: FlexibleSpaceBar(
+              titlePadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+              title: Text(
+                widget.plan.planName,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+              background: Container(color: colorScheme.surface),
+            ),
+          ),
+
+          // Status & Info Section (Moved from App Bar background)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 12.w, vertical: 6.h),
+                        decoration: BoxDecoration(
+                          color: _getStatusColor(widget.plan.status).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8.r),
+                          border: Border.all(
+                            color: _getStatusColor(widget.plan.status).withOpacity(0.2),
                           ),
                         ),
-                        
-                        SizedBox(height: 16.h),
-                        
-                        // Plan Name
-                        Text(
-                          widget.plan.planName,
-                          style: theme.textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.onPrimaryContainer,
-                          ),
-                        ),
-                        
-                        SizedBox(height: 8.h),
-                        
-                        // Trip Info
-                        Row(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.calendar_today_rounded, size: 18.sp, color: colorScheme.onPrimaryContainer),
-                            SizedBox(width: 8.w),
+                            Icon(_getStatusIcon(widget.plan.status),
+                                color: _getStatusColor(widget.plan.status), size: 14.sp),
+                            SizedBox(width: 6.w),
                             Text(
-                              '$days ${days == 1 ? 'Day' : 'Days'}',
-                              style: theme.textTheme.bodyLarge?.copyWith(color: colorScheme.onPrimaryContainer),
-                            ),
-                            SizedBox(width: 16.w),
-                            Icon(Icons.people_rounded, size: 18.sp, color: colorScheme.onPrimaryContainer),
-                            SizedBox(width: 8.w),
-                            Text(
-                              '${widget.plan.numberOfTravelers} ${widget.plan.numberOfTravelers == 1 ? 'Traveler' : 'Travelers'}',
-                              style: theme.textTheme.bodyLarge?.copyWith(color: colorScheme.onPrimaryContainer),
+                              widget.plan.status.toUpperCase(),
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: _getStatusColor(widget.plan.status),
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.0,
+                              ),
                             ),
                           ],
                         ),
-                      ],
-                    ),
+                      ),
+                      SizedBox(width: 12.w),
+                      Icon(Icons.calendar_today_rounded,
+                          size: 16.sp,
+                          color: colorScheme.onSurfaceVariant),
+                      SizedBox(width: 6.w),
+                      Text(
+                        '$days ${days == 1 ? 'Day' : 'Days'}',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant),
+                      ),
+                      SizedBox(width: 12.w),
+                      Icon(Icons.people_outline_rounded,
+                          size: 16.sp,
+                          color: colorScheme.onSurfaceVariant),
+                      SizedBox(width: 6.w),
+                      Text(
+                        '${widget.plan.numberOfTravelers}',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant),
+                      ),
+                    ],
                   ),
-                ),
+                ],
               ),
             ),
           ),
@@ -275,27 +296,15 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
           // Transportation Section
           SliverToBoxAdapter(
             child: Padding(
-              padding: EdgeInsets.fromLTRB(20.w, 32.h, 20.w, 16.h),
+              padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 16.h),
               child: Row(
                 children: [
-                  Container(
-                    padding: EdgeInsets.all(12.w),
-                    decoration: BoxDecoration(
-                      color: colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    child: Icon(Icons.directions_bus_rounded, color: colorScheme.onPrimaryContainer, size: 24.sp),
-                  ),
-                  SizedBox(width: 16.w),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Transportation', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                        Text('Your selected travel options', style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant)),
-                      ],
-                    ),
-                  ),
+                  Icon(Icons.directions_bus_outlined,
+                      color: colorScheme.primary, size: 24.sp),
+                  SizedBox(width: 12.w),
+                  Text('Transportation',
+                      style: theme.textTheme.titleLarge
+                          ?.copyWith(fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -309,14 +318,18 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                 children: [
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 20.w),
-                    child: Text('Outbound Journey', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600, color: colorScheme.primary)),
+                    child: Text('Outbound',
+                        style: theme.textTheme.labelLarge?.copyWith(
+                            color: colorScheme.onSurfaceVariant)),
                   ),
-                  SizedBox(height: 12.h),
+                  SizedBox(height: 8.h),
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     padding: EdgeInsets.symmetric(horizontal: 20.w),
-                    child: _buildModernTransportCard(outboundTransport!, theme, true, () {
-                      _showTransportDetails(outboundTransport!, theme, 'Outbound Journey');
+                    child: _buildModernTransportCard(
+                        outboundTransport!, theme, true, () {
+                      _showTransportDetails(
+                          outboundTransport!, theme, 'Outbound Journey');
                     }),
                   ),
                 ],
@@ -333,20 +346,24 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                 children: [
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 20.w),
-                    child: Text('Return Journey', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600, color: colorScheme.primary)),
+                    child: Text('Return',
+                        style: theme.textTheme.labelLarge?.copyWith(
+                            color: colorScheme.onSurfaceVariant)),
                   ),
-                  SizedBox(height: 12.h),
+                  SizedBox(height: 8.h),
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     padding: EdgeInsets.symmetric(horizontal: 20.w),
-                    child: _buildModernTransportCard(returnTransport!, theme, true, () {
-                      _showTransportDetails(returnTransport!, theme, 'Return Journey');
+                    child: _buildModernTransportCard(
+                        returnTransport!, theme, true, () {
+                      _showTransportDetails(
+                          returnTransport!, theme, 'Return Journey');
                     }),
                   ),
                 ],
               ),
             ),
-            SizedBox(height: 48.h).toSliver(),
+            SizedBox(height: 32.h).toSliver(),
           ],
 
           // Accommodation Section
@@ -355,24 +372,12 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
               padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 16.h),
               child: Row(
                 children: [
-                  Container(
-                    padding: EdgeInsets.all(12.w),
-                    decoration: BoxDecoration(
-                      color: colorScheme.tertiaryContainer,
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    child: Icon(Icons.hotel_rounded, color: colorScheme.onTertiaryContainer, size: 24.sp),
-                  ),
-                  SizedBox(width: 16.w),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Accommodation', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                        Text('Your selected hotel', style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant)),
-                      ],
-                    ),
-                  ),
+                  Icon(Icons.hotel_outlined,
+                      color: colorScheme.primary, size: 24.sp),
+                  SizedBox(width: 12.w),
+                  Text('Accommodation',
+                      style: theme.textTheme.titleLarge
+                          ?.copyWith(fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -384,13 +389,14 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 padding: EdgeInsets.symmetric(horizontal: 20.w),
-                child: _buildModernAccommodationCard(accommodation!, theme, true, () {
+                child: _buildModernAccommodationCard(
+                    accommodation!, theme, true, () {
                   _showAccommodationDetails(accommodation!, theme);
                 }),
               ),
             ),
 
-          SizedBox(height: 48.h).toSliver(),
+          SizedBox(height: 32.h).toSliver(),
 
           // Daily Itinerary Section
           if (itinerary.isNotEmpty) ...[
@@ -399,29 +405,17 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                 padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 16.h),
                 child: Row(
                   children: [
-                    Container(
-                      padding: EdgeInsets.all(12.w),
-                      decoration: BoxDecoration(
-                        color: colorScheme.secondaryContainer,
-                        borderRadius: BorderRadius.circular(12.r),
-                      ),
-                      child: Icon(Icons.calendar_today_rounded, color: colorScheme.onSecondaryContainer, size: 24.sp),
-                    ),
-                    SizedBox(width: 16.w),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Daily Itinerary', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                          Text('Your day-by-day activities', style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant)),
-                        ],
-                      ),
-                    ),
+                    Icon(Icons.calendar_today_outlined,
+                        color: colorScheme.primary, size: 24.sp),
+                    SizedBox(width: 12.w),
+                    Text('Itinerary',
+                        style: theme.textTheme.titleLarge
+                            ?.copyWith(fontWeight: FontWeight.bold)),
                   ],
                 ),
               ),
             ),
-            
+
             // Itinerary Days
             SliverList(
               delegate: SliverChildBuilderDelegate(
@@ -432,7 +426,7 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                 childCount: itinerary.length,
               ),
             ),
-            
+
             SizedBox(height: 24.h).toSliver(),
           ],
 
@@ -445,47 +439,16 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
               ),
             ),
 
-          SizedBox(height: 120.h).toSliver(),
+          SizedBox(height: 40.h).toSliver(),
         ],
       ),
-      
-      // Floating Action Button
-      floatingActionButton: Container(
-        width: double.infinity,
-        margin: EdgeInsets.symmetric(horizontal: 20.w),
-        child: Row(
-          children: [
-            // Delete Button
-            FloatingActionButton(
-              heroTag: 'delete',
-              onPressed: () => _showDeleteConfirmation(context),
-              backgroundColor: Colors.red,
-              child: const Icon(Icons.delete_rounded),
-            ),
-            SizedBox(width: 12.w),
-            // Main Action Button
-            Expanded(
-              child: FloatingActionButton.extended(
-                heroTag: 'main',
-                onPressed: widget.plan.status == 'draft' 
-                    ? () => _showBookingOptions(context)
-                    : () => _showPlanActions(context),
-                icon: Icon(widget.plan.status == 'draft' ? Icons.payment_rounded : Icons.more_horiz_rounded),
-                label: Text(widget.plan.status == 'draft' ? 'Book This Plan' : 'More Actions'),
-                backgroundColor: colorScheme.primary,
-              ),
-            ),
-          ],
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
   Widget _buildSummaryCard(ThemeData theme, ColorScheme colorScheme, int days) {
     // Calculate actual total cost from all components
     double calculatedTotalCost = 0.0;
-    
+
     // Add transport costs
     if (outboundTransport != null) {
       calculatedTotalCost += outboundTransport!.totalCost;
@@ -493,61 +456,49 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
     if (returnTransport != null && widget.plan.needsReturnTransport) {
       calculatedTotalCost += returnTransport!.totalCost;
     }
-    
+
     // Add accommodation cost
     if (accommodation != null) {
       calculatedTotalCost += accommodation!.totalCost;
     }
-    
+
     // Add itinerary activity costs
     for (var day in itinerary) {
       calculatedTotalCost += day.totalEstimatedCost;
     }
-    
+
     // Use calculated cost if it's more accurate than stored totalCost
-    final totalCost = calculatedTotalCost > 0 ? calculatedTotalCost : widget.plan.totalCost;
+    final totalCost =
+        calculatedTotalCost > 0 ? calculatedTotalCost : widget.plan.totalCost;
     final budgetRemaining = widget.plan.budget - totalCost;
     final budgetPercentage = (totalCost / widget.plan.budget).clamp(0.0, 1.0);
 
     return Container(
       padding: EdgeInsets.all(24.w),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            colorScheme.primaryContainer,
-            colorScheme.secondaryContainer,
-          ],
-        ),
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(24.r),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.primary.withOpacity(0.3),
-            blurRadius: 20,
-            offset: Offset(0, 8.h),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.summarize_rounded, color: colorScheme.onPrimaryContainer, size: 28.sp),
+              Icon(Icons.summarize_outlined,
+                  color: colorScheme.primary, size: 24.sp),
               SizedBox(width: 12.w),
               Text(
                 'Trip Summary',
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: colorScheme.onPrimaryContainer,
+                  color: colorScheme.onSurface,
                 ),
               ),
             ],
           ),
-          
+
           SizedBox(height: 20.h),
-          
+
           // Route Info
           Row(
             children: [
@@ -557,39 +508,43 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                   label: 'From',
                   location: widget.plan.startLocation,
                   time: _formatDateTime(widget.plan.startTime),
-                  color: Colors.green,
+                  color: colorScheme.primary,
                   theme: theme,
                 ),
               ),
-              Icon(Icons.arrow_forward_rounded, color: colorScheme.onPrimaryContainer, size: 24.sp),
+              Icon(Icons.arrow_forward_rounded,
+                  color: colorScheme.onSurfaceVariant, size: 20.sp),
               Expanded(
                 child: _buildLocationInfo(
                   icon: Icons.location_on_rounded,
                   label: 'To',
                   location: widget.plan.endLocation,
                   time: _formatDateTime(widget.plan.endTime),
-                  color: Colors.red,
+                  color: colorScheme.primary,
                   theme: theme,
                 ),
               ),
             ],
           ),
-          
+
           SizedBox(height: 24.h),
-          
+
           // Cost Summary
           Container(
             padding: EdgeInsets.all(16.w),
             decoration: BoxDecoration(
-              color: colorScheme.surface.withOpacity(0.5),
+              color: colorScheme.surface,
               borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: colorScheme.outlineVariant.withOpacity(0.5)),
             ),
             child: Column(
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Total Cost', style: theme.textTheme.titleMedium?.copyWith(color: colorScheme.onSurface)),
+                    Text('Total Cost',
+                        style: theme.textTheme.titleMedium
+                            ?.copyWith(color: colorScheme.onSurface)),
                     Flexible(
                       child: Text(
                         CurrencyFormatter.formatPKR(totalCost),
@@ -606,10 +561,13 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Budget', style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface.withOpacity(0.7))),
+                    Text('Budget',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onSurface.withOpacity(0.7))),
                     Text(
                       CurrencyFormatter.formatPKR(widget.plan.budget),
-                      style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                      style: theme.textTheme.bodyMedium
+                          ?.copyWith(fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -618,10 +576,14 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                   borderRadius: BorderRadius.circular(4.r),
                   child: LinearProgressIndicator(
                     value: budgetPercentage,
-                    minHeight: 8.h,
+                    minHeight: 6.h,
                     backgroundColor: colorScheme.surfaceContainerHighest,
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      budgetPercentage > 0.9 ? Colors.red : budgetPercentage > 0.7 ? Colors.orange : Colors.green,
+                      budgetPercentage > 0.9
+                          ? colorScheme.error
+                          : budgetPercentage > 0.7
+                              ? Colors.orange
+                              : colorScheme.primary,
                     ),
                   ),
                 ),
@@ -631,13 +593,14 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                   children: [
                     Text(
                       budgetRemaining >= 0 ? 'Remaining' : 'Over Budget',
-                      style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurface.withOpacity(0.7)),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurface.withOpacity(0.7)),
                     ),
                     Text(
                       CurrencyFormatter.formatPKR(budgetRemaining.abs()),
                       style: theme.textTheme.bodySmall?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: budgetRemaining >= 0 ? Colors.green : Colors.red,
+                        color: budgetRemaining >= 0 ? colorScheme.primary : colorScheme.error,
                       ),
                     ),
                   ],
@@ -663,9 +626,11 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
       children: [
         Row(
           children: [
-            Icon(icon, color: color, size: 20.sp),
+            Icon(icon, color: color, size: 16.sp),
             SizedBox(width: 6.w),
-            Text(label, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onPrimaryContainer.withOpacity(0.7))),
+            Text(label,
+                style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant)),
           ],
         ),
         SizedBox(height: 4.h),
@@ -673,14 +638,15 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
           location,
           style: theme.textTheme.titleSmall?.copyWith(
             fontWeight: FontWeight.bold,
-            color: theme.colorScheme.onPrimaryContainer,
+            color: theme.colorScheme.onSurface,
           ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
         Text(
           time,
-          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onPrimaryContainer.withOpacity(0.8)),
+          style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant),
         ),
       ],
     );
@@ -690,7 +656,7 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
     final transportBooking = bookingDetails?['transportation']?['outbound'];
     final bookingStatus = transportBooking?['status'] ?? 'unknown';
     final bookingMessage = transportBooking?['message'] ?? 'Booking processed';
-    
+
     // Additional info from plan
     final offerId = transportBooking?['offerId'];
     final totalPrice = transportBooking?['totalPrice'];
@@ -701,7 +667,8 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(24.r),
-        border: Border.all(color: _getBookingStatusColor(bookingStatus).withOpacity(0.3)),
+        border: Border.all(
+            color: _getBookingStatusColor(bookingStatus).withOpacity(0.3)),
         boxShadow: [
           BoxShadow(
             color: _getBookingStatusColor(bookingStatus).withOpacity(0.1),
@@ -718,7 +685,8 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
               Container(
                 padding: EdgeInsets.all(12.w),
                 decoration: BoxDecoration(
-                  color: _getBookingStatusColor(bookingStatus).withOpacity(0.15),
+                  color:
+                      _getBookingStatusColor(bookingStatus).withOpacity(0.15),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -734,7 +702,8 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                   children: [
                     Text(
                       'Booking Status',
-                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     Text(
                       bookingStatus.toUpperCase(),
@@ -748,9 +717,7 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
               ),
             ],
           ),
-          
           SizedBox(height: 16.h),
-          
           Container(
             padding: EdgeInsets.all(12.w),
             decoration: BoxDecoration(
@@ -762,7 +729,8 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.info_outline_rounded, size: 20.sp, color: colorScheme.primary),
+                    Icon(Icons.info_outline_rounded,
+                        size: 20.sp, color: colorScheme.primary),
                     SizedBox(width: 8.w),
                     Expanded(
                       child: Text(
@@ -819,164 +787,135 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
     VoidCallback onTap,
   ) {
     final colorScheme = theme.colorScheme;
-    
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
-      width: 360.w,
-      constraints: BoxConstraints(minHeight: 240.h, maxHeight: 340.h),
-      margin: EdgeInsets.only(right: 16.w),
-      clipBehavior: Clip.hardEdge,
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(24.r),
-        border: Border.all(
-          color: isSelected ? colorScheme.primary : colorScheme.outlineVariant,
-          width: isSelected ? 3 : 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isSelected 
-                ? colorScheme.primary.withOpacity(0.2)
-                : Colors.black.withOpacity(0.06),
-            blurRadius: 20,
-            offset: Offset(0, 8.h),
+        width: 320.w,
+        constraints: BoxConstraints(minHeight: 200.h, maxHeight: 280.h),
+        margin: EdgeInsets.only(right: 16.w),
+        clipBehavior: Clip.hardEdge,
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(
+            color: isSelected ? colorScheme.primary : colorScheme.outlineVariant,
+            width: isSelected ? 2 : 1,
           ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Header
-          Container(
-            padding: EdgeInsets.all(24.w),
-            decoration: BoxDecoration(
-              color: isSelected 
-                  ? colorScheme.primaryContainer.withOpacity(0.3)
-                  : colorScheme.surfaceContainerHighest.withOpacity(0.5),
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(24.r),
-                topRight: Radius.circular(24.r),
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(12.w),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primary.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(12.r),
+        ),
+        child: Column(
+          children: [
+            // Header
+            Container(
+              padding: EdgeInsets.all(16.w),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? colorScheme.primaryContainer.withOpacity(0.2)
+                    : colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                border: Border(
+                  bottom: BorderSide(
+                    color: colorScheme.outlineVariant.withOpacity(0.5),
                   ),
-                  child: Icon(
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
                     _getVehicleIcon(transport.vehicleType),
                     color: colorScheme.primary,
-                    size: 28.sp,
+                    size: 24.sp,
                   ),
-                ),
-                SizedBox(width: 16.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        transport.vehicleType,
-                        style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                      SizedBox(height: 4.h),
-                      Text(
-                        transport.providerName,
-                        style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                if (isSelected)
-                  Container(
-                    padding: EdgeInsets.all(8.w),
-                    decoration: BoxDecoration(
-                      color: colorScheme.primary,
-                      shape: BoxShape.circle,
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          transport.vehicleType,
+                          style: theme.textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          transport.providerName,
+                          style: theme.textTheme.bodySmall
+                              ?.copyWith(color: colorScheme.onSurfaceVariant),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
-                    child: Icon(Icons.check_rounded, color: colorScheme.onPrimary, size: 20.sp),
-                  ),
-              ],
-            ),
-          ),
-          
-          // Content
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.all(24.w),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    children: [
-                      _buildTransportInfoRow(
-                        Icons.schedule_rounded,
-                        'Departure',
-                        _formatDateTime(transport.departureTime),
-                        theme,
-                      ),
-                      SizedBox(height: 12.h),
-                      _buildTransportInfoRow(
-                        Icons.location_on_outlined,
-                        'Route',
-                        '${transport.pickupLocation ?? 'Start'} → ${transport.dropoffLocation ?? 'End'}',
-                        theme,
-                      ),
-                      SizedBox(height: 12.h),
-                      _buildTransportInfoRow(
-                        Icons.event_seat_rounded,
-                        'Seats',
-                        '${transport.seatsAvailable} available',
-                        theme,
-                      ),
-                    ],
                   ),
                 ],
               ),
             ),
-          ),
-          
-          // Price Footer
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 18.h),
-            decoration: BoxDecoration(
-              color: colorScheme.primary,
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(24.r),
-                bottomRight: Radius.circular(24.r),
+
+            // Content
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.all(16.w),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      children: [
+                        _buildTransportInfoRow(
+                          Icons.schedule_rounded,
+                          'Departure',
+                          _formatDateTime(transport.departureTime),
+                          theme,
+                        ),
+                        SizedBox(height: 12.h),
+                        _buildTransportInfoRow(
+                          Icons.location_on_outlined,
+                          'Route',
+                          '${transport.pickupLocation ?? 'Start'} → ${transport.dropoffLocation ?? 'End'}',
+                          theme,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Total Cost',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: colorScheme.onPrimary,
-                    fontWeight: FontWeight.w600,
+
+            // Price Footer
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                border: Border(
+                  top: BorderSide(
+                    color: colorScheme.outlineVariant.withOpacity(0.5),
                   ),
                 ),
-                Text(
-                  CurrencyFormatter.formatPKR(transport.totalCost),
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    color: colorScheme.onPrimary,
-                    fontWeight: FontWeight.bold,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Total Cost',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   ),
-                ),
-              ],
+                  Text(
+                    CurrencyFormatter.formatPKR(transport.totalCost),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildTransportInfoRow(IconData icon, String label, String value, ThemeData theme) {
+  Widget _buildTransportInfoRow(
+      IconData icon, String label, String value, ThemeData theme) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -986,8 +925,12 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-              Text(value, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+              Text(label,
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+              Text(value,
+                  style: theme.textTheme.bodyMedium
+                      ?.copyWith(fontWeight: FontWeight.w600)),
             ],
           ),
         ),
@@ -1003,223 +946,184 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
     VoidCallback onTap,
   ) {
     final colorScheme = theme.colorScheme;
-    
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
-      width: 380.w,
-      margin: EdgeInsets.only(right: 16.w),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(24.r),
-        border: Border.all(
-          color: isSelected ? colorScheme.primary : colorScheme.outlineVariant,
-          width: isSelected ? 3 : 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isSelected 
-                ? colorScheme.primary.withOpacity(0.2)
-                : Colors.black.withOpacity(0.08),
-            blurRadius: 24,
-            offset: Offset(0, 10.h),
+        width: 320.w,
+        margin: EdgeInsets.only(right: 16.w),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(
+            color: isSelected ? colorScheme.primary : colorScheme.outlineVariant,
+            width: isSelected ? 2 : 1,
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Image
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(24.r),
-                  topRight: Radius.circular(24.r),
-                ),
-                child: accommodation.images?.isNotEmpty ?? false
-                    ? Image.network(
-                        accommodation.images!.first,
-                        height: 200.h,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          height: 200.h,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(16.r),
+                    topRight: Radius.circular(16.r),
+                  ),
+                  child: accommodation.images?.isNotEmpty ?? false
+                      ? Image.network(
+                          accommodation.images!.first,
+                          height: 160.h,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
+                            height: 160.h,
+                            color: colorScheme.surfaceContainerHighest,
+                            child: Icon(Icons.hotel_rounded,
+                                size: 48.sp,
+                                color: colorScheme.onSurfaceVariant),
+                          ),
+                        )
+                      : Container(
+                          height: 160.h,
                           color: colorScheme.surfaceContainerHighest,
-                          child: Icon(Icons.hotel_rounded, size: 64.sp, color: colorScheme.onSurfaceVariant),
+                          child: Icon(Icons.hotel_rounded,
+                              size: 48.sp, color: colorScheme.onSurfaceVariant),
                         ),
-                      )
-                    : Container(
-                        height: 200.h,
-                        color: colorScheme.surfaceContainerHighest,
-                        child: Icon(Icons.hotel_rounded, size: 64.sp, color: colorScheme.onSurfaceVariant),
-                      ),
-              ),
-              
-              // Rating Badge
-              Positioned(
-                top: 16.h,
-                right: 16.w,
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                  decoration: BoxDecoration(
-                    color: Colors.amber,
-                    borderRadius: BorderRadius.circular(20.r),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 8,
-                        offset: Offset(0, 2.h),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.star_rounded, color: Colors.white, size: 16.sp),
-                      SizedBox(width: 4.w),
-                      Text(
-                        accommodation.avgRating.toStringAsFixed(1),
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
-              ),
-              
-              // Selection Badge
-              if (isSelected)
+
+                // Rating Badge
                 Positioned(
-                  top: 16.h,
-                  left: 16.w,
+                  top: 12.h,
+                  right: 12.w,
                   child: Container(
-                    padding: EdgeInsets.all(8.w),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                     decoration: BoxDecoration(
-                      color: colorScheme.primary,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: colorScheme.primary.withOpacity(0.5),
-                          blurRadius: 8,
-                          offset: Offset(0, 2.h),
+                      color: Colors.black.withOpacity(0.6),
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.star_rounded,
+                            color: Colors.amber, size: 14.sp),
+                        SizedBox(width: 4.w),
+                        Text(
+                          accommodation.avgRating.toStringAsFixed(1),
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),
-                    child: Icon(Icons.check_rounded, color: colorScheme.onPrimary, size: 20.sp),
                   ),
                 ),
-            ],
-          ),
-          
-          // Content
-          Padding(
-            padding: EdgeInsets.all(20.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  accommodation.name,
-                  style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                
-                SizedBox(height: 8.h),
-                
-                Row(
-                  children: [
-                    Icon(Icons.location_on_outlined, size: 16.sp, color: colorScheme.onSurfaceVariant),
-                    SizedBox(width: 4.w),
-                    Expanded(
-                      child: Text(
-                        accommodation.location,
-                        style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
-                      ),
-                    ),
-                  ],
-                ),
-                
-                SizedBox(height: 16.h),
-                
-                if (accommodation.description?.isNotEmpty ?? false) ...[
+              ],
+            ),
+
+            // Content
+            Padding(
+              padding: EdgeInsets.all(16.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    accommodation.description!,
-                    style: theme.textTheme.bodyMedium,
-                    maxLines: 2,
+                    accommodation.name,
+                    style: theme.textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.bold),
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  SizedBox(height: 16.h),
-                ],
-                
-                // Room Info
-                Container(
-                  padding: EdgeInsets.all(12.w),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  child: Row(
+
+                  SizedBox(height: 4.h),
+
+                  Row(
                     children: [
-                      Icon(Icons.hotel_rounded, size: 20.sp, color: colorScheme.primary),
-                      SizedBox(width: 8.w),
+                      Icon(Icons.location_on_outlined,
+                          size: 14.sp, color: colorScheme.onSurfaceVariant),
+                      SizedBox(width: 4.w),
                       Expanded(
                         child: Text(
-                          '${roomAllocations.isNotEmpty ? roomAllocations.length : (accommodation.roomAllocations.isNotEmpty ? accommodation.roomAllocations.length : 1)} room${(roomAllocations.isNotEmpty ? roomAllocations.length : accommodation.roomAllocations.length) != 1 ? 's' : ''} • ${accommodation.numberOfNights} night${accommodation.numberOfNights != 1 ? 's' : ''}',
-                          style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                          accommodation.location,
+                          style: theme.textTheme.bodySmall
+                              ?.copyWith(color: colorScheme.onSurfaceVariant),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
                   ),
-                ),
-              ],
-            ),
-          ),
-          
-          // Price Footer
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-            decoration: BoxDecoration(
-              color: colorScheme.primary,
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(24.r),
-                bottomRight: Radius.circular(24.r),
+
+                  SizedBox(height: 12.h),
+
+                  // Room Info
+                  Container(
+                    padding: EdgeInsets.all(8.w),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.bed_rounded,
+                            size: 16.sp, color: colorScheme.primary),
+                        SizedBox(width: 6.w),
+                        Text(
+                          '${roomAllocations.isNotEmpty ? roomAllocations.length : (accommodation.roomAllocations.isNotEmpty ? accommodation.roomAllocations.length : 1)} room${(roomAllocations.isNotEmpty ? roomAllocations.length : accommodation.roomAllocations.length) != 1 ? 's' : ''}',
+                          style: theme.textTheme.bodySmall
+                              ?.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Total Cost',
-                      style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onPrimary.withOpacity(0.8)),
-                    ),
-                    Text(
-                      CurrencyFormatter.formatPKR(accommodation.totalCost),
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        color: colorScheme.onPrimary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
+
+            // Price Footer
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                border: Border(
+                  top: BorderSide(
+                    color: colorScheme.outlineVariant.withOpacity(0.5),
+                  ),
                 ),
-                Icon(Icons.arrow_forward_ios_rounded, color: colorScheme.onPrimary, size: 16.sp),
-              ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Total Cost',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant),
+                  ),
+                  Text(
+                    CurrencyFormatter.formatPKR(accommodation.totalCost),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }
 
-  void _showTransportDetails(TransportOption transport, ThemeData theme, String title) {
+  void _showTransportDetails(
+      TransportOption transport, ThemeData theme, String title) {
     final colorScheme = theme.colorScheme;
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1245,7 +1149,7 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                 borderRadius: BorderRadius.circular(2.r),
               ),
             ),
-            
+
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.all(24.w),
@@ -1290,9 +1194,9 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                         ),
                       ],
                     ),
-                    
+
                     SizedBox(height: 32.h),
-                    
+
                     // Provider Info
                     _buildDetailSection(
                       icon: Icons.person_rounded,
@@ -1300,40 +1204,48 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                       children: [
                         _buildDetailRow('Provider', transport.providerName),
                         _buildDetailRow('Vehicle Type', transport.vehicleType),
-                        _buildDetailRow('Seats Available', '${transport.seatsAvailable}'),
+                        _buildDetailRow(
+                            'Seats Available', '${transport.seatsAvailable}'),
                       ],
                       theme: theme,
                     ),
-                    
+
                     SizedBox(height: 24.h),
-                    
+
                     // Journey Details
                     _buildDetailSection(
                       icon: Icons.route_rounded,
                       title: 'Journey Details',
                       children: [
-                        _buildDetailRow('Departure', _formatDateTime(transport.departureTime)),
-                        _buildDetailRow('From', transport.pickupLocation ?? 'N/A'),
-                        _buildDetailRow('To', transport.dropoffLocation ?? 'N/A'),
+                        _buildDetailRow('Departure',
+                            _formatDateTime(transport.departureTime)),
+                        _buildDetailRow(
+                            'From', transport.pickupLocation ?? 'N/A'),
+                        _buildDetailRow(
+                            'To', transport.dropoffLocation ?? 'N/A'),
                       ],
                       theme: theme,
                     ),
-                    
+
                     SizedBox(height: 24.h),
-                    
+
                     // Pricing
                     _buildDetailSection(
                       icon: Icons.payments_rounded,
                       title: 'Pricing',
                       children: [
-                        _buildDetailRow('Price per Seat', CurrencyFormatter.formatPKR(transport.pricePerSeat)),
-                        _buildDetailRow('Total Cost', CurrencyFormatter.formatPKR(transport.totalCost)),
+                        _buildDetailRow(
+                            'Price per Seat',
+                            CurrencyFormatter.formatPKR(
+                                transport.pricePerSeat)),
+                        _buildDetailRow('Total Cost',
+                            CurrencyFormatter.formatPKR(transport.totalCost)),
                       ],
                       theme: theme,
                     ),
-                    
+
                     SizedBox(height: 32.h),
-                    
+
                     // Close Button
                     SizedBox(
                       width: double.infinity,
@@ -1355,9 +1267,10 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
     );
   }
 
-  void _showAccommodationDetails(AccommodationOption accommodation, ThemeData theme) {
+  void _showAccommodationDetails(
+      AccommodationOption accommodation, ThemeData theme) {
     final colorScheme = theme.colorScheme;
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1383,7 +1296,7 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                 borderRadius: BorderRadius.circular(2.r),
               ),
             ),
-            
+
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
@@ -1399,7 +1312,8 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                             return Image.network(
                               accommodation.images![index],
                               fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) => Container(
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Container(
                                 color: colorScheme.surfaceContainerHighest,
                                 child: Icon(Icons.hotel_rounded, size: 64.sp),
                               ),
@@ -1412,10 +1326,11 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                         height: 250.h,
                         color: colorScheme.surfaceContainerHighest,
                         child: Center(
-                          child: Icon(Icons.hotel_rounded, size: 64.sp, color: colorScheme.onSurfaceVariant),
+                          child: Icon(Icons.hotel_rounded,
+                              size: 64.sp, color: colorScheme.onSurfaceVariant),
                         ),
                       ),
-                    
+
                     Padding(
                       padding: EdgeInsets.all(24.w),
                       child: Column(
@@ -1430,18 +1345,25 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                                   children: [
                                     Text(
                                       accommodation.name,
-                                      style: theme.textTheme.headlineSmall?.copyWith(
+                                      style: theme.textTheme.headlineSmall
+                                          ?.copyWith(
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                     SizedBox(height: 4.h),
                                     Row(
                                       children: [
-                                        Icon(Icons.location_on_outlined, size: 16.sp, color: colorScheme.onSurfaceVariant),
+                                        Icon(Icons.location_on_outlined,
+                                            size: 16.sp,
+                                            color:
+                                                colorScheme.onSurfaceVariant),
                                         SizedBox(width: 4.w),
                                         Text(
                                           accommodation.location,
-                                          style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                                          style: theme.textTheme.bodyMedium
+                                              ?.copyWith(
+                                                  color: colorScheme
+                                                      .onSurfaceVariant),
                                         ),
                                       ],
                                     ),
@@ -1449,18 +1371,22 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                                 ),
                               ),
                               Container(
-                                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 12.w, vertical: 6.h),
                                 decoration: BoxDecoration(
                                   color: Colors.amber,
                                   borderRadius: BorderRadius.circular(20.r),
                                 ),
                                 child: Row(
                                   children: [
-                                    Icon(Icons.star_rounded, color: Colors.white, size: 16.sp),
+                                    Icon(Icons.star_rounded,
+                                        color: Colors.white, size: 16.sp),
                                     SizedBox(width: 4.w),
                                     Text(
-                                      accommodation.avgRating.toStringAsFixed(1),
-                                      style: theme.textTheme.labelMedium?.copyWith(
+                                      accommodation.avgRating
+                                          .toStringAsFixed(1),
+                                      style:
+                                          theme.textTheme.labelMedium?.copyWith(
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -1470,108 +1396,153 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                               ),
                             ],
                           ),
-                          
+
                           SizedBox(height: 20.h),
-                          
+
                           // Description
-                          if (accommodation.description?.isNotEmpty ?? false) ...[
+                          if (accommodation.description?.isNotEmpty ??
+                              false) ...[
                             Text(
                               accommodation.description!,
                               style: theme.textTheme.bodyLarge,
                             ),
                             SizedBox(height: 24.h),
                           ],
-                          
+
                           // Stay Details
                           _buildDetailSection(
                             icon: Icons.hotel_rounded,
                             title: 'Stay Details',
                             children: [
-                              _buildDetailRow('Check-in', accommodation.checkInDate != null ? DateFormat('MMM dd, yyyy').format(accommodation.checkInDate!) : 'N/A'),
-                              _buildDetailRow('Check-out', accommodation.checkOutDate != null ? DateFormat('MMM dd, yyyy').format(accommodation.checkOutDate!) : 'N/A'),
-                              _buildDetailRow('Number of Nights', '${accommodation.numberOfNights}'),
-                              _buildDetailRow('Guests', '${accommodation.totalGuests ?? 0}'),
+                              _buildDetailRow(
+                                  'Check-in',
+                                  accommodation.checkInDate != null
+                                      ? DateFormat('MMM dd, yyyy')
+                                          .format(accommodation.checkInDate!)
+                                      : 'N/A'),
+                              _buildDetailRow(
+                                  'Check-out',
+                                  accommodation.checkOutDate != null
+                                      ? DateFormat('MMM dd, yyyy')
+                                          .format(accommodation.checkOutDate!)
+                                      : 'N/A'),
+                              _buildDetailRow('Number of Nights',
+                                  '${accommodation.numberOfNights}'),
+                              _buildDetailRow('Guests',
+                                  '${accommodation.totalGuests ?? 0}'),
                             ],
                             theme: theme,
                           ),
-                          
+
                           SizedBox(height: 24.h),
-                          
+
                           // Room Allocations
                           Text(
                             'Room Details',
-                            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                            style: theme.textTheme.titleLarge
+                                ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           SizedBox(height: 12.h),
-                          
-                          ...(roomAllocations.isNotEmpty ? roomAllocations : accommodation.roomAllocations).map((room) => Container(
-                            margin: EdgeInsets.only(bottom: 12.h),
-                            padding: EdgeInsets.all(16.w),
-                            decoration: BoxDecoration(
-                              color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
-                              borderRadius: BorderRadius.circular(12.r),
-                              border: Border.all(color: colorScheme.outline.withOpacity(0.2)),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        room.roomType,
-                                        style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                                      ),
+
+                          ...(roomAllocations.isNotEmpty
+                                  ? roomAllocations
+                                  : accommodation.roomAllocations)
+                              .map((room) => Container(
+                                    margin: EdgeInsets.only(bottom: 12.h),
+                                    padding: EdgeInsets.all(16.w),
+                                    decoration: BoxDecoration(
+                                      color: colorScheme.surfaceContainerHighest
+                                          .withOpacity(0.5),
+                                      borderRadius: BorderRadius.circular(12.r),
+                                      border: Border.all(
+                                          color: colorScheme.outline
+                                              .withOpacity(0.2)),
                                     ),
-                                    Text(
-                                      CurrencyFormatter.formatPKR(room.pricePerNight),
-                                      style: theme.textTheme.titleMedium?.copyWith(
-                                        color: colorScheme.primary,
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                room.roomType,
+                                                style: theme
+                                                    .textTheme.titleMedium
+                                                    ?.copyWith(
+                                                        fontWeight:
+                                                            FontWeight.bold),
+                                              ),
+                                            ),
+                                            Text(
+                                              CurrencyFormatter.formatPKR(
+                                                  room.pricePerNight),
+                                              style: theme.textTheme.titleMedium
+                                                  ?.copyWith(
+                                                color: colorScheme.primary,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        SizedBox(height: 8.h),
+                                        Text('Per night',
+                                            style: theme.textTheme.bodySmall),
+                                        SizedBox(height: 8.h),
+                                        Row(
+                                          children: [
+                                            Icon(Icons.people_rounded,
+                                                size: 16.sp,
+                                                color: colorScheme
+                                                    .onSurfaceVariant),
+                                            SizedBox(width: 4.w),
+                                            Text('Capacity: ${room.capacity}',
+                                                style:
+                                                    theme.textTheme.bodyMedium),
+                                            SizedBox(width: 16.w),
+                                            Icon(Icons.hotel_rounded,
+                                                size: 16.sp,
+                                                color: colorScheme
+                                                    .onSurfaceVariant),
+                                            SizedBox(width: 4.w),
+                                            Text('Rooms: ${room.numberOfRooms}',
+                                                style:
+                                                    theme.textTheme.bodyMedium),
+                                          ],
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                                SizedBox(height: 8.h),
-                                Text('Per night', style: theme.textTheme.bodySmall),
-                                SizedBox(height: 8.h),
-                                Row(
-                                  children: [
-                                    Icon(Icons.people_rounded, size: 16.sp, color: colorScheme.onSurfaceVariant),
-                                    SizedBox(width: 4.w),
-                                    Text('Capacity: ${room.capacity}', style: theme.textTheme.bodyMedium),
-                                    SizedBox(width: 16.w),
-                                    Icon(Icons.hotel_rounded, size: 16.sp, color: colorScheme.onSurfaceVariant),
-                                    SizedBox(width: 4.w),
-                                    Text('Rooms: ${room.numberOfRooms}', style: theme.textTheme.bodyMedium),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          )).toList(),
-                          
+                                  ))
+                              .toList(),
+
                           SizedBox(height: 24.h),
-                          
+
                           // Amenities
                           if (accommodation.amenities?.isNotEmpty ?? false) ...[
                             Text(
                               'Amenities',
-                              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                              style: theme.textTheme.titleLarge
+                                  ?.copyWith(fontWeight: FontWeight.bold),
                             ),
                             SizedBox(height: 12.h),
                             Wrap(
                               spacing: 8.w,
                               runSpacing: 8.h,
-                              children: accommodation.amenities!.map((amenity) => Chip(
-                                label: Text(amenity),
-                                avatar: Icon(_getAmenityIcon(amenity), size: 18.sp),
-                                backgroundColor: colorScheme.surfaceContainerHighest,
-                              )).toList(),
+                              children: accommodation.amenities!
+                                  .map((amenity) => Chip(
+                                        label: Text(amenity),
+                                        avatar: Icon(_getAmenityIcon(amenity),
+                                            size: 18.sp),
+                                        backgroundColor:
+                                            colorScheme.surfaceContainerHighest,
+                                      ))
+                                  .toList(),
                             ),
                             SizedBox(height: 24.h),
                           ],
-                          
+
                           // Total Cost
                           Container(
                             padding: EdgeInsets.all(16.w),
@@ -1584,11 +1555,14 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                               children: [
                                 Text(
                                   'Total Accommodation Cost',
-                                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                                  style: theme.textTheme.titleMedium
+                                      ?.copyWith(fontWeight: FontWeight.bold),
                                 ),
                                 Text(
-                                  CurrencyFormatter.formatPKR(accommodation.totalCost),
-                                  style: theme.textTheme.headlineSmall?.copyWith(
+                                  CurrencyFormatter.formatPKR(
+                                      accommodation.totalCost),
+                                  style:
+                                      theme.textTheme.headlineSmall?.copyWith(
                                     color: colorScheme.primary,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -1596,9 +1570,9 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                               ],
                             ),
                           ),
-                          
+
                           SizedBox(height: 24.h),
-                          
+
                           // Close Button
                           SizedBox(
                             width: double.infinity,
@@ -1638,7 +1612,8 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
             SizedBox(width: 12.w),
             Text(
               title,
-              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              style: theme.textTheme.titleLarge
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -1648,7 +1623,8 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
           decoration: BoxDecoration(
             color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
             borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
+            border:
+                Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1687,37 +1663,31 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
     );
   }
 
-  Widget _buildDayCard(ItineraryDay day, ThemeData theme, ColorScheme colorScheme) {
+  Widget _buildDayCard(
+      ItineraryDay day, ThemeData theme, ColorScheme colorScheme) {
     return Container(
       margin: EdgeInsets.fromLTRB(20.w, 0, 20.w, 16.h),
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(color: colorScheme.outlineVariant),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: Offset(0, 4.h),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: colorScheme.outlineVariant.withOpacity(0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Day Header
           Container(
-            padding: EdgeInsets.all(20.w),
+            padding: EdgeInsets.all(16.w),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  colorScheme.primaryContainer,
-                  colorScheme.secondaryContainer,
-                ],
-              ),
+              color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
               borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(20.r),
-                topRight: Radius.circular(20.r),
+                topLeft: Radius.circular(16.r),
+                topRight: Radius.circular(16.r),
+              ),
+              border: Border(
+                bottom: BorderSide(
+                  color: colorScheme.outlineVariant.withOpacity(0.5),
+                ),
               ),
             ),
             child: Row(
@@ -1728,16 +1698,16 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                     children: [
                       Text(
                         'Day ${day.day}',
-                        style: theme.textTheme.titleLarge?.copyWith(
+                        style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: colorScheme.onPrimaryContainer,
+                          color: colorScheme.onSurface,
                         ),
                       ),
-                      SizedBox(height: 4.h),
+                      SizedBox(height: 2.h),
                       Text(
                         '${day.date} • ${day.dayOfWeek}',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onPrimaryContainer.withOpacity(0.8),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -1746,62 +1716,63 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                   ),
                 ),
                 SizedBox(width: 8.w),
-                Flexible(
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                    decoration: BoxDecoration(
-                      color: colorScheme.surface.withOpacity(0.9),
-                      borderRadius: BorderRadius.circular(20.r),
+                Container(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surface,
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(
+                      color: colorScheme.outlineVariant.withOpacity(0.5),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.attach_money_rounded, size: 16.sp, color: colorScheme.primary),
-                        Flexible(
-                          child: Text(
-                            CurrencyFormatter.formatPKR(day.totalEstimatedCost),
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: colorScheme.primary,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
+                  ),
+                  child: Text(
+                    CurrencyFormatter.formatPKR(day.totalEstimatedCost),
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.primary,
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          
+
           // Day Theme
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
-            color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
-            child: Row(
-              children: [
-                Icon(Icons.lightbulb_outline_rounded, size: 18.sp, color: colorScheme.primary),
-                SizedBox(width: 8.w),
-                Text(
-                  day.theme,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.primary,
+          if (day.theme.isNotEmpty)
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: colorScheme.outlineVariant.withOpacity(0.2),
                   ),
                 ),
-              ],
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.lightbulb_outline_rounded,
+                      size: 16.sp, color: colorScheme.primary),
+                  SizedBox(width: 8.w),
+                  Text(
+                    day.theme,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w500,
+                      color: colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          
+
           // Activities
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            padding: EdgeInsets.all(20.w),
+            padding: EdgeInsets.all(16.w),
             itemCount: day.activities.length,
-            separatorBuilder: (context, index) => SizedBox(height: 16.h),
+            separatorBuilder: (context, index) => SizedBox(height: 12.h),
             itemBuilder: (context, index) {
               final activity = day.activities[index];
               return _buildActivityItem(activity, theme, colorScheme);
@@ -1812,7 +1783,8 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
     );
   }
 
-  Widget _buildActivityItem(ActivityItem activity, ThemeData theme, ColorScheme colorScheme) {
+  Widget _buildActivityItem(
+      ActivityItem activity, ThemeData theme, ColorScheme colorScheme) {
     return InkWell(
       onTap: () => _showActivityDetails(activity, theme),
       borderRadius: BorderRadius.circular(16.r),
@@ -1821,14 +1793,15 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
         decoration: BoxDecoration(
           color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
           borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(color: colorScheme.outlineVariant.withOpacity(0.5)),
+          border:
+              Border.all(color: colorScheme.outlineVariant.withOpacity(0.5)),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Activity photo preview (if available)
-            if (activity.placeDetails != null && 
-                activity.placeDetails!.photos != null && 
+            if (activity.placeDetails != null &&
+                activity.placeDetails!.photos != null &&
                 activity.placeDetails!.photos!.isNotEmpty)
               Container(
                 width: 80.w,
@@ -1836,7 +1809,8 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                 margin: EdgeInsets.only(right: 12.w),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12.r),
-                  border: Border.all(color: colorScheme.outline.withOpacity(0.2)),
+                  border:
+                      Border.all(color: colorScheme.outline.withOpacity(0.2)),
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12.r),
@@ -1845,7 +1819,8 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
-                        color: _getCategoryColor(activity.type).withOpacity(0.12),
+                        color:
+                            _getCategoryColor(activity.type).withOpacity(0.12),
                         child: Icon(
                           _getCategoryIcon(activity.type),
                           color: _getCategoryColor(activity.type),
@@ -1864,7 +1839,8 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.schedule_rounded, size: 16.sp, color: colorScheme.primary),
+                    Icon(Icons.schedule_rounded,
+                        size: 16.sp, color: colorScheme.primary),
                     SizedBox(height: 4.h),
                     Text(
                       activity.time,
@@ -1885,19 +1861,20 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                   ],
                 ),
               ),
-            
+
             // Activity Details
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Time (when photo is shown)
-                  if (activity.placeDetails != null && 
-                      activity.placeDetails!.photos != null && 
+                  if (activity.placeDetails != null &&
+                      activity.placeDetails!.photos != null &&
                       activity.placeDetails!.photos!.isNotEmpty) ...[
                     Row(
                       children: [
-                        Icon(Icons.schedule_rounded, size: 14.sp, color: colorScheme.primary),
+                        Icon(Icons.schedule_rounded,
+                            size: 14.sp, color: colorScheme.primary),
                         SizedBox(width: 4.w),
                         Text(
                           activity.time,
@@ -1918,15 +1895,17 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                     ),
                     SizedBox(height: 6.h),
                   ],
-                  
+
                   Wrap(
                     spacing: 8.w,
                     runSpacing: 6.h,
                     children: [
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 8.w, vertical: 4.h),
                         decoration: BoxDecoration(
-                          color: _getCategoryColor(activity.type).withOpacity(0.2),
+                          color:
+                              _getCategoryColor(activity.type).withOpacity(0.2),
                           borderRadius: BorderRadius.circular(8.r),
                         ),
                         child: Row(
@@ -1950,7 +1929,8 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                       ),
                       if (activity.estimatedCost > 0)
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 8.w, vertical: 4.h),
                           decoration: BoxDecoration(
                             color: Colors.green.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8.r),
@@ -1965,9 +1945,9 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                         ),
                     ],
                   ),
-                  
+
                   SizedBox(height: 8.h),
-                  
+
                   Text(
                     activity.title,
                     style: theme.textTheme.titleSmall?.copyWith(
@@ -1976,9 +1956,9 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  
+
                   SizedBox(height: 4.h),
-                  
+
                   Text(
                     activity.description,
                     style: theme.textTheme.bodySmall?.copyWith(
@@ -1987,12 +1967,13 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  
+
                   if (activity.location != null) ...[
                     SizedBox(height: 6.h),
                     Row(
                       children: [
-                        Icon(Icons.place_rounded, size: 14.sp, color: colorScheme.error),
+                        Icon(Icons.place_rounded,
+                            size: 14.sp, color: colorScheme.error),
                         SizedBox(width: 4.w),
                         Expanded(
                           child: Text(
@@ -2007,12 +1988,13 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                       ],
                     ),
                   ],
-                  
+
                   if (activity.placeDetails?.rating != null) ...[
                     SizedBox(height: 4.h),
                     Row(
                       children: [
-                        Icon(Icons.star_rounded, size: 14.sp, color: Colors.amber),
+                        Icon(Icons.star_rounded,
+                            size: 14.sp, color: Colors.amber),
                         SizedBox(width: 4.w),
                         Text(
                           '${activity.placeDetails!.rating!.toStringAsFixed(1)}',
@@ -2020,7 +2002,8 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        if (activity.placeDetails!.userRatingsTotal != null) ...[
+                        if (activity.placeDetails!.userRatingsTotal !=
+                            null) ...[
                           Text(
                             ' (${activity.placeDetails!.userRatingsTotal})',
                             style: theme.textTheme.bodySmall?.copyWith(
@@ -2034,9 +2017,10 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                 ],
               ),
             ),
-            
+
             SizedBox(width: 8.w),
-            Icon(Icons.chevron_right_rounded, color: colorScheme.onSurfaceVariant, size: 20.sp),
+            Icon(Icons.chevron_right_rounded,
+                color: colorScheme.onSurfaceVariant, size: 20.sp),
           ],
         ),
       ),
@@ -2045,7 +2029,7 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
 
   void _showActivityDetails(ActivityItem activity, ThemeData theme) {
     final colorScheme = theme.colorScheme;
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -2070,99 +2054,103 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                 borderRadius: BorderRadius.circular(2.r),
               ),
             ),
-            
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.all(24.w),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: EdgeInsets.all(16.w),
-                        decoration: BoxDecoration(
-                          color: _getCategoryColor(activity.type).withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(16.r),
+                    Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(16.w),
+                          decoration: BoxDecoration(
+                            color: _getCategoryColor(activity.type)
+                                .withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(16.r),
+                          ),
+                          child: Icon(
+                            _getCategoryIcon(activity.type),
+                            size: 32.sp,
+                            color: _getCategoryColor(activity.type),
+                          ),
                         ),
-                        child: Icon(
-                          _getCategoryIcon(activity.type),
-                          size: 32.sp,
-                          color: _getCategoryColor(activity.type),
+                        SizedBox(width: 16.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                activity.type,
+                                style: theme.textTheme.labelLarge?.copyWith(
+                                  color: _getCategoryColor(activity.type),
+                                ),
+                              ),
+                              Text(
+                                activity.title,
+                                style: theme.textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      SizedBox(width: 16.w),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              activity.type,
-                              style: theme.textTheme.labelLarge?.copyWith(
-                                color: _getCategoryColor(activity.type),
+                      ],
+                    ),
+
+                    // Activity Photos Gallery
+                    if (activity.placeDetails != null &&
+                        activity.placeDetails!.photos != null &&
+                        activity.placeDetails!.photos!.isNotEmpty) ...[
+                      SizedBox(height: 20.h),
+                      SizedBox(
+                        height: 120.h,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount:
+                              activity.placeDetails!.photos!.length.clamp(0, 5),
+                          separatorBuilder: (context, index) =>
+                              SizedBox(width: 12.w),
+                          itemBuilder: (context, index) {
+                            return ClipRRect(
+                              borderRadius: BorderRadius.circular(12.r),
+                              child: Image.network(
+                                activity.placeDetails!.photos![index],
+                                width: 160.w,
+                                height: 120.h,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    width: 160.w,
+                                    height: 120.h,
+                                    color: colorScheme.surfaceContainerHighest,
+                                    child: Icon(
+                                      _getCategoryIcon(activity.type),
+                                      size: 48.sp,
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
+                                  );
+                                },
                               ),
-                            ),
-                            Text(
-                              activity.title,
-                              style: theme.textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
+                            );
+                          },
                         ),
                       ),
                     ],
-                  ),
-                  
-                  // Activity Photos Gallery
-                  if (activity.placeDetails != null && 
-                      activity.placeDetails!.photos != null && 
-                      activity.placeDetails!.photos!.isNotEmpty) ...[
-                    SizedBox(height: 20.h),
-                    SizedBox(
-                      height: 120.h,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: activity.placeDetails!.photos!.length.clamp(0, 5),
-                        separatorBuilder: (context, index) => SizedBox(width: 12.w),
-                        itemBuilder: (context, index) {
-                          return ClipRRect(
-                            borderRadius: BorderRadius.circular(12.r),
-                            child: Image.network(
-                              activity.placeDetails!.photos![index],
-                              width: 160.w,
-                              height: 120.h,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  width: 160.w,
-                                  height: 120.h,
-                                  color: colorScheme.surfaceContainerHighest,
-                                  child: Icon(
-                                    _getCategoryIcon(activity.type),
-                                    size: 48.sp,
-                                    color: colorScheme.onSurfaceVariant,
-                                  ),
-                                );
-                              },
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                  
-                  SizedBox(height: 24.h),                    _buildDetailSection(
+
+                    SizedBox(height: 24.h),
+                    _buildDetailSection(
                       icon: Icons.info_outline_rounded,
                       title: 'Description',
                       children: [
-                        Text(activity.description, style: theme.textTheme.bodyLarge),
+                        Text(activity.description,
+                            style: theme.textTheme.bodyLarge),
                       ],
                       theme: theme,
                     ),
-                    
+
                     if (activity.location != null) ...[
                       SizedBox(height: 24.h),
                       _buildDetailSection(
@@ -2171,7 +2159,8 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                         children: [
                           _buildDetailRow('Place', activity.location!.name),
                           if (activity.location!.address != null)
-                            _buildDetailRow('Address', activity.location!.address!),
+                            _buildDetailRow(
+                                'Address', activity.location!.address!),
                           _buildDetailRow(
                             'Coordinates',
                             '${activity.location!.coordinates.lat.toStringAsFixed(6)}, ${activity.location!.coordinates.lng.toStringAsFixed(6)}',
@@ -2180,21 +2169,25 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                         theme: theme,
                       ),
                     ],
-                    
+
                     SizedBox(height: 24.h),
-                    
+
                     _buildDetailSection(
                       icon: Icons.schedule_rounded,
                       title: 'Timing & Cost',
                       children: [
                         _buildDetailRow('Time', activity.time),
                         if (activity.duration != null)
-                          _buildDetailRow('Duration', '${activity.duration} minutes'),
-                        _buildDetailRow('Estimated Cost', CurrencyFormatter.formatPKR(activity.estimatedCost)),
+                          _buildDetailRow(
+                              'Duration', '${activity.duration} minutes'),
+                        _buildDetailRow(
+                            'Estimated Cost',
+                            CurrencyFormatter.formatPKR(
+                                activity.estimatedCost)),
                       ],
                       theme: theme,
                     ),
-                    
+
                     if (activity.placeDetails != null) ...[
                       SizedBox(height: 24.h),
                       _buildDetailSection(
@@ -2202,20 +2195,25 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                         title: 'Reviews & Details',
                         children: [
                           if (activity.placeDetails!.rating != null)
-                            _buildDetailRow('Rating', '${activity.placeDetails!.rating!.toStringAsFixed(1)} ⭐'),
+                            _buildDetailRow('Rating',
+                                '${activity.placeDetails!.rating!.toStringAsFixed(1)} ⭐'),
                           if (activity.placeDetails!.userRatingsTotal != null)
-                            _buildDetailRow('Total Reviews', '${activity.placeDetails!.userRatingsTotal}'),
+                            _buildDetailRow('Total Reviews',
+                                '${activity.placeDetails!.userRatingsTotal}'),
                           if (activity.placeDetails!.priceLevel != null)
-                            _buildDetailRow('Price Level', '${'💰' * activity.placeDetails!.priceLevel!}'),
+                            _buildDetailRow('Price Level',
+                                '${'💰' * activity.placeDetails!.priceLevel!}'),
                           if (activity.placeDetails!.website != null)
-                            _buildDetailRow('Website', activity.placeDetails!.website!),
+                            _buildDetailRow(
+                                'Website', activity.placeDetails!.website!),
                           if (activity.placeDetails!.phoneNumber != null)
-                            _buildDetailRow('Phone', activity.placeDetails!.phoneNumber!),
+                            _buildDetailRow(
+                                'Phone', activity.placeDetails!.phoneNumber!),
                         ],
                         theme: theme,
                       ),
                     ],
-                    
+
                     if (activity.tips != null) ...[
                       SizedBox(height: 24.h),
                       Container(
@@ -2223,12 +2221,14 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                         decoration: BoxDecoration(
                           color: Colors.amber.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12.r),
-                          border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                          border:
+                              Border.all(color: Colors.amber.withOpacity(0.3)),
                         ),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(Icons.tips_and_updates_rounded, color: Colors.amber.shade700, size: 24.sp),
+                            Icon(Icons.tips_and_updates_rounded,
+                                color: Colors.amber.shade700, size: 24.sp),
                             SizedBox(width: 12.w),
                             Expanded(
                               child: Column(
@@ -2253,9 +2253,9 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
                         ),
                       ),
                     ],
-                    
+
                     SizedBox(height: 32.h),
-                    
+
                     SizedBox(
                       width: double.infinity,
                       child: FilledButton(
@@ -2278,10 +2278,15 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
 
   IconData _getCategoryIcon(String category) {
     final lower = category.toLowerCase();
-    if (lower.contains('food') || lower.contains('dining') || lower.contains('restaurant') || lower.contains('meal')) {
+    if (lower.contains('food') ||
+        lower.contains('dining') ||
+        lower.contains('restaurant') ||
+        lower.contains('meal')) {
       return Icons.restaurant_rounded;
     }
-    if (lower.contains('sightseeing') || lower.contains('attraction') || lower.contains('visit')) {
+    if (lower.contains('sightseeing') ||
+        lower.contains('attraction') ||
+        lower.contains('visit')) {
       return Icons.attractions_rounded;
     }
     if (lower.contains('activity') || lower.contains('adventure')) {
@@ -2307,10 +2312,15 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
 
   Color _getCategoryColor(String category) {
     final lower = category.toLowerCase();
-    if (lower.contains('food') || lower.contains('dining') || lower.contains('restaurant') || lower.contains('meal')) {
+    if (lower.contains('food') ||
+        lower.contains('dining') ||
+        lower.contains('restaurant') ||
+        lower.contains('meal')) {
       return Colors.orange;
     }
-    if (lower.contains('sightseeing') || lower.contains('attraction') || lower.contains('visit')) {
+    if (lower.contains('sightseeing') ||
+        lower.contains('attraction') ||
+        lower.contains('visit')) {
       return Colors.blue;
     }
     if (lower.contains('activity') || lower.contains('adventure')) {
@@ -2336,11 +2346,15 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
 
   IconData _getAmenityIcon(String amenity) {
     final lower = amenity.toLowerCase();
-    if (lower.contains('wifi') || lower.contains('wi-fi')) return Icons.wifi_rounded;
+    if (lower.contains('wifi') || lower.contains('wi-fi'))
+      return Icons.wifi_rounded;
     if (lower.contains('parking')) return Icons.local_parking_rounded;
-    if (lower.contains('restaurant') || lower.contains('dining')) return Icons.restaurant_rounded;
-    if (lower.contains('pool') || lower.contains('swimming')) return Icons.pool_rounded;
-    if (lower.contains('gym') || lower.contains('fitness')) return Icons.fitness_center_rounded;
+    if (lower.contains('restaurant') || lower.contains('dining'))
+      return Icons.restaurant_rounded;
+    if (lower.contains('pool') || lower.contains('swimming'))
+      return Icons.pool_rounded;
+    if (lower.contains('gym') || lower.contains('fitness'))
+      return Icons.fitness_center_rounded;
     if (lower.contains('spa')) return Icons.spa_rounded;
     if (lower.contains('bar')) return Icons.local_bar_rounded;
     if (lower.contains('room service')) return Icons.room_service_rounded;
@@ -2349,7 +2363,8 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
 
   IconData _getVehicleIcon(String vehicleType) {
     final lower = vehicleType.toLowerCase();
-    if (lower.contains('bus') || lower.contains('minibus')) return Icons.directions_bus_rounded;
+    if (lower.contains('bus') || lower.contains('minibus'))
+      return Icons.directions_bus_rounded;
     if (lower.contains('car')) return Icons.directions_car_rounded;
     if (lower.contains('van')) return Icons.airport_shuttle_rounded;
     return Icons.directions_rounded;
@@ -2414,7 +2429,8 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Plan?'),
-        content: Text('Are you sure you want to delete "${widget.plan.planName}"? This action cannot be undone.'),
+        content: Text(
+            'Are you sure you want to delete "${widget.plan.planName}"? This action cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -2422,7 +2438,9 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
           ),
           FilledButton(
             onPressed: () {
-              context.read<TripPlannerBloc>().add(DeleteSavedPlan(planId: widget.plan.id));
+              context
+                  .read<TripPlannerBloc>()
+                  .add(DeleteSavedPlan(planId: widget.plan.id));
               Navigator.pop(context); // Close dialog
               Navigator.pop(context); // Go back to list
               ScaffoldMessenger.of(context).showSnackBar(
@@ -2455,13 +2473,18 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
           children: [
             Text(
               'Book This Plan',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 24.h),
             ListTile(
-              leading: Icon(Icons.payment_rounded, color: Theme.of(context).colorScheme.primary),
+              leading: Icon(Icons.payment_rounded,
+                  color: Theme.of(context).colorScheme.primary),
               title: const Text('Proceed to Payment'),
-              subtitle: Text(CurrencyFormatter.formatPKR(widget.plan.totalCost)),
+              subtitle:
+                  Text(CurrencyFormatter.formatPKR(widget.plan.totalCost)),
               onTap: () {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -2493,11 +2516,15 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
           children: [
             Text(
               'Plan Actions',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 24.h),
             ListTile(
-              leading: Icon(Icons.share_rounded, color: Theme.of(context).colorScheme.primary),
+              leading: Icon(Icons.share_rounded,
+                  color: Theme.of(context).colorScheme.primary),
               title: const Text('Share Plan'),
               onTap: () {
                 Navigator.pop(context);
@@ -2507,7 +2534,8 @@ class _SavedPlanDetailsPageState extends State<SavedPlanDetailsPage> {
               },
             ),
             ListTile(
-              leading: Icon(Icons.edit_rounded, color: Theme.of(context).colorScheme.primary),
+              leading: Icon(Icons.edit_rounded,
+                  color: Theme.of(context).colorScheme.primary),
               title: const Text('Edit Plan'),
               onTap: () {
                 Navigator.pop(context);

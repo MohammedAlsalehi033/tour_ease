@@ -31,6 +31,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     ScreenUtil.init(context, designSize: const Size(360, 800));
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         actions: const [Themeswitch()],
       ),
       body: SingleChildScrollView(

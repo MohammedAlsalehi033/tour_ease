@@ -27,7 +27,10 @@ class _AuthScreenState extends State<AuthScreen> {
   Widget build(BuildContext context) {
     ScreenUtil.init(context, designSize: const Size(360, 800));
     return Scaffold(
-      appBar: AppBar(actions: [Themeswitch(),],),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        actions: [Themeswitch(),],
+      ),
       body: SingleChildScrollView(
         child: Padding(
           padding: EdgeInsets.symmetric(

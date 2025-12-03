@@ -123,7 +123,7 @@ class _CurrentPlansPageState extends State<CurrentPlansPage> {
                       );
                     },
                     icon: const Icon(Icons.add_rounded),
-                    label: Text('Create new plan', style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold)),
+                    label: Text('Create new plan', style: theme.textTheme.labelLarge?.copyWith(color: colorScheme.onPrimary, fontWeight: FontWeight.bold)),
                     style: ElevatedButton.styleFrom(
                       padding: EdgeInsets.symmetric(vertical: 16.h),
                       backgroundColor: colorScheme.primary,
