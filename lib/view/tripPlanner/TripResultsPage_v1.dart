@@ -109,116 +109,33 @@ class _TripResultsPageState extends State<TripResultsPage> {
           return CustomScrollView(
             slivers: [
               // Modern App Bar
-              SliverAppBar.large(
-                expandedHeight: 180.h,
+              SliverAppBar(
                 pinned: true,
-                backgroundColor: colorScheme.primaryContainer,
-                foregroundColor: colorScheme.onPrimaryContainer,
+                backgroundColor: colorScheme.surface,
+                expandedHeight: 120.h,
                 flexibleSpace: FlexibleSpaceBar(
-                  title: null,
-                  collapseMode: CollapseMode.parallax,
+                  titlePadding: EdgeInsets.only(left: 20.w, bottom: 16.h),
+                  title: Text(
+                    'Trip Results',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
                   background: Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
+                        colors: [
+                          colorScheme.primaryContainer.withOpacity(0.8),
+                          colorScheme.secondaryContainer.withOpacity(0.8),
+                        ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [
-                          colorScheme.primaryContainer,
-                          colorScheme.surfaceVariant.withOpacity(0.9),
-                        ],
-                      ),
-                    ),
-                    child: SafeArea(
-                      child: Padding(
-                        padding: EdgeInsets.all(14.w),
-                        child: Column(
-                          children: [
-                            // Top row: back + title + actions
-                            Row(
-                              children: [
-                                IconButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  icon: Icon(Icons.arrow_back_rounded, color: colorScheme.onPrimaryContainer),
-                                ),
-                                SizedBox(width: 4.w),
-                                Expanded(
-                                  child: Text(
-                                    'Your Trip Options',
-                                    style: theme.textTheme.headlineSmall?.copyWith(
-                                      color: colorScheme.onPrimaryContainer,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                IconButton(
-                                  onPressed: () => _showTopBarActionMessage(context, 'Map view not implemented yet'),
-                                  icon: Icon(Icons.map_rounded, color: colorScheme.onPrimaryContainer),
-                                ),
-                              ],
-                            ),
-
-                            // Spacer pushes the summary to the bottom of the expanded area
-                            const Spacer(),
-
-                            // Compact trip header: days/nights and cost
-                            if (tripPlan.tripSummary != null) ...[
-                              Container(
-                                width: double.infinity,
-                                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 8.h),
-                                decoration: BoxDecoration(
-                                  color: colorScheme.surface.withOpacity(0.06),
-                                  borderRadius: BorderRadius.circular(12.r),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            '${tripPlan.tripSummary!.totalDays} Days • ${tripPlan.tripSummary!.totalNights} Nights',
-                                            style: theme.textTheme.titleMedium?.copyWith(
-                                              color: colorScheme.onPrimaryContainer.withOpacity(0.95),
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          SizedBox(height: 4.h),
-                                          Text(
-                                            'Est. ${CurrencyFormatter.formatPKR(tripPlan.tripSummary!.estimatedTotalCost)} • Remaining ${CurrencyFormatter.formatPKR(tripPlan.tripSummary!.remainingBudget)}',
-                                            style: theme.textTheme.bodySmall?.copyWith(
-                                              color: colorScheme.onPrimaryContainer.withOpacity(0.9),
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-
-                                    SizedBox(width: 8.w),
-                                    OutlinedButton(
-                                      onPressed: () => _showTopBarActionMessage(context, 'View cost breakdown'),
-                                      style: OutlinedButton.styleFrom(
-                                        side: BorderSide(color: colorScheme.onPrimaryContainer.withOpacity(0.12)),
-                                        foregroundColor: colorScheme.onPrimaryContainer,
-                                        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-                                      ),
-                                      child: Text('Cost'),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-
               // Best Option Quick Select
               SliverToBoxAdapter(
                 child: Padding(
@@ -291,7 +208,7 @@ class _TripResultsPageState extends State<TripResultsPage> {
                     ),
                     SizedBox(height: 16.h),
                     SizedBox(
-                      height: 300.h,
+                      height: 360.h,
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,
                         padding: EdgeInsets.symmetric(horizontal: 20.w),
@@ -348,7 +265,7 @@ class _TripResultsPageState extends State<TripResultsPage> {
                     ),
                     SizedBox(height: 16.h),
                     SizedBox(
-                      height: 300.h,
+                      height: 360.h,
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,
                         padding: EdgeInsets.symmetric(horizontal: 20.w),
@@ -390,26 +307,34 @@ class _TripResultsPageState extends State<TripResultsPage> {
                         ),
                       ),
                       SizedBox(width: 16.w),
-                      Text(
-                        'Select Accommodation',
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
+                      Column(
+                        children: [
+                            Text(
+                              'Select Accommodation',
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(width: 8.w),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.arrow_forward_rounded,
+                                  size: 20.sp,
+                                  color: colorScheme.primary,
+                                ),
+                                SizedBox(width: 4.w),
+                                                        Text(
+                                                        'Swipe',
+                                                        style: theme.textTheme.bodyMedium?.copyWith(
+                                                          color: colorScheme.primary,
+                                                          fontStyle: FontStyle.italic,
+                                                        ),
+                                                      ),
+                              ],
+                            ),
+                          ],
                         ),
-                      ),
-                      SizedBox(width: 8.w),
-                      Icon(
-                        Icons.arrow_forward_rounded,
-                        size: 20.sp,
-                        color: colorScheme.primary,
-                      ),
-                      SizedBox(width: 4.w),
-                      Text(
-                        'Swipe',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.primary,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -418,7 +343,7 @@ class _TripResultsPageState extends State<TripResultsPage> {
               // Accommodations Horizontal Scroll
               SliverToBoxAdapter(
                 child: SizedBox(
-                  height: 520.h,
+                  height: 600.h,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     padding: EdgeInsets.symmetric(horizontal: 20.w),
@@ -487,7 +412,7 @@ class _TripResultsPageState extends State<TripResultsPage> {
                 // Daily Activities Horizontal Scroll
                 SliverToBoxAdapter(
                   child: SizedBox(
-                    height: 520.h,
+                    height: 650.h,
                     child: Stack(
                       children: [
                         ListView.builder(
@@ -1082,7 +1007,7 @@ class _TripResultsPageState extends State<TripResultsPage> {
       },
       child: Container(
         width: 380.w,
-        height: 490.h,
+        height: 580.h,
         margin: EdgeInsets.only(right: 16.w),
         decoration: BoxDecoration(
           color: colorScheme.surface,

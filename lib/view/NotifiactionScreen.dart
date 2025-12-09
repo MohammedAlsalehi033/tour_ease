@@ -196,14 +196,18 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    senderName,
-                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
+                                  Expanded(
+                                    child: Text(
+                                      senderName,
+                                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
+                                  const SizedBox(width: 8),
                                   Text(
                                     '$formattedDate at $formattedTime',
                                     style: Theme.of(context).textTheme.bodySmall, // CHANGED: Use theme text style
@@ -221,23 +225,32 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Row(
-                                    children: [
-                                      Icon(Icons.airline_seat_recline_normal, size: 16, color: Theme.of(context).textTheme.bodySmall?.color),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        '${offer.seatsRequested} seat(s)',
-                                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).textTheme.bodySmall?.color), // CHANGED
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Icon(Icons.attach_money, size: 16, color: Theme.of(context).textTheme.bodySmall?.color),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        '\$${offer.pricePerSeat.toStringAsFixed(2)}',
-                                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).textTheme.bodySmall?.color, fontWeight: FontWeight.bold), //CHANGED
-                                      ),
-                                    ],
+                                  Expanded(
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.airline_seat_recline_normal, size: 16, color: Theme.of(context).textTheme.bodySmall?.color),
+                                        const SizedBox(width: 4),
+                                        Flexible(
+                                          child: Text(
+                                            '${offer.seatsRequested} seat(s)',
+                                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).textTheme.bodySmall?.color), // CHANGED
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Icon(Icons.attach_money, size: 16, color: Theme.of(context).textTheme.bodySmall?.color),
+                                        const SizedBox(width: 4),
+                                        Flexible(
+                                          child: Text(
+                                            '\$${offer.pricePerSeat.toStringAsFixed(2)}',
+                                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).textTheme.bodySmall?.color, fontWeight: FontWeight.bold), //CHANGED
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
+                                  const SizedBox(width: 8),
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                     decoration: BoxDecoration(
@@ -270,8 +283,10 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
                             child: Text("This offer has expired", style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.error)),
                           ),
                         )
-                            : Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
+                            : Wrap(
+                          alignment: WrapAlignment.end,
+                          spacing: 12,
+                          runSpacing: 8,
                           children: [
                             OutlinedButton(
                               onPressed: () => _handleOfferResponse(context, offer, 'rejected'),
@@ -285,7 +300,6 @@ class _NotifiactionScreenState extends State<NotifiactionScreen> {
                               ),
                               child: const Text('Decline'),
                             ),
-                            const SizedBox(width: 12),
                             ElevatedButton(
                               onPressed: () => _handleOfferResponse(context, offer, 'accepted'),
                               style: ElevatedButton.styleFrom(

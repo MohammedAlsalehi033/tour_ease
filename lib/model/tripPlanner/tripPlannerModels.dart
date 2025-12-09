@@ -14,6 +14,31 @@ double _toDouble(dynamic value) {
   return 0.0; // For Maps or other unexpected types, return 0
 }
 
+/// Safely converts a dynamic value to int, handling various input types including Maps (extracting id)
+int _toInt(dynamic value) {
+  if (value == null) return 0;
+  if (value is int) return value;
+  if (value is double) return value.toInt();
+  if (value is String) return int.tryParse(value) ?? 0;
+  if (value is Map) {
+    // If it's a map, try to find an 'id' field
+    return _toInt(value['id']);
+  }
+  return 0;
+}
+
+/// Safely converts a dynamic value to nullable int
+int? _toNullableInt(dynamic value) {
+  if (value == null) return null;
+  if (value is int) return value;
+  if (value is double) return value.toInt();
+  if (value is String) return int.tryParse(value);
+  if (value is Map) {
+    return _toNullableInt(value['id']);
+  }
+  return null;
+}
+
 // ============================================================================
 // SEARCH REQUEST MODELS
 // ============================================================================
@@ -97,12 +122,12 @@ class TransportOption {
 
   factory TransportOption.fromJson(Map<String, dynamic> json) {
     return TransportOption(
-      id: json['id'] ?? 0,
-      listingId: json['listingId'] ?? 0,
+      id: _toInt(json['id']),
+      listingId: _toInt(json['listingId']),
       providerName: json['providerName'] ?? '',
       vehicleType: json['vehicleType'] ?? '',
       pricePerSeat: _toDouble(json['pricePerSeat']),
-      seatsAvailable: json['seatsAvailable'] ?? 0,
+      seatsAvailable: _toInt(json['seatsAvailable']),
       departureTime: json['departureTime'] != null
           ? DateTime.parse(json['departureTime'])
           : DateTime.now(),
@@ -111,7 +136,7 @@ class TransportOption {
       totalCost: _toDouble(json['totalCost']),
       pickupLocation: json['pickupLocation'],
       dropoffLocation: json['dropoffLocation'],
-      totalReviews: json['totalReviews'],
+      totalReviews: _toNullableInt(json['totalReviews']),
       amenities: json['amenities'] != null ? List<String>.from(json['amenities']) : null,
     );
   }
@@ -134,9 +159,9 @@ class RoomInfo {
 
   factory RoomInfo.fromJson(Map<String, dynamic> json) {
     return RoomInfo(
-      roomId: json['roomId'] ?? 0,
+      roomId: _toInt(json['roomId']),
       roomType: json['roomType'] ?? '',
-      capacity: json['capacity'] ?? 0,
+      capacity: _toInt(json['capacity']),
       pricePerNight: _toDouble(json['pricePerNight']),
       amenities: json['amenities'] != null ? List<String>.from(json['amenities']) : null,
     );
@@ -166,12 +191,12 @@ class RoomAllocation {
 
   factory RoomAllocation.fromJson(Map<String, dynamic> json) {
     return RoomAllocation(
-      roomId: json['roomId'] ?? 0,
+      roomId: _toInt(json['roomId']),
       roomType: json['roomType'] ?? '',
       pricePerNight: _toDouble(json['pricePerNight']),
-      capacity: json['capacity'] ?? 0,
-      numberOfRooms: json['numberOfRooms'] ?? 0,
-      guestsAllocated: json['guestsAllocated'] ?? 0,
+      capacity: _toInt(json['capacity']),
+      numberOfRooms: _toInt(json['numberOfRooms']),
+      guestsAllocated: _toInt(json['guestsAllocated']),
       totalCost: _toDouble(json['totalCost']),
       amenities: json['amenities'] != null ? List<String>.from(json['amenities']) : null,
     );
@@ -220,13 +245,13 @@ class AccommodationOption {
 
   factory AccommodationOption.fromJson(Map<String, dynamic> json) {
     return AccommodationOption(
-      id: json['id'] ?? 0,
-      accommodationId: json['accommodationId'] ?? 0,
+      id: _toInt(json['id']),
+      accommodationId: _toInt(json['accommodationId']),
       name: json['name'] ?? '',
       location: json['location'] ?? '',
       avgRating: _toDouble(json['avgRating']),
       totalCost: _toDouble(json['totalCost']),
-      numberOfNights: json['numberOfNights'] ?? 0,
+      numberOfNights: _toInt(json['numberOfNights']),
       roomAllocations: (json['roomAllocations'] as List?)
               ?.map((e) => RoomAllocation.fromJson(e))
               .toList() ??
@@ -239,8 +264,8 @@ class AccommodationOption {
       description: json['description'],
       checkInDate: json['checkInDate'] != null ? DateTime.parse(json['checkInDate']) : null,
       checkOutDate: json['checkOutDate'] != null ? DateTime.parse(json['checkOutDate']) : null,
-      totalGuests: json['totalGuests'],
-      totalReviews: json['totalReviews'],
+      totalGuests: _toNullableInt(json['totalGuests']),
+      totalReviews: _toNullableInt(json['totalReviews']),
     );
   }
 }
@@ -271,7 +296,7 @@ class Activity {
       description: json['description'] ?? '',
       location: json['location'] ?? '',
       estimatedCost: _toDouble(json['estimatedCost']),
-      duration: json['duration'] ?? 0,
+      duration: _toInt(json['duration']),
       category: json['category'] ?? '',
     );
   }
@@ -1363,7 +1388,7 @@ class SavedPlan {
     }
     
     return SavedPlan(
-      id: json['id'] ?? 0,
+      id: _toInt(json['id']),
       userId: json['userId'] ?? '',
       planName: json['planName'] ?? '',
       description: json['description'] ?? planData?['description'],
@@ -1376,18 +1401,18 @@ class SavedPlan {
       endTime: json['endTime'] != null
           ? DateTime.parse(json['endTime'])
           : DateTime.now(),
-      numberOfTravelers: json['numberOfTravelers'] ?? 0,
+      numberOfTravelers: _toInt(json['numberOfTravelers']),
       budget: budget,
       interests: json['interests'] != null
           ? List<String>.from(json['interests'])
           : [],
       needsReturnTransport: json['needsReturnTransport'] ?? true,
-      selectedOutboundTransportId: json['selectedOutboundTransportId'] ?? json['selectedOutboundId'],
-      selectedReturnTransportId: json['selectedReturnTransportId'] ?? json['selectedReturnId'],
-      selectedAccommodationId: json['selectedAccommodationId'],
-      seatsNeeded: json['seatsNeeded'],
+      selectedOutboundTransportId: _toNullableInt(json['selectedOutboundTransportId'] ?? json['selectedOutboundId']),
+      selectedReturnTransportId: _toNullableInt(json['selectedReturnTransportId'] ?? json['selectedReturnId']),
+      selectedAccommodationId: _toNullableInt(json['selectedAccommodationId']),
+      seatsNeeded: _toNullableInt(json['seatsNeeded']),
       selectedActivities: json['selectedActivities'] != null
-          ? List<int>.from(json['selectedActivities'])
+          ? (json['selectedActivities'] as List).map((e) => _toInt(e)).toList()
           : null,
       totalCost: totalCost,
       tags: json['tags'] != null ? List<String>.from(json['tags']) : null,
